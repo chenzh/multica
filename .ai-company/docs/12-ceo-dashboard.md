@@ -35,9 +35,10 @@ gh pr list -R org/repo --search "head:cursor/ merged:>@yesterday"
 
 多 repo：脚本读 `project-registry.yaml` 循环。
 
-**已实现：** `scripts/ai-company/ceo-dashboard.sh`
+**已实现：** `scripts/ai-company/ceo-dashboard.sh`（终端）与 `scripts/ai-company/ceo-workbench.sh`（浏览器工作台）
 
 ```bash
+bash scripts/ai-company/ceo-workbench.sh
 bash scripts/ai-company/ceo-dashboard.sh
 bash scripts/ai-company/ceo-dashboard.sh --json
 bash scripts/ai-company/ceo-dashboard.sh --dispatch --max-total 3

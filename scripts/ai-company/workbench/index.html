@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 公司工作台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div>
+          <h1>AI 公司工作台</h1>
+          <p class="subtitle">看全组合队列、挑 issue、一键本地派单</p>
+        </div>
+        <div class="header-actions">
+          <span class="pill" id="org-label">org: -</span>
+          <span class="pill" id="dispatch-mode">检查中…</span>
+          <button id="refresh-btn">刷新</button>
+        </div>
+      </header>
+
+      <section class="grid">
+        <div class="card">
+          <div class="metric-label">BLOCKED</div>
+          <div class="metric-value" id="metric-blocked">0</div>
+        </div>
+        <div class="card">
+          <div class="metric-label">RUNNING</div>
+          <div class="metric-value" id="metric-running">0</div>
+        </div>
+        <div class="card">
+          <div class="metric-label">QUEUE</div>
+          <div class="metric-value" id="metric-queue">0</div>
+        </div>
+        <div class="card">
+          <div class="metric-label">MERGED</div>
+          <div class="metric-value" id="metric-merged">0</div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-bottom: 16px">
+        <div class="panel-title">
+          <h2>派单</h2>
+          <div class="header-actions">
+            <label>
+              最多
+              <select id="max-total" class="select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="5">5</option>
+              </select>
+              单
+            </label>
+            <button class="primary" id="dispatch-portfolio">智能派单</button>
+          </div>
+        </div>
+        <p class="subtitle">按 `project-registry.yaml` 优先级自动挑 issue，走本地 `cursor-agent`。</p>
+      </section>
+
+      <section class="layout">
+        <div class="card">
+          <div class="panel-title">
+            <h2>项目</h2>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>项目</th>
+                <th>Blocked</th>
+                <th>Running</th>
+                <th>Queue</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="projects-body"></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="panel-title">
+            <h2 id="queue-title">队列</h2>
+            <button id="dispatch-one">派下一单</button>
+          </div>
+          <p class="subtitle" id="path-hint"></p>
+          <div id="queue-panel" class="empty">选择左侧项目查看队列</div>
+        </div>
+      </section>
+
+      <section class="card jobs">
+        <div class="panel-title">
+          <h2>最近派单</h2>
+        </div>
+        <div id="jobs-panel" class="empty">加载中…</div>
+        <div class="log-box" id="log-box">选择任务查看日志尾部</div>
+      </section>
+    </div>
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+# Optional per-machine repo checkout paths (gitignored).
+# Keys: project id from project-registry.yaml, or owner/repo.
+
+beatscape: /Users/you/Desktop/MusicSaas
+# chenzh/MusicSaas: /Users/you/Desktop/MusicSaas

@@ -4,6 +4,8 @@
 set -euo pipefail
 
 MULTICA_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=lib/source-local-env.sh
+source "$(dirname "$0")/lib/source-local-env.sh"
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 MAX_TOTAL="${MAX_TOTAL:-5}"
 DRY_RUN=0
@@ -52,9 +54,9 @@ if [ ! -f "$REGISTRY" ]; then
 fi
 
 # Parse YAML projects block (line-oriented; matches our template shape).
-declare -a IDS=() REPOS=() PRIORITIES=() CAPS=() PAUSED=() LOCAL_PATHS=()
+declare -a IDS=() REPOS=() PRIORITIES=() CAPS=() PAUSED=()
 
-current_id="" current_repo="" current_priority="0" current_cap="1" current_paused="false" current_local_path=""
+current_id="" current_repo="" current_priority="0" current_cap="1" current_paused="false"
 
 flush_project() {
   if [ -z "$current_id" ] || [ -z "$current_repo" ]; then
@@ -65,13 +67,11 @@ flush_project() {
   PRIORITIES+=("$current_priority")
   CAPS+=("$current_cap")
   PAUSED+=("$current_paused")
-  LOCAL_PATHS+=("$current_local_path")
   current_id=""
   current_repo=""
   current_priority="0"
   current_cap="1"
   current_paused="false"
-  current_local_path=""
 }
 
 while IFS= read -r line; do
@@ -104,10 +104,6 @@ while IFS= read -r line; do
     current_paused="${BASH_REMATCH[1]}"
     continue
   fi
-  if [[ "$line" =~ ^local_path:\ (.+)$ ]]; then
-    current_local_path="${BASH_REMATCH[1]}"
-    continue
-  fi
 done <"$REGISTRY"
 flush_project
 
@@ -137,7 +133,7 @@ pick_next_issue() {
     --label "agent-safe" \
     --state open \
     --json number,labels \
-    --jq '.[] | select([.labels[].name] | (index("agent-running") | not) and (index("agent-blocked") | not)) | .number' \
+    --jq '.[] | select([.labels[].name] | (index("agent-running") | not) and (index("agent-blocked") | not) and (index("agent-done") | not)) | .number' \
     | head -n 1
 }
 
@@ -159,9 +155,9 @@ for idx in "${ORDER[@]}"; do
   echo "→ ${IDS[$idx]} ($repo) max_tasks=$cap priority=${PRIORITIES[$idx]}"
 
   if [ "$LOCAL" -eq 1 ]; then
-    root="${LOCAL_PATHS[$idx]}"
+    root="$(bash "$MULTICA_ROOT/scripts/ai-company/resolve-repo-path.sh" --id "${IDS[$idx]}" --repo "$repo" --quiet 2>/dev/null || true)"
     if [ -z "$root" ] || [ ! -d "$root" ]; then
-      echo "  warning: local_path missing for ${IDS[$idx]} — skip" >&2
+      echo "  warning: no local checkout for ${IDS[$idx]} ($repo) — set AI_REPO_PATH_${IDS[$idx]} in local.env" >&2
       continue
     fi
     for ((n=0; n<cap; n++)); do

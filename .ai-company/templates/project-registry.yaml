@@ -19,7 +19,6 @@ defaults:
 projects:
   - id: beatscape
     repo: github.com/chenzh/MusicSaas
-    local_path: /Users/zhenhuachen/Desktop/MusicSaas
     tier: production
     priority: 30
     stack: vite-react-beatscape

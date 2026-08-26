@@ -24,15 +24,10 @@
 ## 派单（本地 cursor-agent）
 
 ```bash
-# 派 beatscape 一单
-GITHUB_REPOSITORY=chenzh/MusicSaas \
-REPO_ROOT=/Users/zhenhuachen/Desktop/MusicSaas \
-bash ~/Projects/multica/scripts/agent-delivery/dispatch-cursor-agent-cli.sh <issue#>
+# 浏览器工作台（推荐）
+bash ~/Projects/multica/scripts/ai-company/ceo-workbench.sh
 
-# portfolio 本地批量派单
-bash ~/Projects/multica/scripts/ai-company/portfolio-dispatch.sh --local --max-total 1
-
-# CEO 仪表盘（自动 --local）
+# 终端仪表盘
 bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
 ```
 

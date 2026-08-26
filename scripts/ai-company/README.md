@@ -40,6 +40,30 @@ bash scripts/ai-company/bootstrap-project.sh ../landing-tool-a \
 bash scripts/ai-company/ensure-github-labels.sh your-org/music-game-sea
 ```
 
+## ceo-dashboard.sh
+
+One-command portfolio summary:
+
+```bash
+bash scripts/ai-company/ceo-dashboard.sh
+bash scripts/ai-company/ceo-dashboard.sh --dispatch --max-total 3
+```
+
+## ceo-workbench.sh
+
+Local browser workbench — queue view, per-issue dispatch, portfolio dispatch:
+
+```bash
+bash scripts/ai-company/ceo-workbench.sh
+# http://127.0.0.1:9477
+```
+
+Requires: `python3`, `gh`, logged-in `cursor-agent` for local dispatch.
+
+Local checkout paths are machine-specific — configure in `.ai-company/config/local.env`
+(`MUSIC_SAAS_PATH` or `AI_REPO_PATH_<id>`), or let `resolve-repo-path.sh` auto-discover
+under `~/Projects` / `~/Desktop`.
+
 ## portfolio-dispatch.sh
 
 Multi-repo nightly dispatch from `project-registry.yaml` (run on company HQ / multica repo):

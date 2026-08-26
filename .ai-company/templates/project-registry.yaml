@@ -55,29 +55,3 @@ projects:
     paused: false
     delivery_slug: saas-stripe-mvp
     notes: "Payment human-only; repo bootstrapped 2026-08-26"
-
-  - id: hello-cf-smoke
-    repo: github.com/chenzh/hello-cf-smoke
-    tier: experiment
-    priority: 12
-    stack: cloudflare-pages
-    autopilot_id: null
-    max_nightly_tickets: 0
-    openapi: false
-    e2e: false
-    paused: true
-    delivery_slug: hello-cf-smoke
-    notes: "Site-factory smoke 2026-08-26 — paused after validation"
-
-  - id: hello-cloudflare
-    repo: github.com/chenzh/hello-cloudflare
-    tier: experiment
-    priority: 12
-    stack: cloudflare-pages
-    autopilot_id: null
-    max_nightly_tickets: 0
-    openapi: false
-    e2e: false
-    paused: true
-    delivery_slug: hello-cloudflare
-    notes: "Site-factory duplicate smoke — paused; use hello-cf-smoke if re-enabled"

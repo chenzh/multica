@@ -79,8 +79,11 @@ while IFS= read -r repo; do
   [ -n "$repo" ] || continue
   [ "$merged" -ge "$MAX_MERGE" ] && break
     numbers="$(
-    gh pr list -R "$repo" -s open --json number,isDraft,statusCheckRollup \
-      --jq '.[] | select(.isDraft == false) | select((.statusCheckRollup | length) > 0) | select([.statusCheckRollup[]? | select(.status != "COMPLETED" or .conclusion != "SUCCESS")] | length == 0) | .number' 2>/dev/null || true
+    gh pr list -R "$repo" -s open --json number,isDraft,mergeable,statusCheckRollup \
+      --jq '.[] | select(.isDraft == false) | select(.mergeable == "MERGEABLE") | select(
+        (.statusCheckRollup | length) == 0
+        or ([.statusCheckRollup[]? | select(.status != "COMPLETED" or (.conclusion == "FAILURE" or .conclusion == "TIMED_OUT" or .conclusion == "ACTION_REQUIRED"))] | length == 0)
+      ) | .number' 2>/dev/null || true
   )"
   for num in $numbers; do
     [ "$merged" -ge "$MAX_MERGE" ] && break

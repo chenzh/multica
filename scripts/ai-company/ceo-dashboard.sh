@@ -137,7 +137,7 @@ for i in "${!IDS[@]}"; do
     total_safe=$((total_safe + safe))
     total_merged=$((total_merged + merged))
   fi
-  [ "$blocked" -gt 0 ] && needs_action=1
+  [ "$blocked" -gt 0 ] && [ "$paused" != "true" ] && needs_action=1
 
   if [ "$JSON" -eq 1 ]; then
     emit_json "$id" "$repo" "$paused" "${blocked:-0}" "${running:-0}" "${safe:-0}" "${merged:-0}" "$accessible"

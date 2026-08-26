@@ -70,8 +70,10 @@ fi
 
 echo ""
 echo "4. 组合状态"
-if bash "$SCRIPT_DIR/ceo-dashboard.sh" --json 2>/dev/null | head -4; then
-  :
+dashboard_json="/tmp/verify-hands-off-dashboard.json"
+if bash "$SCRIPT_DIR/ceo-dashboard.sh" --json >"$dashboard_json" 2>/dev/null; then
+  head -4 "$dashboard_json"
+  pass "ceo-dashboard 可读"
 else
   bad "ceo-dashboard 失败"
 fi

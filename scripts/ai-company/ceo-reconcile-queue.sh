@@ -18,6 +18,7 @@ usage() {
 Usage: ceo-reconcile-queue.sh [options]
 
 Fixes common label drift:
+  - open PR with merge conflicts → agent-blocked (CEO must resolve)
   - agent-done on open issues with no open/merged PR → back to agent-safe
   - agent-running on open issues with no open PR → back to agent-safe
   - merged PR linked to issue → strip agent-* labels
@@ -83,6 +84,26 @@ while IFS= read -r repo; do
   while IFS=$'\t' read -r issue_num pr_num; do
     [ -z "$issue_num" ] && continue
     if issue_dispatch_active "$issue_num"; then
+      continue
+    fi
+    mergeable="$(
+      gh pr view "$pr_num" -R "$repo" --json mergeable -q '.mergeable' 2>/dev/null || echo UNKNOWN
+    )"
+    if [ "$mergeable" = "CONFLICTING" ]; then
+      if [ "$DRY_RUN" -eq 1 ]; then
+        echo "would block: $repo#$issue_num (PR #$pr_num has merge conflicts)"
+      else
+        gh issue edit "$issue_num" -R "$repo" \
+          --remove-label "agent-done" 2>/dev/null || true
+        gh issue edit "$issue_num" -R "$repo" \
+          --remove-label "agent-running" 2>/dev/null || true
+        gh issue edit "$issue_num" -R "$repo" \
+          --add-label "agent-blocked" 2>/dev/null || true
+        gh issue comment "$issue_num" -R "$repo" --body \
+          "🔴 PR #$pr_num has merge conflicts — CEO or agent must resolve before auto-merge." 2>/dev/null || true
+        echo "reconcile: $repo#$issue_num → agent-blocked (PR #$pr_num conflicting)"
+      fi
+      fixed=$((fixed + 1))
       continue
     fi
     labels="$(

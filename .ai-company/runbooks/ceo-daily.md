@@ -2,6 +2,27 @@
 
 > 经营面（一人公司 OPC）对接见 [../docs/13-opc-bridge.md](../docs/13-opc-bridge.md)。
 
+## 自动模式（推荐）
+
+每晚 **21:00** 本机 cron 自动：**派单 → 日报 → 飞书/Slack 推送**。
+
+```bash
+# 一次性配置
+cp .ai-company/config/local.env.example .ai-company/config/local.env
+# 编辑 FEISHU_WEBHOOK_URL 或 SLACK_WEBHOOK_URL
+
+bash scripts/ai-company/install-nightly-cron.sh --install
+```
+
+详见 [nightly-ceo-brief.md](./nightly-ceo-brief.md)。**有 BLOCKED 才需要你回话**；无 BLOCKED 可睡。
+
+手动试跑：
+
+```bash
+bash scripts/ai-company/ceo-nightly.sh --no-dispatch   # 只出日报
+bash scripts/ai-company/ceo-daily-brief.sh             # 日报 + webhook
+```
+
 ## 0. 打开仪表盘
 
 **浏览器工作台（推荐）：**

@@ -15,9 +15,11 @@ concurrency:
   max_verify_loops: 3
 
 nightly:
-  enabled: false              # 试跑通过后改为 true
-  cron: "0 2 * * *"
+  enabled: true                   # local: install-nightly-cron.sh --install
+  cron: "0 21 * * *"              # 21:00 server local time (set TZ=Asia/Shanghai)
   max_total_tickets: 5
+  dispatch_before_brief: true       # ceo-nightly.sh
+  brief_script: scripts/ai-company/ceo-daily-brief.sh
   github_dispatch_workflow: agent-delivery-dispatch.yml
 
 notifications:

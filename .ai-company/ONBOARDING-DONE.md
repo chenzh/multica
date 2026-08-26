@@ -15,6 +15,7 @@
 | `portfolio-agent-dispatch.yml` | ✅ | `chenzh/multica` main，cron + manual |
 | multica harness fork | ✅ | `chenzh/multica` PR #1 #2 已合并 |
 | CEO 浏览器工作台 | ✅ | `scripts/ai-company/ceo-workbench.sh` → http://127.0.0.1:9477 |
+| 每晚 21:00 派单 + 日报 | ✅ | `ceo-nightly.sh` + `install-nightly-cron.sh --install` |
 | 本机路径解析 | ✅ | `resolve-repo-path.sh` + `local.env`（registry 不写路径） |
 | 派单方式 | ✅ 本地 CLI | `cursor-agent` 已登录，**无需 `CURSOR_API_KEY`** |
 | `saas-stripe-mvp` 仓库 | ✅ | `chenzh/saas-stripe-mvp`，issues #1–#4 |
@@ -35,8 +36,13 @@ bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
 ## 日常 CEO 命令
 
 ```bash
+# 自动（cron 21:00）：派单 + 日报 → 飞书/Slack
+bash scripts/ai-company/install-nightly-cron.sh --install
+
+# 手动
 bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh
 bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
+bash ~/Projects/multica/scripts/ai-company/ceo-nightly.sh --no-dispatch
 ```
 
 ## 队列现状

@@ -49,6 +49,7 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | 文档 | 说明 |
 |------|------|
 | [runbooks/ceo-daily.md](./runbooks/ceo-daily.md) | CEO 每日 15 分钟 |
+| [runbooks/nightly-ceo-brief.md](./runbooks/nightly-ceo-brief.md) | **每晚 21:00 自动派单 + 日报** |
 | [runbooks/ceo-weekly.md](./runbooks/ceo-weekly.md) | CEO 每周治理 |
 | [runbooks/onboard-new-project.md](./runbooks/onboard-new-project.md) | 新网站 / 新项目接入清单 |
 | [runbooks/blocked-triage.md](./runbooks/blocked-triage.md) | BLOCKED 分拣与澄清 |
@@ -77,6 +78,9 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | [../scripts/ai-company/portfolio-dispatch.sh](../scripts/ai-company/portfolio-dispatch.sh) | 按 registry 多仓夜间 dispatch |
 | [../scripts/ai-company/scaffold-landing.sh](../scripts/ai-company/scaffold-landing.sh) | 生成 `landing-tool-a` |
 | [../scripts/ai-company/ceo-dashboard.sh](../scripts/ai-company/ceo-dashboard.sh) | **CEO 一条命令看全公司状态** |
+| [../scripts/ai-company/ceo-daily-brief.sh](../scripts/ai-company/ceo-daily-brief.sh) | 生成 CEO 日报 markdown + webhook |
+| [../scripts/ai-company/ceo-nightly.sh](../scripts/ai-company/ceo-nightly.sh) | 每晚派单 + 日报（cron 入口） |
+| [../scripts/ai-company/install-nightly-cron.sh](../scripts/ai-company/install-nightly-cron.sh) | 安装 21:00 crontab |
 | [../scripts/ai-company/bootstrap-all-products.sh](../scripts/ai-company/bootstrap-all-products.sh) | 批量 bootstrap 三条产品线 |
 | [../scripts/ai-company/install-harness.sh](../scripts/ai-company/install-harness.sh) | 从仓库根调用的安装包装脚本 |
 | [../scripts/ai-company/sync-backlog-to-issues.sh](../scripts/ai-company/sync-backlog-to-issues.sh) | 从 `backlog.md` 批量创建 GitHub Issue |

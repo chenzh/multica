@@ -21,8 +21,10 @@
 
 ## 每日 15 分钟（合并版）
 
+**自动（推荐）**：21:00 cron 跑 `ceo-nightly.sh`，飞书/Slack 收日报；你只回 BLOCKED。
+
 1. 开工作台：`bash ~/Projects/multica/scripts/ai-company/ceo-workbench.sh`  
-2. 跑：`bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh`  
+2. 或手动：`bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh`  
 3. 处理 BLOCKED → 绿 PR 勾 AC → merge  
 4. OPC：若本周主线仍是 No WiFi → 只做「抄数/记账」，不新开 TickFocus 功能票  
 5. 日记一行写入 `Documents/SecondBrain/05-DAILY/YYYY-MM-DD.md` + 飞书工作区 `.cursor/memory/`

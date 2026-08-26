@@ -37,11 +37,14 @@ gh pr list -R org/repo --search "head:cursor/ merged:>@yesterday"
 
 **已实现：** `scripts/ai-company/ceo-dashboard.sh`（终端）与 `scripts/ai-company/ceo-workbench.sh`（浏览器工作台）
 
+每晚 21:00：`ceo-nightly.sh`（派单 + `ceo-daily-brief.sh` + webhook），见 [runbooks/nightly-ceo-brief.md](../runbooks/nightly-ceo-brief.md)。
+
 ```bash
 bash scripts/ai-company/ceo-workbench.sh
 bash scripts/ai-company/ceo-dashboard.sh
 bash scripts/ai-company/ceo-dashboard.sh --json
 bash scripts/ai-company/ceo-dashboard.sh --dispatch --max-total 3
+bash scripts/ai-company/install-nightly-cron.sh --install
 ```
 
 ---

@@ -16,4 +16,4 @@ if ! git remote get-url "$REMOTE" &>/dev/null; then
 fi
 
 echo ">> git push $REMOTE $BRANCH"
-GIT_HTTP_VERSION="${GIT_HTTP_VERSION:-HTTP/1.1}" git push -u "$REMOTE" "$BRANCH"
+git -c http.version=HTTP/1.1 push -u "$REMOTE" "$BRANCH"

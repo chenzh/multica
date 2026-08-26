@@ -48,6 +48,7 @@ if [ -z "$ISSUE_NUMBER" ]; then
 fi
 
 WORKTREE_NAME="${WORKTREE_NAME:-cursor-issue-${ISSUE_NUMBER}}"
+USE_WORKTREE="${USE_WORKTREE:-1}"
 
 if [ -z "$REPO" ]; then
   REPO="$(gh repo view "$REPO_ROOT" --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)"
@@ -103,11 +104,18 @@ echo "Dispatching issue #$ISSUE_NUMBER in $REPO_ROOT (log: $LOG_FILE)"
 set +e
 (
   cd "$REPO_ROOT"
-  cat "$PROMPT" | "$CURSOR_AGENT_BIN" -p --force --trust \
-    --worktree "$WORKTREE_NAME" \
-    --worktree-base "$WORKTREE_BASE" \
-    --output-format stream-json \
-    2>&1 | tee "$LOG_FILE"
+  if [ "$USE_WORKTREE" = "1" ]; then
+    cat "$PROMPT" | "$CURSOR_AGENT_BIN" -p --force --trust \
+      --worktree "$WORKTREE_NAME" \
+      --worktree-base "$WORKTREE_BASE" \
+      --output-format stream-json \
+      2>&1 | tee "$LOG_FILE"
+  else
+    git checkout -B "$WORKTREE_NAME" "$WORKTREE_BASE" 2>/dev/null || git checkout "$WORKTREE_NAME" 2>/dev/null
+    cat "$PROMPT" | "$CURSOR_AGENT_BIN" -p --force --trust \
+      --output-format stream-json \
+      2>&1 | tee "$LOG_FILE"
+  fi
 )
 exit_code=$?
 set -e

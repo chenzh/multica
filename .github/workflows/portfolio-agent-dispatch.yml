@@ -1,0 +1,41 @@
+# Portfolio agent dispatch (company HQ)
+# Triggers each product repo's agent-delivery-dispatch from project-registry.yaml.
+#
+# Setup (multica or company-os repo):
+#   - Commit project-registry.yaml with real github.com/org/repo paths
+#   - Secrets: not required here (each product repo has CURSOR_API_KEY)
+#   - gh token needs workflow scope on all product repos
+
+name: Portfolio agent dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_total:
+        description: Max agent dispatches across all repos this run
+        required: true
+        default: "5"
+        type: string
+  schedule:
+  # UTC 18:00 Mon-Fri ≈ CST 02:00 next day — adjust in company-defaults.yaml
+    - cron: "0 18 * * 1-5"
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch-portfolio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout company OS
+        uses: actions/checkout@v6
+
+      - name: Portfolio dispatch
+        env:
+          GH_TOKEN: ${{ secrets.PORTFOLIO_GH_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          chmod +x scripts/ai-company/portfolio-dispatch.sh
+          bash scripts/ai-company/portfolio-dispatch.sh \
+            --registry .ai-company/templates/project-registry.yaml \
+            --max-total "${{ inputs.max_total || '5' }}"

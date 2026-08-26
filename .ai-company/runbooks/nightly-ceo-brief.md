@@ -10,6 +10,7 @@
 
 ```bash
 cp .ai-company/config/local.env.example .ai-company/config/local.env
+cp .ai-company/config/proxy.env.example .ai-company/config/proxy.env   # 国内访问 GitHub
 # 编辑：FEISHU_WEBHOOK_URL 或 SLACK_WEBHOOK_URL
 
 # 试跑（不派单）

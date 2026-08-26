@@ -94,6 +94,7 @@ total_blocked = total_running = total_safe = total_merged = 0
 project_lines = []
 blocked_section = []
 merged_section = []
+pending_merge_section = []
 
 for row in rows:
     repo = row["repo"]
@@ -104,10 +105,11 @@ for row in rows:
     merged = int(row.get("merged_prs") or 0)
     accessible = row.get("accessible") in (True, "true")
 
-    total_blocked += blocked
-    total_running += running
-    total_safe += safe
-    total_merged += merged
+    if not paused:
+        total_blocked += blocked
+        total_running += running
+        total_safe += safe
+        total_merged += merged
 
     pause_note = " (paused)" if paused else ""
     project_lines.append(
@@ -149,9 +151,39 @@ for row in rows:
         if line.strip():
             merged_section.append(f"- {line.strip()}")
 
+    out = subprocess.run(
+        [
+            "gh", "pr", "list", "-R", repo,
+            "-s", "open", "-L", "10",
+            "--json", "number,title,url,isDraft,statusCheckRollup",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if out.returncode == 0 and out.stdout.strip():
+        import json as _json
+
+        for pr in _json.loads(out.stdout):
+            if pr.get("isDraft"):
+                continue
+            checks = pr.get("statusCheckRollup") or []
+            if not checks:
+                continue
+            if all(
+                c.get("status") == "COMPLETED" and c.get("conclusion") == "SUCCESS"
+                for c in checks
+            ):
+                pending_merge_section.append(
+                    f"- [ ] [#{pr['number']}] {pr['title']} — {pr['url']}"
+                )
+
 if total_blocked > 0:
     verdict = f"⚠️ {total_blocked} BLOCKED — 需 CEO 拍板"
     action = "处理 BLOCKED（runbooks/blocked-triage.md），其余可睡"
+elif pending_merge_section:
+    verdict = f"🟢 {len(pending_merge_section)} 条绿 PR 待 merge"
+    action = "回复「merge #xx」或开启 CEO_AUTO_MERGE=1 自动合并"
 elif total_merged == 0 and total_safe > 0:
     verdict = "💤 队列有粮、昨夜零交付 — 建议派单"
     action = "运行: ceo-dashboard.sh --dispatch 或工作台「智能派单」"
@@ -190,6 +222,10 @@ body = f"""# AI 公司日报 — {ts}
 ## 昨夜交付（merged PR）
 
 {chr(10).join(merged_section) if merged_section else "_无_"}
+
+## 待 merge（CI 全绿）
+
+{chr(10).join(pending_merge_section) if pending_merge_section else "_无_"}
 
 ## 建议动作
 

@@ -2,7 +2,10 @@
 # CEO dashboard — one command summary across all projects in project-registry.yaml.
 set -euo pipefail
 
-MULTICA_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+MULTICA_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# shellcheck source=lib/source-local-env.sh
+source "$SCRIPT_DIR/lib/source-local-env.sh"
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 GITHUB_ORG="${GITHUB_ORG:-chenzh}"
 SINCE="${SINCE:-@yesterday}"
@@ -118,7 +121,8 @@ for i in "${!IDS[@]}"; do
   else
     blocked="$(gh issue list -R "$repo" -l agent-blocked -s open --json number -q 'length' 2>/dev/null || echo 0)"
     running="$(gh issue list -R "$repo" -l agent-running -s open --json number -q 'length' 2>/dev/null || echo 0)"
-    safe="$(gh issue list -R "$repo" -l agent-safe -s open --json number -q 'length' 2>/dev/null || echo 0)"
+    safe="$(gh issue list -R "$repo" --label agent-safe --state open --json labels \
+      --jq '[.[] | select([.labels[].name] | (index("agent-running") | not) and (index("agent-blocked") | not) and (index("agent-done") | not))] | length' 2>/dev/null || echo 0)"
     merged="$(gh pr list -R "$repo" -s merged --search "head:cursor/ merged:>$SINCE" --json number -q 'length' 2>/dev/null || echo 0)"
   fi
 
@@ -127,10 +131,12 @@ for i in "${!IDS[@]}"; do
   safe="${safe:-0}"
   merged="${merged:-0}"
 
-  total_blocked=$((total_blocked + blocked))
-  total_running=$((total_running + running))
-  total_safe=$((total_safe + safe))
-  total_merged=$((total_merged + merged))
+  if [ "$paused" != "true" ]; then
+    total_blocked=$((total_blocked + blocked))
+    total_running=$((total_running + running))
+    total_safe=$((total_safe + safe))
+    total_merged=$((total_merged + merged))
+  fi
   [ "$blocked" -gt 0 ] && needs_action=1
 
   if [ "$JSON" -eq 1 ]; then

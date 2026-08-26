@@ -16,8 +16,9 @@ Adds a cron job at ${HOUR}:${MINUTE} (server local time) to run ceo-nightly.sh.
 
 Before install:
   1. cp .ai-company/config/local.env.example .ai-company/config/local.env
-  2. Set FEISHU_WEBHOOK_URL or SLACK_WEBHOOK_URL (optional)
-  3. Ensure cursor-agent logged in for local dispatch
+  2. cp .ai-company/config/proxy.env.example .ai-company/config/proxy.env   # if GitHub needs proxy
+  3. Set FEISHU_WEBHOOK_URL or SLACK_WEBHOOK_URL (optional)
+  4. Ensure cursor-agent logged in for local dispatch
 
 Cron line (copy/paste or --install):
   ${MINUTE} ${HOUR} * * * cd ${MULTICA_ROOT} && bash scripts/ai-company/ceo-nightly.sh >> ${LOG} 2>&1

@@ -11,6 +11,7 @@ REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}
 GITHUB_ORG="${GITHUB_ORG:-chenzh}"
 MAX_TOTAL="${MAX_TOTAL:-5}"
 DISPATCH="${CEO_NIGHTLY_DISPATCH:-1}"
+AUTO_MERGE="${CEO_AUTO_MERGE:-1}"
 BRIEF=1
 SINCE="${SINCE:-@yesterday}"
 
@@ -32,6 +33,7 @@ Options:
 
 Environment:
   CEO_NIGHTLY_DISPATCH=1|0   default 1
+  CEO_AUTO_MERGE=1|0         default 1 — merge green open PRs before dispatch
   SLACK_WEBHOOK_URL / FEISHU_WEBHOOK_URL in local.env
 EOF
 }
@@ -50,6 +52,15 @@ while [ $# -gt 0 ]; do
 done
 
 echo "=== ceo-nightly $(date -Iseconds) ==="
+
+if [ "$AUTO_MERGE" -eq 1 ]; then
+  echo ">> auto-merge green PRs"
+  bash "$SCRIPT_DIR/ceo-auto-merge.sh" \
+    --registry "$REGISTRY" \
+    --org "$GITHUB_ORG" || {
+    echo "warn: auto-merge failed (continuing)" >&2
+  }
+fi
 
 if [ "$DISPATCH" -eq 1 ]; then
   echo ">> dispatch (max_total=$MAX_TOTAL)"

@@ -1,4 +1,4 @@
-# AI 公司上线清单 — 已完成项（2026-08-26）
+# AI 公司上线清单 — 已完成（2026-08-26）
 
 ## 已落地
 
@@ -7,82 +7,67 @@
 | `.ai-company/` 文档 + 模板 + runbook | ✅ | `multica/.ai-company/` |
 | Harness 安装脚本 | ✅ | `.ai-company/harness/install.sh` |
 | `scripts/ai-company/*` | ✅ | ceo-dashboard、portfolio-dispatch、sync-backlog |
-| **beatscape** 注册表 | ✅ | `.ai-company/templates/project-registry.yaml` → `chenzh/MusicSaas` |
+| **beatscape** 注册表 | ✅ | `project-registry.yaml` → `chenzh/MusicSaas` |
 | MusicSaas harness 已 push `main` | ✅ | commit `baa6520` |
-| GitHub Issues B01–B04 | ✅ | #6 #8 #9 #11（#7 #10 已关重复） |
-| `~/Projects/MusicSaas` 重复副本 | ✅ 已删 | — |
-| CEO 仪表盘 | ✅ | `bash scripts/ai-company/ceo-dashboard.sh` |
-| 首次 dispatch 已触发 | ✅ | [run 32928101929](https://github.com/chenzh/MusicSaas/actions/runs/32928101929) |
-| `local.env` | ✅ | `.ai-company/config/local.env` |
+| GitHub Issues B01–B04 | ✅ | #6 #8 #9 #11 |
+| 首次 dispatch（本地 CLI） | ✅ | issue #6 → PR [#12](https://github.com/chenzh/MusicSaas/pull/12) |
+| PR #12 CI 全绿 | ✅ | evaluate / unit / build / integration |
+| Issue #6 `agent-done` | ✅ | Play 页 SEO（TICKET-B01） |
+| `PORTFOLIO_GH_TOKEN` | ✅ | `chenzh/multica` Secrets |
+| `portfolio-agent-dispatch.yml` | ✅ | `chenzh/multica` main，cron + manual |
+| multica harness fork | ✅ | `chenzh/multica` PR #1 #2 已合并 |
+| 本地派单脚本 | ✅ | `dispatch-cursor-agent-cli.sh` + `--local` portfolio |
 | `saas-stripe-mvp` 仓库 | ✅ | `chenzh/saas-stripe-mvp`，issues #1–#4 |
-| multica harness 分支 | ✅ push 待合并 | `feat/ai-company-os` → `multica-ai/multica` |
+| `local.env` | ✅ | `.ai-company/config/local.env` |
 
-## 仍需你手动完成（约 5 分钟）
+## 派单方式（二选一）
 
-### 1. 派单方式（二选一）
-
-**A. 本地 CLI（推荐，你已登录 cursor-agent）**
+### A. 本地 CLI（推荐，已验证）
 
 ```bash
 # 派 beatscape 一单
 GITHUB_REPOSITORY=chenzh/MusicSaas \
 REPO_ROOT=/Users/zhenhuachen/Desktop/MusicSaas \
-bash ~/Projects/multica/scripts/agent-delivery/dispatch-cursor-agent-cli.sh 6
+bash ~/Projects/multica/scripts/agent-delivery/dispatch-cursor-agent-cli.sh <issue#>
 
-# 或 portfolio 本地派单
+# portfolio 本地批量派单
 bash ~/Projects/multica/scripts/ai-company/portfolio-dispatch.sh --local --max-total 1
+
+# CEO 仪表盘（已登录 cursor-agent 时自动 --local）
+bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
 ```
 
-**B. GitHub Actions 云端（需 Secret）**
+### B. GitHub Actions 云端（需 `CURSOR_API_KEY`）
+
+各产品仓 Secrets 尚未配置 `CURSOR_API_KEY`（GHA dispatch 会失败）。配置后：
 
 ```bash
 export CURSOR_API_KEY=crsr_...
 bash ~/Projects/multica/scripts/ai-company/setup-secrets.sh
+
+# 单仓派单
 gh workflow run agent-delivery-dispatch.yml -R chenzh/MusicSaas -f max_tasks=1
-```
 
-### 2. 跨仓 portfolio dispatch（可选，睡后自动派单）
-
-在 **multica** 仓库：
-
-```bash
-gh secret set PORTFOLIO_GH_TOKEN -R chenzh/multica
-# 使用有 repo/workflow 权限的 PAT 或 GitHub App token
-```
-
-然后启用 cron：`portfolio-agent-dispatch.yml`（已存在于 multica）。
-
-### 3. 睡后派单
-
-```bash
-cd ~/Projects/multica
-bash scripts/ai-company/ceo-dashboard.sh --dispatch
-# 或
-bash scripts/ai-company/portfolio-dispatch.sh --max-total 3
-```
-
-### 4. MusicSaas 本地 WIP
-
-你在 `preview/beatscape-try` 上的未提交改动已 `git stash`（`wip-all`）。恢复：
-
-```bash
-cd ~/Desktop/MusicSaas
-git checkout preview/beatscape-try
-git stash pop
+# 总部 portfolio 派单（需 PORTFOLIO_GH_TOKEN，已配置）
+gh workflow run portfolio-agent-dispatch.yml -R chenzh/multica -f max_total=1
 ```
 
 ## 日常 CEO 命令
 
 ```bash
-# 一眼看全组合
-bash scripts/ai-company/ceo-dashboard.sh
-
-# 手动派 1 单 beatscape
-gh workflow run agent-delivery-dispatch.yml -R chenzh/MusicSaas -f max_tasks=1
+bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh
+bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
 ```
 
-## 队列现状（首次仪表盘）
+## 队列现状
 
-- **beatscape**: 3 单 agent-safe 在队
-- **landing-tool-a**: 4 单
-- **music-game-sea**: paused（6 单在队但不派）
+- **beatscape**: issue #6 done（PR #12 待 merge）；#8 #9 #11 仍在队
+- **landing-tool-a**: 4 单 agent-safe
+- **music-game-sea**: paused
+- **saas-stripe-mvp**: issues #1–#4 在队
+
+## 可选后续
+
+- Merge [PR #12](https://github.com/chenzh/MusicSaas/pull/12)（TICKET-B01）
+- 配置 `CURSOR_API_KEY` 启用无人值守 GHA 派单
+- MusicSaas 本地 WIP：`preview/beatscape-try` 上 `git stash pop`（stash: `wip-all`）

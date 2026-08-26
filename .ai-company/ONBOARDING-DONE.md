@@ -17,12 +17,11 @@
 | `portfolio-agent-dispatch.yml` | ✅ | `chenzh/multica` main，cron + manual |
 | multica harness fork | ✅ | `chenzh/multica` PR #1 #2 已合并 |
 | 本地派单脚本 | ✅ | `dispatch-cursor-agent-cli.sh` + `--local` portfolio |
+| 派单方式 | ✅ 本地 CLI | `cursor-agent` 已登录，**无需 `CURSOR_API_KEY`** |
 | `saas-stripe-mvp` 仓库 | ✅ | `chenzh/saas-stripe-mvp`，issues #1–#4 |
 | `local.env` | ✅ | `.ai-company/config/local.env` |
 
-## 派单方式（二选一）
-
-### A. 本地 CLI（推荐，已验证）
+## 派单（本地 cursor-agent）
 
 ```bash
 # 派 beatscape 一单
@@ -33,24 +32,11 @@ bash ~/Projects/multica/scripts/agent-delivery/dispatch-cursor-agent-cli.sh <iss
 # portfolio 本地批量派单
 bash ~/Projects/multica/scripts/ai-company/portfolio-dispatch.sh --local --max-total 1
 
-# CEO 仪表盘（已登录 cursor-agent 时自动 --local）
+# CEO 仪表盘（自动 --local）
 bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
 ```
 
-### B. GitHub Actions 云端（需 `CURSOR_API_KEY`）
-
-各产品仓 Secrets 尚未配置 `CURSOR_API_KEY`（GHA dispatch 会失败）。配置后：
-
-```bash
-export CURSOR_API_KEY=crsr_...
-bash ~/Projects/multica/scripts/ai-company/setup-secrets.sh
-
-# 单仓派单
-gh workflow run agent-delivery-dispatch.yml -R chenzh/MusicSaas -f max_tasks=1
-
-# 总部 portfolio 派单（需 PORTFOLIO_GH_TOKEN，已配置）
-gh workflow run portfolio-agent-dispatch.yml -R chenzh/multica -f max_total=1
-```
+> GHA 云端派单（`agent-delivery-dispatch.yml`）需各仓 `CURSOR_API_KEY`；当前不走此路径。
 
 ## 日常 CEO 命令
 
@@ -69,5 +55,4 @@ bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
 ## 可选后续
 
 - Merge [PR #12](https://github.com/chenzh/MusicSaas/pull/12)（TICKET-B01）
-- 配置 `CURSOR_API_KEY` 启用无人值守 GHA 派单
 - MusicSaas 本地 WIP：`preview/beatscape-try` 上 `git stash pop`（stash: `wip-all`）

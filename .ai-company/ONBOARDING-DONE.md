@@ -68,12 +68,11 @@ git push fork main
 
 ## 还差一步（webhook）
 
-在 `.ai-company/config/local.env` 配置其一后，21:00 日报会推送到手机：
-
 ```bash
-export FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/...
-# 或 export SLACK_WEBHOOK_URL=...
+bash scripts/ai-company/setup-feishu-notify.sh 'https://open.feishu.cn/open-apis/bot/v2/hook/你的token'
 ```
+
+飞书群 → 设置 → 群机器人 → 自定义机器人 → 复制 webhook URL。
 
 ## 可选后续
 

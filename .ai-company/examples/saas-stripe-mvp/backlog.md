@@ -25,3 +25,8 @@
 
 - **What:** mock handler 返回单条 workspace JSON  
 - **AC:** Go test；`make check` exit 0  
+
+### TICKET-007 [agent-safe] OpenAPI health 路径文档
+
+- **What:** `api/openapi.yaml` 增加 `/health` 路径与示例响应  
+- **AC:** `make check` exit 0  

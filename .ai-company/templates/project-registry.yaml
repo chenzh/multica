@@ -30,19 +30,6 @@ projects:
     delivery_slug: beatscape
     notes: "BeatScape apps/beatscape — MLX/gateway human-only"
 
-  - id: music-game-sea
-    repo: github.com/chenzh/music-game-sea
-    tier: experiment
-    priority: 5
-    stack: next-go
-    autopilot_id: null
-    max_nightly_tickets: 0
-    openapi: true
-    e2e: true
-    paused: true
-    delivery_slug: music-game-sea
-    notes: "Harness scaffold only — superseded by beatscape/MusicSaas"
-
   - id: landing-tool-a
     repo: github.com/chenzh/landing-tool-a
     tier: experiment

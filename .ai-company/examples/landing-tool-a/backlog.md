@@ -28,3 +28,8 @@
 
 - **What:** `apps/web/public/robots.txt`；`app/sitemap.ts` 返回最小 sitemap  
 - **AC:** `pnpm typecheck` exit 0  
+
+### TICKET-007 [agent-safe] 404 页与 metadata
+
+- **What:** `app/not-found.tsx` 最小文案；`metadata` title 为站点名  
+- **AC:** `pnpm typecheck` exit 0  

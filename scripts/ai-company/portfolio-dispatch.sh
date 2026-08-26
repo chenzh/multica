@@ -195,13 +195,46 @@ for idx in "${ORDER[@]}"; do
       echo "  warning: cannot access repo $repo — skip" >&2
       continue
     fi
-    gh workflow run "$WORKFLOW" -R "$repo" -f "max_tasks=$cap" || {
-      echo "  warning: workflow dispatch failed for $repo" >&2
+    default_branch="$(gh repo view "$repo" --json defaultBranchRef -q '.defaultBranchRef.name' 2>/dev/null || echo main)"
+    workflow_id="$(
+      gh api "repos/$repo/actions/workflows" \
+        --jq ".workflows[] | select(.path == \".github/workflows/$WORKFLOW\") | .id" 2>/dev/null || true
+    )"
+    if [ -n "$workflow_id" ]; then
+      if gh workflow run "$workflow_id" -R "$repo" --ref "$default_branch" -f "max_tasks=$cap"; then
+        total_dispatched=$((total_dispatched + cap))
+        remaining=$((remaining - cap))
+        continue
+      fi
+      echo "  warning: workflow dispatch failed for $repo — trying local CLI" >&2
+    else
+      echo "  workflow $WORKFLOW not registered on $repo — falling back to local CLI" >&2
+    fi
+    root="$(bash "$MULTICA_ROOT/scripts/ai-company/resolve-repo-path.sh" --id "${IDS[$idx]}" --repo "$repo" --quiet 2>/dev/null || true)"
+    if [ -z "$root" ] || [ ! -d "$root" ]; then
+      echo "  warning: no local checkout for ${IDS[$idx]} — set AI_REPO_PATH_* in local.env" >&2
       continue
-    }
+    fi
+    for ((n=0; n<cap; n++)); do
+      issue="$(pick_next_issue "$repo")"
+      if [ -z "$issue" ]; then
+        echo "  no eligible agent-safe issues in $repo"
+        break
+      fi
+      if issue_dispatch_active "$issue"; then
+        echo "  skip $repo#$issue (dispatch already in progress)"
+        break
+      fi
+      GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
+        bash "$MULTICA_ROOT/scripts/agent-delivery/dispatch-cursor-agent-cli.sh" "$issue" || {
+        echo "  warning: local dispatch failed for $repo#$issue" >&2
+        continue
+      }
+      total_dispatched=$((total_dispatched + 1))
+      remaining=$((remaining - 1))
+      [ "$remaining" -le 0 ] && break
+    done
   fi
-  total_dispatched=$((total_dispatched + cap))
-  remaining=$((remaining - cap))
 done
 
 echo ""

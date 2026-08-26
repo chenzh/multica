@@ -12,6 +12,7 @@ source "$SCRIPT_DIR/lib/agent-queue.sh"
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 GITHUB_ORG="${GITHUB_ORG:-chenzh}"
 DRY_RUN=0
+INCLUDE_PAUSED=0
 
 usage() {
   cat <<'EOF'
@@ -24,6 +25,9 @@ Fixes common label drift:
   - merged PR linked to issue → strip agent-* labels
 
 Runs automatically in ceo-nightly.sh before auto-merge.
+
+Options:
+  --include-paused   Also reconcile paused registry projects (stale labels only)
 EOF
 }
 
@@ -32,6 +36,7 @@ while [ $# -gt 0 ]; do
     --registry) REGISTRY="${2:?}"; shift 2 ;;
     --org) GITHUB_ORG="${2:?}"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
+    --include-paused) INCLUDE_PAUSED=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
@@ -43,12 +48,13 @@ if ! command -v gh &>/dev/null; then
 fi
 
 repos="$(
-  python3 - "$REGISTRY" "$GITHUB_ORG" <<'PY'
+  python3 - "$REGISTRY" "$GITHUB_ORG" "$INCLUDE_PAUSED" <<'PY'
 import sys
 from pathlib import Path
 
 registry = Path(sys.argv[1])
 org = sys.argv[2]
+include_paused = sys.argv[3] == "1"
 current = None
 paused = False
 for line in registry.read_text(encoding="utf-8").splitlines():
@@ -65,7 +71,7 @@ for line in registry.read_text(encoding="utf-8").splitlines():
         repo = repo.replace("github.com/", "").replace("https://github.com/", "")
         if repo.startswith("your-org/"):
             repo = repo.replace("your-org/", f"{org}/", 1)
-        if not paused:
+        if not paused or include_paused:
             print(repo)
         current = None
 PY

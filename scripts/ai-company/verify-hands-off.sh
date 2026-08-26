@@ -68,6 +68,27 @@ else
   bad "未配置通知 — setup-feishu-notify.sh 或 setup-feishu-bot-notify.sh"
 fi
 
+if [ "${CEO_NIGHTLY_DISPATCH:-0}" = "1" ] && [ "${CEO_AUTO_MERGE:-0}" = "1" ] && [ "${CEO_SYNC_BACKLOG:-0}" = "1" ]; then
+  pass "local.env CEO 夜间开关已开（dispatch/merge/sync）"
+else
+  note "local.env 建议: CEO_NIGHTLY_DISPATCH=1 CEO_AUTO_MERGE=1 CEO_SYNC_BACKLOG=1"
+fi
+if [ "${CEO_FEISHU_APPROVAL_PUSH:-0}" = "1" ]; then
+  pass "CEO_FEISHU_APPROVAL_PUSH=1（日报后推审批卡）"
+else
+  note "BLOCKED 飞书审批卡未开 — export CEO_FEISHU_APPROVAL_PUSH=1"
+fi
+if curl -fsS --max-time 2 "http://127.0.0.1:${CEO_FEISHU_APPROVAL_PORT:-9478}/health" >/dev/null 2>&1; then
+  pass "飞书审批回调 :${CEO_FEISHU_APPROVAL_PORT:-9478} 在跑"
+else
+  note "飞书审批回调未跑 — bash scripts/ai-company/ceo-feishu-approval-service.sh install"
+fi
+if [ -n "${FEISHU_VERIFICATION_TOKEN:-}" ]; then
+  pass "FEISHU_VERIFICATION_TOKEN 已配置"
+else
+  note "未设 FEISHU_VERIFICATION_TOKEN — 飞书事件订阅需填 token 后写入 local.env"
+fi
+
 echo ""
 echo "4. 组合状态"
 dashboard_json="/tmp/verify-hands-off-dashboard.json"

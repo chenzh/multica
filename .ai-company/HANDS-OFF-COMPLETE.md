@@ -22,8 +22,8 @@ bash scripts/ai-company/setup-feishu-bot-notify.sh
 bash scripts/ai-company/install-nightly-cron.sh --install
 # 可选：飞书卡片审批
 bash scripts/ai-company/setup-feishu-approval.sh --test
-# 可选：工作台 launchd
-bash scripts/ai-company/ceo-workbench-service.sh install
+bash scripts/ai-company/ceo-feishu-approval-service.sh install
+# 飞书开放平台 Request URL: https://<公网>/feishu/event（需内网穿透）
 ```
 
 `local.env` 建议：
@@ -32,7 +32,7 @@ bash scripts/ai-company/ceo-workbench-service.sh install
 export CEO_NIGHTLY_DISPATCH=1
 export CEO_AUTO_MERGE=1
 export CEO_SYNC_BACKLOG=1
-# export CEO_FEISHU_APPROVAL_PUSH=1
+export CEO_FEISHU_APPROVAL_PUSH=1
 ```
 
 ## 仍需你偶尔介入的边界

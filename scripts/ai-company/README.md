@@ -191,6 +191,7 @@ Multica + Feishu dual CEO approval (BLOCKED / green PR). Syncs GitHub → Multic
 ```bash
 bash scripts/ai-company/setup-feishu-approval.sh --test
 bash scripts/ai-company/ceo-feishu-approval-server.py   # callback :9478
+bash scripts/ai-company/ceo-feishu-approval-service.sh install   # LaunchAgent 常开
 bash scripts/ai-company/ceo-feishu-approval.sh list
 bash scripts/ai-company/ceo-feishu-approval.sh sync
 bash scripts/ai-company/ceo-feishu-approval.sh push

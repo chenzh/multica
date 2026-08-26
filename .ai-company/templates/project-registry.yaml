@@ -81,3 +81,16 @@ projects:
     paused: false
     delivery_slug: hello-cf-smoke
     notes: "Feishu site-factory 2026-08-26 — 只显示 Hello Cloudflare 的极简展示"
+
+  - id: hello-cloudflare
+    repo: github.com/chenzh/hello-cloudflare
+    tier: experiment
+    priority: 12
+    stack: cloudflare-pages
+    autopilot_id: null
+    max_nightly_tickets: 2
+    openapi: false
+    e2e: false
+    paused: false
+    delivery_slug: hello-cloudflare
+    notes: "Feishu site-factory 2026-08-26 — 只显示 Hello Cloudflare 的极简展示"

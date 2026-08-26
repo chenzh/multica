@@ -21,3 +21,23 @@ if [ -z "${FEISHU_WEBHOOK_URL:-}" ] && [ -f "$WEBHOOK_FILE" ]; then
   FEISHU_WEBHOOK_URL="$(sed -n '1p' "$WEBHOOK_FILE" | tr -d '[:space:]')"
   export FEISHU_WEBHOOK_URL
 fi
+
+SECOND_BRAIN_FEISHU="${SECOND_BRAIN_FEISHU_JSON:-$HOME/Documents/SecondBrain/10-SYSTEM/control-plane-tunnel/feishu.local.json}"
+if [ -z "${FEISHU_WEBHOOK_URL:-}" ] && [ -f "$SECOND_BRAIN_FEISHU" ]; then
+  FEISHU_WEBHOOK_URL="$(
+    python3 - "$SECOND_BRAIN_FEISHU" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    url = str(json.loads(path.read_text(encoding="utf-8")).get("webhookUrl", "")).strip()
+except (OSError, json.JSONDecodeError, AttributeError):
+    url = ""
+if url and "YOUR_TOKEN" not in url:
+    print(url)
+PY
+  )"
+  [ -n "$FEISHU_WEBHOOK_URL" ] && export FEISHU_WEBHOOK_URL
+fi

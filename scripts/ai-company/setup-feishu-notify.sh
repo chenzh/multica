@@ -17,8 +17,11 @@ Usage: setup-feishu-notify.sh <webhook-url>
 2. Run:
    bash scripts/ai-company/setup-feishu-notify.sh 'https://open.feishu.cn/open-apis/bot/v2/hook/...'
 
-Writes .ai-company/config/feishu-webhook.url (gitignored) and exports FEISHU_WEBHOOK_URL
-from ai-company scripts. Sends a one-line test message.
+Writes:
+  - .ai-company/config/feishu-webhook.url (gitignored)
+  - ~/Documents/SecondBrain/.../feishu.local.json (shared with OPC Control Plane)
+
+Sends a one-line test message.
 EOF
 }
 
@@ -38,6 +41,28 @@ esac
 mkdir -p "$CONFIG_DIR"
 printf '%s\n' "$URL" >"$WEBHOOK_FILE"
 chmod 600 "$WEBHOOK_FILE"
+
+SECOND_BRAIN_FEISHU="${SECOND_BRAIN_FEISHU_JSON:-$HOME/Documents/SecondBrain/10-SYSTEM/control-plane-tunnel/feishu.local.json}"
+mkdir -p "$(dirname "$SECOND_BRAIN_FEISHU")"
+python3 - "$SECOND_BRAIN_FEISHU" "$URL" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+url = sys.argv[2]
+data = {"webhookUrl": url, "notifyOn": ["command_completed", "daily_summary"], "projectFilter": []}
+if path.is_file():
+    try:
+        existing = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(existing, dict):
+            data = {**existing, "webhookUrl": url}
+    except (json.JSONDecodeError, OSError):
+        pass
+path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+PY
+chmod 600 "$SECOND_BRAIN_FEISHU"
+echo "Saved: $SECOND_BRAIN_FEISHU (SecondBrain OPC)"
 
 if [ -f "$LOCAL_ENV" ] && grep -q '^export FEISHU_WEBHOOK_URL=' "$LOCAL_ENV" 2>/dev/null; then
   :

@@ -57,6 +57,7 @@ Commands:
   quick              Start quick tunnel; print public URL (trycloudflare.com)
   quick-install      LaunchAgent: quick tunnel (URL changes on restart)
   quick-url          Show last captured public URL
+  token-install      LaunchAgent: named tunnel via CLOUDFLARE_TUNNEL_TOKEN in local.env
   login              cloudflared tunnel login (for stable hostname)
   setup-named        Print steps to create a named tunnel + config template
   named-install      LaunchAgent: named tunnel (\$NAMED_CONFIG)
@@ -273,6 +274,63 @@ cmd_named_install() {
   echo "  飞书 URL: https://<你的hostname>/feishu/event"
 }
 
+generate_token_plist() {
+  need_cloudflared
+  local token="${CLOUDFLARE_TUNNEL_TOKEN:-${TUNNEL_TOKEN:-}}"
+  if [ -z "$token" ] || [[ "$token" == YOUR_* ]]; then
+    echo "error: set CLOUDFLARE_TUNNEL_TOKEN in .ai-company/config/local.env" >&2
+    echo "  Zero Trust → Networks → Tunnels → 你的 tunnel → Copy token" >&2
+    exit 1
+  fi
+  proxy_env_for_plist
+  cat >"$PLIST" <<PEOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>$LABEL</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>$CLOUDFLARED</string>
+		<string>tunnel</string>
+		<string>--protocol</string>
+		<string>http2</string>
+		<string>run</string>
+		<string>--token</string>
+		<string>$token</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>$HOME/.homebrew/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+$PROXY_ENV_BLOCK
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>$LOG_FILE</string>
+	<key>StandardErrorPath</key>
+	<string>$LOG_FILE</string>
+	<key>ProcessType</key>
+	<string>Background</string>
+</dict>
+</plist>
+PEOF
+}
+
+cmd_token_install() {
+  echo "📦 安装 Cloudflare tunnel（TUNNEL_TOKEN）LaunchAgent..."
+  generate_token_plist
+  launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+  launchctl bootstrap "gui/$(id -u)" "$PLIST"
+  echo "  ✅ token tunnel LaunchAgent 已安装"
+  echo "  在 Zero Trust 把 public hostname 指到 http://127.0.0.1:$PORT"
+  echo "  飞书 Request URL: https://<你的固定域名>/feishu/event"
+}
+
 cmd_uninstall() {
   launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
   rm -f "$PLIST"
@@ -302,6 +360,7 @@ case "${1:-}" in
   login) need_cloudflared; "$CLOUDFLARED" tunnel login ;;
   setup-named) cmd_setup_named ;;
   named-install) cmd_named_install ;;
+  token-install) cmd_token_install ;;
   uninstall) cmd_uninstall ;;
   status) cmd_status ;;
   logs) cmd_logs ;;

@@ -1,0 +1,94 @@
+name: Agent delivery dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_tasks:
+        description: Maximum issues to dispatch this run
+        required: true
+        default: "1"
+        type: string
+      issue_number:
+        description: Optional single issue number (overrides queue scan)
+        required: false
+        type: string
+  # Uncomment after secrets and labels are configured:
+  # schedule:
+  #   - cron: "0 18 * * 1-5"  # UTC 18:00 ≈ CST 02:00 next day
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: agent-delivery-dispatch
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Verify secrets
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          if [ -z "$CURSOR_API_KEY" ]; then
+            echo "::error::Missing secret CURSOR_API_KEY. See .delivery/README.md"
+            exit 1
+          fi
+
+      - name: Resolve issue queue
+        id: queue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SINGLE: ${{ inputs.issue_number }}
+          MAX: ${{ inputs.max_tasks }}
+        run: |
+          set -euo pipefail
+          if [ -n "$SINGLE" ]; then
+            echo "numbers=$SINGLE" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mapfile -t nums < <(gh issue list \
+            --label "agent-safe" \
+            --state open \
+            --json number,labels \
+            --jq '.[] | select([.labels[].name] | (index("agent-running") | not) and (index("agent-blocked") | not)) | .number' \
+            | head -n "$MAX")
+          if [ "${#nums[@]}" -eq 0 ]; then
+            echo "numbers=" >> "$GITHUB_OUTPUT"
+            echo "No eligible issues in queue."
+            exit 0
+          fi
+          joined="$(IFS=,; echo "${nums[*]}")"
+          echo "numbers=$joined" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch Cloud Agents
+        if: steps.queue.outputs.numbers != ''
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          chmod +x scripts/agent-delivery/*.sh
+          IFS=',' read -ra ISSUES <<< "${{ steps.queue.outputs.numbers }}"
+          failed=0
+          for n in "${ISSUES[@]}"; do
+            n="$(echo "$n" | xargs)"
+            [ -z "$n" ] && continue
+            echo "Dispatching issue #$n"
+            if ! bash scripts/agent-delivery/dispatch-cursor-agent.sh "$n"; then
+              failed=1
+              gh issue edit "$n" --add-label "agent-blocked" --remove-label "agent-running" || true
+              gh issue comment "$n" --body "❌ Agent dispatch failed. See workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+                SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}" \
+                  bash scripts/agent-delivery/notify-slack.sh "Agent dispatch FAILED for ${GITHUB_REPOSITORY}#$n"
+              fi
+            fi
+          done
+          exit "$failed"

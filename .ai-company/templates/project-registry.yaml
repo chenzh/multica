@@ -1,0 +1,71 @@
+# AI 公司 — 项目台账
+# CEO 每周更新。调度脚本 / LangGraph 可读此文件做多 repo 公平队列。
+
+company:
+  name: your-ai-company
+  multica_workspace: default
+  timezone: Asia/Shanghai
+  github_org: chenzh   # used by ceo-dashboard.sh / portfolio-dispatch (override: GITHUB_ORG)
+
+defaults:
+  max_verify_loops: 3
+  branch_prefix: cursor/
+  labels:
+    safe: agent-safe
+    running: agent-running
+    blocked: agent-blocked
+    done: agent-done
+
+projects:
+  - id: beatscape
+    repo: github.com/chenzh/MusicSaas
+    local_path: /Users/zhenhuachen/Desktop/MusicSaas
+    tier: production
+    priority: 30
+    stack: vite-react-beatscape
+    autopilot_id: null
+    max_nightly_tickets: 2
+    openapi: false
+    e2e: true
+    paused: false
+    delivery_slug: beatscape
+    notes: "BeatScape apps/beatscape — MLX/gateway human-only"
+
+  - id: music-game-sea
+    repo: github.com/chenzh/music-game-sea
+    tier: experiment
+    priority: 5
+    stack: next-go
+    autopilot_id: null
+    max_nightly_tickets: 0
+    openapi: true
+    e2e: true
+    paused: true
+    delivery_slug: music-game-sea
+    notes: "Harness scaffold only — superseded by beatscape/MusicSaas"
+
+  - id: landing-tool-a
+    repo: github.com/chenzh/landing-tool-a
+    tier: experiment
+    priority: 10
+    stack: next-static
+    autopilot_id: null
+    max_nightly_tickets: 1
+    openapi: false
+    e2e: false
+    paused: false
+    delivery_slug: landing-tool-a
+    notes: "Lightweight landing; scaffold via scripts/ai-company/scaffold-landing.sh"
+
+  - id: saas-stripe-mvp
+    repo: github.com/chenzh/saas-stripe-mvp
+    tier: staging
+    priority: 15
+    stack: next-go-saas
+    autopilot_id: null
+    max_nightly_tickets: 1
+    openapi: false
+    e2e: false
+    paused: false
+    delivery_slug: saas-stripe-mvp
+    notes: "Payment human-only; repo bootstrapped 2026-08-26"

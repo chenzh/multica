@@ -1,0 +1,54 @@
+# AI 公司 — 全局默认参数
+# 复制到新环境后按实际修改。不 secrets。
+
+company:
+  name: your-ai-company
+  timezone: Asia/Shanghai
+
+budget:
+  monthly_cursor_usd: 500
+  alert_threshold_percent: 80
+  pause_autopilot_on_exceed: true
+
+concurrency:
+  max_parallel_cloud_agents: 3
+  max_verify_loops: 3
+
+nightly:
+  enabled: false              # 试跑通过后改为 true
+  cron: "0 2 * * *"
+  max_total_tickets: 5
+  github_dispatch_workflow: agent-delivery-dispatch.yml
+
+notifications:
+  slack_webhook_secret: SLACK_WEBHOOK_URL   # GitHub Secret 名
+  alert_on:
+    - agent_blocked
+    - ci_failed_on_agent_pr
+  silent_on:
+    - auto_merge_denied_by_policy
+
+multica:
+  self_host: true
+  prefer_workspace_mcp: true    # per-agent MCP 已知 issue，优先全局
+
+workers:
+  primary: cursor-agent
+  optional:
+    - hermes    # review only, no orchestration
+    - openclaw  # intel only
+
+langgraph:
+  enabled: false
+  enable_when_daily_tickets_above: 10
+
+compliance:
+  hermes_self_evolution: false  # 无人值守流水线必须 false
+  script_gates_before_agent_review: true
+
+portfolio:
+  # Company HQ repo (this multica checkout) runs portfolio-agent-dispatch.yml
+  registry_path: .ai-company/templates/project-registry.yaml
+  github_workflow: portfolio-agent-dispatch.yml
+  # PAT secret on HQ repo for cross-repo workflow dispatch (optional if same-org token works)
+  github_token_secret: PORTFOLIO_GH_TOKEN

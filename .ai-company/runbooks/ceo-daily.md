@@ -1,0 +1,59 @@
+# CEO 每日 Runbook（15 分钟）
+
+## 0. 打开仪表盘
+
+**一条命令（推荐）：**
+
+```bash
+cd ~/Projects/multica
+bash scripts/ai-company/ceo-dashboard.sh
+# 有队列且无 BLOCKED 时顺带派活：
+bash scripts/ai-company/ceo-dashboard.sh --dispatch
+```
+
+可选：`source .ai-company/config/local.env`（从 `local.env.example` 复制）
+
+- Multica Issues（或各 repo GitHub）
+- Slack #ai-company-alerts（若配置）
+
+## 1. 阻塞清零（优先级最高）
+
+```bash
+# 对每个生产项目 repo
+gh issue list -l agent-blocked --json number,title,url
+```
+
+- 每条 BLOCKED → [blocked-triage.md](./blocked-triage.md)
+- 目标：**上班前 BLOCKED = 0**（或已明确排期）
+
+## 2. 昨夜交付确认
+
+- 若启用 **Portfolio 调度**（multica 仓 `portfolio-agent-dispatch`）：看 Actions 是否对各 repo 成功 `workflow_run`
+- 筛选各产品 repo 昨夜 merge 的 `cursor/*` PR
+- **不读 diff**；仅确认：
+  - [ ] CI 全绿
+  - [ ] PR body 含 AC 勾选 + verify 输出
+  - [ ] 非 deny 路径误 auto-merge（抽查 1 条即可）
+
+## 3. 队列补给（5 分钟）
+
+- 从 backlog 挑 1～3 条 **已分级为 agent-safe** 的 ticket
+- 确保 `accept_cases.md` 可勾选、brief 无歧义
+- 打 label `agent-safe`（若尚未）
+
+## 4. 成本扫一眼
+
+- Cursor / API 用量是否 >80% 月预算
+- 是 → 今日暂停非 P0 项目 Autopilot
+
+## 5. 结束
+
+- 无 BLOCKED、队列有粮、预算正常 → **今天可以躺平**
+
+---
+
+## 不做清单
+
+- ❌ 逐行 review Agent 代码（除非 security label）
+- ❌ 在 BLOCKED 未清时投模糊需求
+- ❌ 手动 merge 未绿 CI 的 PR

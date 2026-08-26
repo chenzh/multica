@@ -20,6 +20,7 @@ in project-registry.yaml — configure per machine via:
 
   1. .ai-company/config/local.env
      export AI_REPO_PATH_beatscape=/path/to/checkout
+     export AI_REPO_PATH_landing_tool_a=/path/to/checkout   # hyphens → underscores
      export MUSIC_SAAS_PATH=/path/to/checkout   # beatscape alias
 
   2. Optional YAML map (gitignored):
@@ -61,7 +62,8 @@ env_key_for_repo() {
 }
 
 env_key_for_id() {
-  echo "AI_REPO_PATH_$1"
+  local id="${1//-/_}"
+  echo "AI_REPO_PATH_$id"
 }
 
 path_if_dir() {
@@ -128,10 +130,38 @@ discover_repo_path() {
   return 1
 }
 
+registry_repo_for_id() {
+  local id="$1"
+  local registry="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
+  python3 - "$registry" "$id" <<'PY'
+import sys
+from pathlib import Path
+
+registry = Path(sys.argv[1])
+project_id = sys.argv[2]
+if not registry.is_file():
+    sys.exit(0)
+current = None
+for line in registry.read_text(encoding="utf-8").splitlines():
+    stripped = line.strip()
+    if stripped.startswith("- id:"):
+        current = stripped.split(":", 1)[1].strip()
+        continue
+    if current == project_id and stripped.startswith("repo:"):
+        repo = stripped.split(":", 1)[1].strip()
+        print(repo.replace("github.com/", ""))
+        break
+PY
+}
+
 resolve_path() {
   local id="$1"
   local repo="$2"
   local candidate="" key=""
+
+  if [ -z "$repo" ] && [ -n "$id" ]; then
+    repo="$(registry_repo_for_id "$id" || true)"
+  fi
 
   if [ -n "$id" ]; then
     key="$(env_key_for_id "$id")"

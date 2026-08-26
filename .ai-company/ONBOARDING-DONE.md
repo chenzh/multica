@@ -45,14 +45,36 @@ bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
 bash ~/Projects/multica/scripts/ai-company/ceo-nightly.sh --no-dispatch
 ```
 
-## 队列现状
+## 队列现状（2026-08-26 晚）
 
 - **beatscape**: agent-safe 队列已清空（B01–B04 已交付）
-- **landing-tool-a**: 有 agent 在跑；需本机 clone 或 `AI_REPO_PATH_*` 才能本地派单
+- **landing-tool-a**: `~/Projects/landing-tool-a`，4 条 agent-safe + 1 running
+- **saas-stripe-mvp**: `~/Projects/saas-stripe-mvp`，4 条 agent-safe
 - **music-game-sea**: paused
-- **saas-stripe-mvp**: 需本机 clone 或 `AI_REPO_PATH_*`
+
+## Git：只推 fork，别推 origin
+
+本机 `main` 跟踪 **`fork/main`**（`chenzh/multica`）。推上游 `multica-ai/multica` 会 **403**。
+
+```bash
+# 推荐
+bash scripts/ai-company/push-fork.sh
+
+# 或
+git push fork main
+```
+
+`origin` 仅用于拉上游更新：`git fetch origin`。
+
+## 还差一步（webhook）
+
+在 `.ai-company/config/local.env` 配置其一后，21:00 日报会推送到手机：
+
+```bash
+export FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/...
+# 或 export SLACK_WEBHOOK_URL=...
+```
 
 ## 可选后续
 
-- Clone `landing-tool-a` / `saas-stripe-mvp` 到 `~/Projects` 或配置 `local.env` 后继续派单
 - MusicSaas 本地 WIP：`preview/beatscape-try` 上 `git stash pop`（stash: `wip-all`）

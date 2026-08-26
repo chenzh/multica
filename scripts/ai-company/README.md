@@ -120,3 +120,23 @@ Parses lines like:
 ```
 
 Human-only lines (`PAY-001`, etc.) are only parsed if they use the same `### ID [grade] title` format.
+
+## push-fork.sh
+
+Push harness changes to **your fork** (`chenzh/multica`). Pushing to `origin` (`multica-ai/multica`) returns 403 unless you are a maintainer.
+
+```bash
+bash scripts/ai-company/push-fork.sh
+# branch tracks fork/main after first push -u
+```
+
+## ceo-nightly.sh / ceo-daily-brief.sh
+
+21:00 cron: dispatch + markdown brief + optional Slack/Feishu webhook.
+
+```bash
+bash scripts/ai-company/install-nightly-cron.sh --install
+bash scripts/ai-company/ceo-nightly.sh --no-dispatch   # brief only
+```
+
+See `.ai-company/runbooks/nightly-ceo-brief.md`.

@@ -33,11 +33,12 @@ bash scripts/ai-company/setup-feishu-approval.sh --test
 | Request URL | `https://<公网>/feishu/event` |
 | 事件 | `card.action.trigger`, `im.message.receive_v1` |
 
-本机回调：
+本机回调（需公网可达 — 推荐 Cloudflare Tunnel）:
 
 ```bash
-bash scripts/ai-company/ceo-feishu-approval-server.py
-# 默认 http://127.0.0.1:9478/feishu/event
+bash scripts/ai-company/ceo-feishu-approval-service.sh install
+bash scripts/ai-company/ceo-feishu-cloudflare-tunnel.sh quick-install   # 或 setup-named 稳定域名
+bash scripts/ai-company/ceo-feishu-cloudflare-tunnel.sh quick-url       # 飞书 Request URL
 ```
 
 `local.env` 可选：

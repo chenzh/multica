@@ -37,13 +37,15 @@ webhook, text = sys.argv[1], sys.argv[2]
 body = json.dumps(
     {"msg_type": "text", "content": {"text": text}}
 ).encode("utf-8")
+# Feishu API is domestic; bypass HTTP proxy if set.
+opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 req = urllib.request.Request(
     webhook,
     data=body,
     headers={"Content-Type": "application/json"},
     method="POST",
 )
-with urllib.request.urlopen(req, timeout=30) as resp:
+with opener.open(req, timeout=30) as resp:
     resp.read()
 PY
 }

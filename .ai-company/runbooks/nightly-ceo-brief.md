@@ -11,7 +11,9 @@
 ```bash
 cp .ai-company/config/local.env.example .ai-company/config/local.env
 cp .ai-company/config/proxy.env.example .ai-company/config/proxy.env   # 国内访问 GitHub
-# 编辑：FEISHU_WEBHOOK_URL 或 SLACK_WEBHOOK_URL
+
+# 飞书 webhook（一次性）
+bash scripts/ai-company/setup-feishu-notify.sh 'https://open.feishu.cn/open-apis/bot/v2/hook/...'
 
 # 试跑（不派单）
 bash scripts/ai-company/ceo-daily-brief.sh --no-notify

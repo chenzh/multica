@@ -37,6 +37,7 @@ Options:
 Webhooks (optional, in .ai-company/config/local.env):
   SLACK_WEBHOOK_URL
   FEISHU_WEBHOOK_URL
+  Or: bash scripts/ai-company/setup-feishu-bot-notify.sh (Bot private DM)
 EOF
 }
 
@@ -249,8 +250,8 @@ if [ "$PRINT" -eq 1 ]; then
 fi
 
 if [ "$NOTIFY" -eq 1 ]; then
-  if [ -z "${SLACK_WEBHOOK_URL:-}" ] && [ -z "${FEISHU_WEBHOOK_URL:-}" ]; then
-    echo "notify: skipped (set SLACK_WEBHOOK_URL or FEISHU_WEBHOOK_URL in local.env)" >&2
+  if ! has_ceo_notify_channel; then
+    echo "notify: skipped (set SLACK_WEBHOOK_URL, FEISHU_WEBHOOK_URL, or run setup-feishu-bot-notify.sh)" >&2
   else
     notify_text="$(python3 - "$brief_file" <<'PY'
 import sys

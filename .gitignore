@@ -81,4 +81,5 @@ __pycache__/
 .ai-company/config/local.env
 .ai-company/config/proxy.env
 .ai-company/config/feishu-webhook.url
+.ai-company/config/feishu-bot-notify.env
 .ai-company/config/repo-paths.local.yaml

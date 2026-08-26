@@ -68,8 +68,22 @@ git push fork main
 
 ## 还差一步（webhook）
 
+**推荐（已支持）**：用自建飞书 Bot 私聊收日报，无需群 webhook：
+
 ```bash
+bash scripts/ai-company/setup-feishu-bot-notify.sh
+```
+
+从 `~/Projects/feishu-cursor-claw/.env` 读取 App 凭据，CEO 日报走 Bot 私聊。
+
+**或** 群机器人 webhook：
+
+```bash
+# 方式 A：群 webhook
 bash scripts/ai-company/setup-feishu-notify.sh 'https://open.feishu.cn/open-apis/bot/v2/hook/你的token'
+
+# 方式 B：Bot 私聊（已有 feishu-cursor-claw 时推荐）
+bash scripts/ai-company/setup-feishu-bot-notify.sh
 ```
 
 飞书群 → 设置 → 群机器人 → 自定义机器人 → 复制 webhook URL。

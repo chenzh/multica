@@ -45,11 +45,27 @@ else
 fi
 
 echo ""
-echo "3. 飞书推送"
-if [ -n "${FEISHU_WEBHOOK_URL:-}" ]; then
-  pass "FEISHU_WEBHOOK_URL 已配置"
+echo "3. 飞书 / 通知"
+# shellcheck source=lib/notify.sh
+source "$SCRIPT_DIR/lib/notify.sh"
+if has_ceo_notify_channel; then
+  if [ -n "${FEISHU_BOT_APP_ID:-}" ]; then
+    pass "Feishu Bot 私聊已配置（feishu-bot-notify.env）"
+  fi
+  if [ -n "${FEISHU_WEBHOOK_URL:-}" ]; then
+    pass "FEISHU_WEBHOOK_URL 已配置"
+  fi
+  if [ -n "${SLACK_WEBHOOK_URL:-}" ]; then
+    pass "SLACK_WEBHOOK_URL 已配置"
+  fi
+  test_msg="AI 公司验收测试 — $(date '+%H:%M')"
+  if notify_ceo_brief "$test_msg"; then
+    pass "通知试发成功"
+  else
+    bad "通知试发失败 — 检查 feishu-bot-notify.env 或 webhook"
+  fi
 else
-  bad "未配置飞书 webhook — bash scripts/ai-company/setup-feishu-notify.sh '<url>'"
+  bad "未配置通知 — setup-feishu-notify.sh 或 setup-feishu-bot-notify.sh"
 fi
 
 echo ""

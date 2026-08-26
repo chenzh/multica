@@ -47,7 +47,7 @@ if [ -z "$ISSUE_NUMBER" ]; then
   exit 1
 fi
 
-WORKTREE_NAME="${WORKTREE_NAME:-cursor/issue-${ISSUE_NUMBER}}"
+WORKTREE_NAME="${WORKTREE_NAME:-cursor-issue-${ISSUE_NUMBER}}"
 
 if [ -z "$REPO" ]; then
   REPO="$(gh repo view "$REPO_ROOT" --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)"

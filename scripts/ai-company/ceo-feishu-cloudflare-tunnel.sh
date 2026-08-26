@@ -18,6 +18,7 @@ CONFIG_DIR="$MULTICA_ROOT/.ai-company/config"
 NAMED_CONFIG="$CONFIG_DIR/cloudflared-ceo-feishu.yml"
 PORT="${CEO_FEISHU_APPROVAL_PORT:-9478}"
 CLOUDFLARED="${CLOUDFLARED_BIN:-$(command -v cloudflared || true)}"
+RUN_TOKEN_FILE="${CEO_CLOUDFLARE_RUN_TOKEN_FILE:-$HOME/.multica/cloudflared-run-token}"
 PROXY_ENV_BLOCK=""
 
 proxy_env_for_plist() {
@@ -57,7 +58,8 @@ Commands:
   quick              Start quick tunnel; print public URL (trycloudflare.com)
   quick-install      LaunchAgent: quick tunnel (URL changes on restart)
   quick-url          Show last captured public URL
-  token-install      LaunchAgent: named tunnel via CLOUDFLARE_TUNNEL_TOKEN in local.env
+  token-install      LaunchAgent: tunnel run token (file or CLOUDFLARE_TUNNEL_TOKEN)
+  fetch-run-token    Use CLOUDFLARE_API_TOKEN once → save scoped run token (recommended)
   login              cloudflared tunnel login (for stable hostname)
   setup-named        Print steps to create a named tunnel + config template
   named-install      LaunchAgent: named tunnel (\$NAMED_CONFIG)
@@ -277,13 +279,62 @@ cmd_named_install() {
 generate_token_plist() {
   need_cloudflared
   local token="${CLOUDFLARE_TUNNEL_TOKEN:-${TUNNEL_TOKEN:-}}"
-  if [ -z "$token" ] || [[ "$token" == YOUR_* ]]; then
-    echo "error: set CLOUDFLARE_TUNNEL_TOKEN in .ai-company/config/local.env" >&2
-    echo "  Zero Trust → Networks → Tunnels → 你的 tunnel → Copy token" >&2
+  local use_token_file=0
+  local token_file_arg=""
+
+  if [ -f "$RUN_TOKEN_FILE" ] && [ -s "$RUN_TOKEN_FILE" ]; then
+    use_token_file=1
+    token_file_arg="$RUN_TOKEN_FILE"
+  elif [ -n "$token" ] && [[ "$token" != YOUR_* ]]; then
+    use_token_file=0
+  else
+    echo "error: no tunnel run credential" >&2
+    echo "  推荐: 在 local.env 设 CLOUDFLARE_API_TOKEN + CLOUDFLARE_TUNNEL_NAME，然后:" >&2
+    echo "    bash $0 fetch-run-token" >&2
+    echo "  或设 CLOUDFLARE_TUNNEL_TOKEN（仅 tunnel 的 run token，不是 Account API Token）" >&2
     exit 1
   fi
+
   proxy_env_for_plist
-  cat >"$PLIST" <<PEOF
+  if [ "$use_token_file" -eq 1 ]; then
+    cat >"$PLIST" <<PEOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>$LABEL</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>$CLOUDFLARED</string>
+		<string>tunnel</string>
+		<string>--protocol</string>
+		<string>http2</string>
+		<string>run</string>
+		<string>--token-file</string>
+		<string>$token_file_arg</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>$HOME/.homebrew/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+$PROXY_ENV_BLOCK
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>$LOG_FILE</string>
+	<key>StandardErrorPath</key>
+	<string>$LOG_FILE</string>
+	<key>ProcessType</key>
+	<string>Background</string>
+</dict>
+</plist>
+PEOF
+  else
+    cat >"$PLIST" <<PEOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -319,16 +370,39 @@ $PROXY_ENV_BLOCK
 </dict>
 </plist>
 PEOF
+  fi
 }
 
 cmd_token_install() {
-  echo "📦 安装 Cloudflare tunnel（TUNNEL_TOKEN）LaunchAgent..."
+  echo "📦 安装 Cloudflare tunnel LaunchAgent..."
   generate_token_plist
   launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
   launchctl bootstrap "gui/$(id -u)" "$PLIST"
   echo "  ✅ token tunnel LaunchAgent 已安装"
   echo "  在 Zero Trust 把 public hostname 指到 http://127.0.0.1:$PORT"
   echo "  飞书 Request URL: https://<你的固定域名>/feishu/event"
+}
+
+cmd_fetch_run_token() {
+  need_cloudflared
+  local api="${CLOUDFLARE_API_TOKEN:-}"
+  local name="${CLOUDFLARE_TUNNEL_NAME:-ceo-feishu-approval}"
+  if [ -z "$api" ] || [[ "$api" == YOUR_* ]]; then
+    echo "error: set CLOUDFLARE_API_TOKEN in .ai-company/config/local.env" >&2
+    echo "  这是 Account API Token（高权限）— 仅用于一次性换取 tunnel run token" >&2
+    exit 1
+  fi
+  mkdir -p "$(dirname "$RUN_TOKEN_FILE")"
+  echo ">> cloudflared tunnel token $name"
+  if ! CLOUDFLARE_API_TOKEN="$api" "$CLOUDFLARED" tunnel token "$name" >"$RUN_TOKEN_FILE"; then
+    echo "error: fetch failed — check API token permissions (Cloudflare Tunnel: Read) and tunnel name" >&2
+    rm -f "$RUN_TOKEN_FILE"
+    exit 1
+  fi
+  chmod 600 "$RUN_TOKEN_FILE"
+  echo "  ✅ scoped run token → $RUN_TOKEN_FILE"
+  echo "  ⚠️  不要把 Account API Token 写进 LaunchAgent；可注释掉 local.env 里的 CLOUDFLARE_API_TOKEN"
+  echo "  下一步: bash $0 token-install"
 }
 
 cmd_uninstall() {
@@ -361,6 +435,7 @@ case "${1:-}" in
   setup-named) cmd_setup_named ;;
   named-install) cmd_named_install ;;
   token-install) cmd_token_install ;;
+  fetch-run-token) cmd_fetch_run_token ;;
   uninstall) cmd_uninstall ;;
   status) cmd_status ;;
   logs) cmd_logs ;;

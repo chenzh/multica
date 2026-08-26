@@ -16,4 +16,8 @@ if ! git remote get-url "$REMOTE" &>/dev/null; then
 fi
 
 echo ">> git push $REMOTE $BRANCH"
-git -c http.version=HTTP/1.1 push -u "$REMOTE" "$BRANCH"
+GIT_CREDENTIAL_ARGS=()
+if command -v gh >/dev/null 2>&1 && gh auth status -h github.com >/dev/null 2>&1; then
+  GIT_CREDENTIAL_ARGS+=(-c "credential.helper=!gh auth git-credential")
+fi
+git "${GIT_CREDENTIAL_ARGS[@]}" -c http.version=HTTP/1.1 push -u "$REMOTE" "$BRANCH"

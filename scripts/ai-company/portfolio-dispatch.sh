@@ -7,6 +7,7 @@ MULTICA_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 MAX_TOTAL="${MAX_TOTAL:-5}"
 DRY_RUN=0
+LOCAL=0
 WORKFLOW="${WORKFLOW:-agent-delivery-dispatch.yml}"
 GITHUB_ORG="${GITHUB_ORG:-chenzh}"
 
@@ -21,7 +22,8 @@ Options:
   --registry PATH   project-registry.yaml
   --max-total N     Cap total dispatches this run (default: 5)
   --workflow NAME   Workflow file name (default: agent-delivery-dispatch.yml)
-  --dry-run         Print gh commands only
+  --local           Dispatch via local cursor-agent CLI (no GHA / no CURSOR_API_KEY)
+  --dry-run         Print commands only
   -h, --help
 
 Requires: gh CLI, authenticated for all repos in registry.
@@ -37,6 +39,7 @@ while [ $# -gt 0 ]; do
     --registry) REGISTRY="${2:?}"; shift 2 ;;
     --max-total) MAX_TOTAL="${2:?}"; shift 2 ;;
     --workflow) WORKFLOW="${2:?}"; shift 2 ;;
+    --local) LOCAL=1; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
@@ -49,9 +52,9 @@ if [ ! -f "$REGISTRY" ]; then
 fi
 
 # Parse YAML projects block (line-oriented; matches our template shape).
-declare -a IDS=() REPOS=() PRIORITIES=() CAPS=() PAUSED=()
+declare -a IDS=() REPOS=() PRIORITIES=() CAPS=() PAUSED=() LOCAL_PATHS=()
 
-current_id="" current_repo="" current_priority="0" current_cap="1" current_paused="false"
+current_id="" current_repo="" current_priority="0" current_cap="1" current_paused="false" current_local_path=""
 
 flush_project() {
   if [ -z "$current_id" ] || [ -z "$current_repo" ]; then
@@ -62,11 +65,13 @@ flush_project() {
   PRIORITIES+=("$current_priority")
   CAPS+=("$current_cap")
   PAUSED+=("$current_paused")
+  LOCAL_PATHS+=("$current_local_path")
   current_id=""
   current_repo=""
   current_priority="0"
   current_cap="1"
   current_paused="false"
+  current_local_path=""
 }
 
 while IFS= read -r line; do
@@ -99,6 +104,10 @@ while IFS= read -r line; do
     current_paused="${BASH_REMATCH[1]}"
     continue
   fi
+  if [[ "$line" =~ ^local_path:\ (.+)$ ]]; then
+    current_local_path="${BASH_REMATCH[1]}"
+    continue
+  fi
 done <"$REGISTRY"
 flush_project
 
@@ -122,7 +131,17 @@ done
 remaining="$MAX_TOTAL"
 total_dispatched=0
 
-echo "Portfolio dispatch (max_total=$MAX_TOTAL)"
+pick_next_issue() {
+  local repo="$1"
+  gh issue list -R "$repo" \
+    --label "agent-safe" \
+    --state open \
+    --json number,labels \
+    --jq '.[] | select([.labels[].name] | (index("agent-running") | not) and (index("agent-blocked") | not)) | .number' \
+    | head -n 1
+}
+
+echo "Portfolio dispatch (max_total=$MAX_TOTAL mode=$([ "$LOCAL" -eq 1 ] && echo local-cli || echo gha))"
 echo "Registry: $REGISTRY"
 echo ""
 
@@ -138,6 +157,34 @@ for idx in "${ORDER[@]}"; do
   fi
   repo="${REPOS[$idx]}"
   echo "→ ${IDS[$idx]} ($repo) max_tasks=$cap priority=${PRIORITIES[$idx]}"
+
+  if [ "$LOCAL" -eq 1 ]; then
+    root="${LOCAL_PATHS[$idx]}"
+    if [ -z "$root" ] || [ ! -d "$root" ]; then
+      echo "  warning: local_path missing for ${IDS[$idx]} — skip" >&2
+      continue
+    fi
+    for ((n=0; n<cap; n++)); do
+      issue="$(pick_next_issue "$repo")"
+      if [ -z "$issue" ]; then
+        echo "  no eligible agent-safe issues in $repo"
+        break
+      fi
+      if [ "$DRY_RUN" -eq 1 ]; then
+        echo "  GITHUB_REPOSITORY=$repo REPO_ROOT=$root dispatch-cursor-agent-cli.sh $issue"
+      else
+        GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
+          bash "$MULTICA_ROOT/scripts/agent-delivery/dispatch-cursor-agent-cli.sh" "$issue" || {
+          echo "  warning: local dispatch failed for $repo#$issue" >&2
+          continue
+        }
+      fi
+      total_dispatched=$((total_dispatched + 1))
+      remaining=$((remaining - 1))
+      [ "$remaining" -le 0 ] && break
+    done
+    continue
+  fi
 
   if [ "$DRY_RUN" -eq 1 ]; then
     echo "  gh workflow run $WORKFLOW -R $repo -f max_tasks=$cap"

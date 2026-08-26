@@ -10,13 +10,12 @@
 | **beatscape** 注册表 | ✅ | `project-registry.yaml` → `chenzh/MusicSaas` |
 | MusicSaas harness 已 push `main` | ✅ | commit `baa6520` |
 | GitHub Issues B01–B04 | ✅ | #6 #8 #9 #11 |
-| 首次 dispatch（本地 CLI） | ✅ | issue #6 → PR [#12](https://github.com/chenzh/MusicSaas/pull/12) |
-| PR #12 CI 全绿 | ✅ | evaluate / unit / build / integration |
-| Issue #6 `agent-done` | ✅ | Play 页 SEO（TICKET-B01） |
+| 首次 dispatch（本地 CLI） | ✅ | issue #6 → PR [#12](https://github.com/chenzh/MusicSaas/pull/12) 已 merge |
 | `PORTFOLIO_GH_TOKEN` | ✅ | `chenzh/multica` Secrets |
 | `portfolio-agent-dispatch.yml` | ✅ | `chenzh/multica` main，cron + manual |
 | multica harness fork | ✅ | `chenzh/multica` PR #1 #2 已合并 |
-| 本地派单脚本 | ✅ | `dispatch-cursor-agent-cli.sh` + `--local` portfolio |
+| CEO 浏览器工作台 | ✅ | `scripts/ai-company/ceo-workbench.sh` → http://127.0.0.1:9477 |
+| 本机路径解析 | ✅ | `resolve-repo-path.sh` + `local.env`（registry 不写路径） |
 | 派单方式 | ✅ 本地 CLI | `cursor-agent` 已登录，**无需 `CURSOR_API_KEY`** |
 | `saas-stripe-mvp` 仓库 | ✅ | `chenzh/saas-stripe-mvp`，issues #1–#4 |
 | `local.env` | ✅ | `.ai-company/config/local.env` |
@@ -42,12 +41,13 @@ bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
 
 ## 队列现状
 
-- **beatscape**: issue #6 done（PR #12 待 merge）；#8 #9 #11 仍在队
-- **landing-tool-a**: 4 单 agent-safe
+- **beatscape**: #11 派单中（TICKET-B04）；#8 #9 待派
+- **landing-tool-a**: 4 单（需本机 clone 或 `AI_REPO_PATH_*`）
 - **music-game-sea**: paused
-- **saas-stripe-mvp**: issues #1–#4 在队
+- **saas-stripe-mvp**: 4 单（需本机 clone 或 `AI_REPO_PATH_*`）
 
 ## 可选后续
 
-- Merge [PR #12](https://github.com/chenzh/MusicSaas/pull/12)（TICKET-B01）
+- 等 issue #11 agent 完成 → review PR + merge
+- 其他产品仓 clone 到 `~/Projects` 或配置 `local.env` 后即可从工作台派单
 - MusicSaas 本地 WIP：`preview/beatscape-try` 上 `git stash pop`（stash: `wip-all`）

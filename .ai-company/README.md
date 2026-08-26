@@ -125,3 +125,5 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | 调度脚本 | `scripts/agent-delivery/` | dispatch / gate-check |
 
 新公司项目应 **fork 或 submodule 复制** 上述 harness，再填项目级 brief。
+
+| [docs/13-opc-bridge.md](./docs/13-opc-bridge.md) | OPC（SecondBrain 一人公司）↔ Company OS 桥接 |

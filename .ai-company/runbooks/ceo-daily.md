@@ -1,8 +1,17 @@
 # CEO 每日 Runbook（15 分钟）
 
+> 经营面（一人公司 OPC）对接见 [../docs/13-opc-bridge.md](../docs/13-opc-bridge.md)。
+
 ## 0. 打开仪表盘
 
-**一条命令（推荐）：**
+**浏览器工作台（推荐）：**
+
+```bash
+bash ~/Projects/multica/scripts/ai-company/ceo-workbench.sh
+# → http://127.0.0.1:9477
+```
+
+**终端一条命令：**
 
 ```bash
 cd ~/Projects/multica
@@ -15,6 +24,7 @@ bash scripts/ai-company/ceo-dashboard.sh --dispatch
 
 - Multica Issues（或各 repo GitHub）
 - Slack #ai-company-alerts（若配置）
+- OPC 杀线 / 本周全力：SecondBrain `03-MAPS/...-map-portfolio-opc.md`
 
 ## 1. 阻塞清零（优先级最高）
 

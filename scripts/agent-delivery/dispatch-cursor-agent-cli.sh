@@ -101,13 +101,21 @@ gh issue comment "$ISSUE_NUMBER" --body "$COMMENT"
 
 echo "Dispatching issue #$ISSUE_NUMBER in $REPO_ROOT (log: $LOG_FILE)"
 
+WORKTREE_BASE_REF="$WORKTREE_BASE"
+if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree &>/dev/null; then
+  git -C "$REPO_ROOT" fetch origin "$WORKTREE_BASE" --quiet 2>/dev/null || true
+  if git -C "$REPO_ROOT" show-ref --verify --quiet "refs/remotes/origin/$WORKTREE_BASE"; then
+    WORKTREE_BASE_REF="origin/$WORKTREE_BASE"
+  fi
+fi
+
 set +e
 (
   cd "$REPO_ROOT"
   if [ "$USE_WORKTREE" = "1" ]; then
     cat "$PROMPT" | "$CURSOR_AGENT_BIN" -p --force --trust \
       --worktree "$WORKTREE_NAME" \
-      --worktree-base "$WORKTREE_BASE" \
+      --worktree-base "$WORKTREE_BASE_REF" \
       --output-format stream-json \
       2>&1 | tee "$LOG_FILE"
   else

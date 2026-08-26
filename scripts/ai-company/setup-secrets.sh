@@ -20,12 +20,10 @@ for repo in "${REPOS[@]}"; do
   printf '%s' "$CURSOR_API_KEY" | gh secret set CURSOR_API_KEY -R "$repo"
 done
 
+PORTFOLIO_REPO="${PORTFOLIO_REPO:-$ORG/multica}"
 if [ -n "${PORTFOLIO_GH_TOKEN:-}" ]; then
-  if gh secret set PORTFOLIO_GH_TOKEN -R multica-ai/multica <<<"$PORTFOLIO_GH_TOKEN" 2>/dev/null; then
-    echo "PORTFOLIO_GH_TOKEN set on multica-ai/multica"
-  else
-    echo "warn: could not set PORTFOLIO_GH_TOKEN on multica-ai/multica (need admin)" >&2
-  fi
+  echo "Setting PORTFOLIO_GH_TOKEN on $PORTFOLIO_REPO ..."
+  printf '%s' "$PORTFOLIO_GH_TOKEN" | gh secret set PORTFOLIO_GH_TOKEN -R "$PORTFOLIO_REPO"
 fi
 
 echo "Done. Trial dispatch:"

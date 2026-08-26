@@ -41,10 +41,10 @@ bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
 
 ## 队列现状
 
-- **beatscape**: #11 派单中（TICKET-B04）；#8 #9 待派
-- **landing-tool-a**: 4 单（需本机 clone 或 `AI_REPO_PATH_*`）
+- **beatscape**: agent-safe 队列已清空（B01–B04 已交付）
+- **landing-tool-a**: 有 agent 在跑；需本机 clone 或 `AI_REPO_PATH_*` 才能本地派单
 - **music-game-sea**: paused
-- **saas-stripe-mvp**: 4 单（需本机 clone 或 `AI_REPO_PATH_*`）
+- **saas-stripe-mvp**: 需本机 clone 或 `AI_REPO_PATH_*`
 
 ## 可选后续
 

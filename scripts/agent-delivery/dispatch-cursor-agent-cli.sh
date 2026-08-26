@@ -101,28 +101,55 @@ gh issue comment "$ISSUE_NUMBER" --body "$COMMENT"
 
 echo "Dispatching issue #$ISSUE_NUMBER in $REPO_ROOT (log: $LOG_FILE)"
 
+# Resolve base ref: explicit WORKTREE_BASE, else origin/HEAD, else main/master.
 WORKTREE_BASE_REF="$WORKTREE_BASE"
 if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree &>/dev/null; then
-  git -C "$REPO_ROOT" fetch origin "$WORKTREE_BASE" --quiet 2>/dev/null || true
+  if [ "$WORKTREE_BASE" = "main" ] || [ -z "${WORKTREE_BASE_SET:-}" ]; then
+    default_remote="$(git -C "$REPO_ROOT" symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+    if [ -n "$default_remote" ]; then
+      WORKTREE_BASE="${default_remote#origin/}"
+    elif git -C "$REPO_ROOT" show-ref --verify --quiet refs/remotes/origin/master; then
+      WORKTREE_BASE="master"
+    elif git -C "$REPO_ROOT" show-ref --verify --quiet refs/remotes/origin/main; then
+      WORKTREE_BASE="main"
+    fi
+  fi
+  if ! git -C "$REPO_ROOT" show-ref --verify --quiet "refs/remotes/origin/$WORKTREE_BASE"; then
+    # Best-effort refresh; don't hang the dispatcher on flaky network.
+    GIT_TERMINAL_PROMPT=0 git -C "$REPO_ROOT" -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=15 \
+      fetch origin "$WORKTREE_BASE" --quiet 2>/dev/null || true
+  fi
   if git -C "$REPO_ROOT" show-ref --verify --quiet "refs/remotes/origin/$WORKTREE_BASE"; then
     WORKTREE_BASE_REF="origin/$WORKTREE_BASE"
+  elif git -C "$REPO_ROOT" show-ref --verify --quiet "refs/heads/$WORKTREE_BASE"; then
+    WORKTREE_BASE_REF="$WORKTREE_BASE"
+  else
+    echo "error: cannot resolve worktree base '$WORKTREE_BASE' in $REPO_ROOT" >&2
+    gh issue edit "$ISSUE_NUMBER" --remove-label "agent-running" --add-label "agent-blocked" 2>/dev/null || true
+    exit 1
   fi
 fi
+echo "Using worktree base: $WORKTREE_BASE_REF"
 
 set +e
 (
   cd "$REPO_ROOT"
+  # Keep prompt outside TMP so EXIT trap cannot race stdin; write log directly.
+  PROMPT_KEEP="$LOG_DIR/issue-${ISSUE_NUMBER}-${TS}.prompt.txt"
+  cp "$PROMPT" "$PROMPT_KEEP"
   if [ "$USE_WORKTREE" = "1" ]; then
-    cat "$PROMPT" | "$CURSOR_AGENT_BIN" -p --force --trust \
+    "$CURSOR_AGENT_BIN" -p --force --trust \
       --worktree "$WORKTREE_NAME" \
       --worktree-base "$WORKTREE_BASE_REF" \
-      --output-format stream-json \
-      2>&1 | tee "$LOG_FILE"
+      --output-format text \
+      <"$PROMPT_KEEP" \
+      >"$LOG_FILE" 2>&1
   else
     git checkout -B "$WORKTREE_NAME" "$WORKTREE_BASE" 2>/dev/null || git checkout "$WORKTREE_NAME" 2>/dev/null
-    cat "$PROMPT" | "$CURSOR_AGENT_BIN" -p --force --trust \
-      --output-format stream-json \
-      2>&1 | tee "$LOG_FILE"
+    "$CURSOR_AGENT_BIN" -p --force --trust \
+      --output-format text \
+      <"$PROMPT_KEEP" \
+      >"$LOG_FILE" 2>&1
   fi
 )
 exit_code=$?

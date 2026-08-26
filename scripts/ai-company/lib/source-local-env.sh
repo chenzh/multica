@@ -9,6 +9,14 @@ PROXY_ENV="$MULTICA_ROOT/.ai-company/config/proxy.env"
 if [ -f "$PROXY_ENV" ]; then
   # shellcheck disable=SC1090
   source "$PROXY_ENV"
+  if [ -n "${https_proxy:-}" ]; then
+    proxy_host_port="${https_proxy#*://}"
+    proxy_host="${proxy_host_port%%:*}"
+    proxy_port="${proxy_host_port##*:}"
+    if ! curl -fsS --connect-timeout 1 "http://${proxy_host}:${proxy_port}/" >/dev/null 2>&1; then
+      unset https_proxy http_proxy all_proxy
+    fi
+  fi
 fi
 
 if [ -f "$LOCAL_ENV" ]; then

@@ -23,3 +23,8 @@
 
 - **What:** `apps/web/public/favicon.ico`、`site.webmanifest`（name/theme_color）  
 - **AC:** `pnpm typecheck` exit 0；`/manifest.webmanifest` 或等价路由可访问  
+
+### TICKET-006 [agent-safe] robots.txt 与 sitemap 占位
+
+- **What:** `apps/web/public/robots.txt`；`app/sitemap.ts` 返回最小 sitemap  
+- **AC:** `pnpm typecheck` exit 0  

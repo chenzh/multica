@@ -20,3 +20,8 @@
 
 - **What:** `server` 增加 `GET /health` 返回 `{"status":"ok"}`  
 - **AC:** Go test 覆盖 handler；`make check` exit 0  
+
+### TICKET-006 [agent-safe] GET /v1/workspaces mock 列表
+
+- **What:** mock handler 返回单条 workspace JSON  
+- **AC:** Go test；`make check` exit 0  

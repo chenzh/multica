@@ -146,6 +146,18 @@ Parses lines like:
 ### TICKET-004 [agent-safe] 营销落地页 `/`
 ```
 
+## sync-portfolio-backlogs.sh
+
+Nightly refill: for each **active** registry project with
+`.ai-company/examples/<delivery_slug>/backlog.md`, create missing `[TICKET-xxx]` issues.
+
+```bash
+bash scripts/ai-company/sync-portfolio-backlogs.sh --dry-run
+bash scripts/ai-company/sync-portfolio-backlogs.sh
+```
+
+Enabled in `ceo-nightly.sh` when `CEO_SYNC_BACKLOG=1` (default).
+
 Human-only lines (`PAY-001`, etc.) are only parsed if they use the same `### ID [grade] title` format.
 
 ## push-fork.sh

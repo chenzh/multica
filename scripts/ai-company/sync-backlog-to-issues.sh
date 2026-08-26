@@ -28,12 +28,14 @@ REPO="${GITHUB_REPOSITORY:-}"
 DRY_RUN=0
 FROM_ID=""
 TO_ID=""
+SKIP_EXISTING=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --backlog) BACKLOG="${2:?}"; shift 2 ;;
     --repo) REPO="${2:?}"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
+    --skip-existing) SKIP_EXISTING=1; shift ;;
     --from) FROM_ID="${2:?}"; shift 2 ;;
     --to) TO_ID="${2:?}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
@@ -92,6 +94,18 @@ create_issue() {
   local body="$4"
   local labels
   labels="$(labels_for_grade "$grade")"
+
+  if [ "$SKIP_EXISTING" -eq 1 ]; then
+    local exists
+    exists="$(
+      gh issue list -R "$REPO" --search "[${ticket_id}] in:title" --state all \
+        --json number -q 'length' 2>/dev/null || echo 0
+    )"
+    if [ "${exists:-0}" -gt 0 ]; then
+      echo "skip existing: $ticket_id ($REPO)"
+      return 0
+    fi
+  fi
 
   local gh_labels=()
   if [ -n "$labels" ]; then

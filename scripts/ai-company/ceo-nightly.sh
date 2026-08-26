@@ -14,6 +14,7 @@ DISPATCH="${CEO_NIGHTLY_DISPATCH:-1}"
 DISPATCH_BG="${CEO_NIGHTLY_DISPATCH_BG:-1}"
 DISPATCH_LOG="${CEO_NIGHTLY_DISPATCH_LOG:-$HOME/.multica/ceo-nightly-dispatch.log}"
 AUTO_MERGE="${CEO_AUTO_MERGE:-1}"
+SYNC_BACKLOG="${CEO_SYNC_BACKLOG:-1}"
 BRIEF=1
 SINCE="${SINCE:-@yesterday}"
 
@@ -39,6 +40,7 @@ Environment:
   CEO_NIGHTLY_DISPATCH_BG=1|0    default 1 — background dispatch so brief fires immediately
   CEO_AUTO_MERGE=1|0             default 1 — merge green open PRs before dispatch
   CEO_RECONCILE_QUEUE=1|0        default 1 — fix stale agent-* labels
+  CEO_SYNC_BACKLOG=1|0           default 1 — sync missing backlog tickets before dispatch
   SLACK_WEBHOOK_URL / FEISHU_WEBHOOK_URL in local.env
 EOF
 }
@@ -83,6 +85,15 @@ if [ "$AUTO_MERGE" -eq 1 ]; then
     echo ">> reconcile queue labels (post-merge)"
     reconcile_queue
   fi
+fi
+
+if [ "$SYNC_BACKLOG" -eq 1 ]; then
+  echo ">> sync portfolio backlogs (skip-existing)"
+  bash "$SCRIPT_DIR/sync-portfolio-backlogs.sh" \
+    --registry "$REGISTRY" \
+    --org "$GITHUB_ORG" || {
+    echo "warn: sync-portfolio-backlogs failed (continuing)" >&2
+  }
 fi
 
 if [ "$DISPATCH" -eq 1 ]; then

@@ -95,7 +95,14 @@ else
 fi
 
 echo ""
-echo "5. 试跑 nightly（brief only，不发通知）"
+echo "4d. Backlog 自动补票"
+if bash "$SCRIPT_DIR/sync-portfolio-backlogs.sh" --dry-run >>/tmp/verify-hands-off-sync.log 2>&1; then
+  pass "sync-portfolio-backlogs --dry-run 成功"
+else
+  bad "sync-portfolio-backlogs 失败 — /tmp/verify-hands-off-sync.log"
+fi
+
+echo ""
 if bash "$SCRIPT_DIR/ceo-daily-brief.sh" --no-notify --quiet >>/tmp/verify-hands-off-nightly.log 2>&1; then
   pass "ceo-daily-brief --no-notify 成功（见 /tmp/verify-hands-off-nightly.log）"
   grep -E '^brief:' /tmp/verify-hands-off-nightly.log 2>/dev/null | tail -1 | sed 's/^/     /' || true

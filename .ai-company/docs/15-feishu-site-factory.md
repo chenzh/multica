@@ -91,9 +91,12 @@ bash scripts/ai-company/site-factory.sh \
 验证：
 
 ```bash
-bash scripts/ai-company/verify-hands-off.sh
+bash scripts/ai-company/site-factory-verify.sh
+bash scripts/ai-company/feishu-site-factory-smoke.sh
 bash scripts/ai-company/site-factory.sh --intake "测试站点" --dry-run
 ```
+
+**Live 验收（Goal 最后一项）：** 飞书私聊 Bot 发「做一个 XX 网站」→ 收到「建站流水线已提交 CEO 工作台」卡片 → 查 `~/.multica/ceo-workbench/jobs/` 日志。
 
 ---
 

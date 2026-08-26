@@ -308,6 +308,14 @@ PY
 )"
     notify_ceo_brief "$notify_text" && echo "notify: sent" >&2 || echo "notify: failed" >&2
   fi
+  if [ "${CEO_FEISHU_APPROVAL_PUSH:-0}" = "1" ]; then
+    if bash "$SCRIPT_DIR/ceo-feishu-approval.sh" sync >/dev/null 2>&1 \
+      && bash "$SCRIPT_DIR/ceo-feishu-approval.sh" push >/dev/null 2>&1; then
+      echo "approval cards: sent" >&2
+    else
+      echo "approval cards: skipped or failed (see ceo-feishu-approval.sh list)" >&2
+    fi
+  fi
 fi
 
 echo "brief: $brief_file" >&2

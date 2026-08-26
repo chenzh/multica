@@ -14,14 +14,19 @@ CEO 在飞书发一句「做一个 XX 网站」，系统自动完成竞品调研
    ```bash
    bash scripts/ai-company/setup-feishu-bot-notify.sh
    ```
+   **CEO 工作台**（飞书 intake 优先走此 API，自托管 autostart 会一并拉起 `:9477`）  
+   ```bash
+   bash scripts/ai-company/ceo-workbench.sh
+   # http://127.0.0.1:9477
+   ```
 3. **Agent 登录**  
    ```bash
    cursor-agent login && cursor-agent status
    ```
-4. **（可选）工作台**  
+4. **Multica 自托管**（API + daemon + 工作台 `:9477`，飞书 intake 依赖）  
    ```bash
-   bash scripts/ai-company/ceo-workbench.sh
-   # http://127.0.0.1:9477
+   bash scripts/local-selfhost-autostart.sh
+   # 或手动: bash scripts/ai-company/ceo-workbench.sh
    ```
 
 ## 日常用法

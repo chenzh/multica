@@ -60,6 +60,24 @@ bash scripts/ai-company/ceo-workbench.sh
 
 Requires: `python3`, `gh`, logged-in `cursor-agent` for local dispatch.
 
+**Feishu 建站 intake** 优先 POST `/api/site-factory`。常驻安装：
+
+```bash
+bash scripts/ai-company/ceo-workbench-service.sh install
+bash scripts/ai-company/ceo-workbench-service.sh status
+```
+
+## site-factory.sh（飞书一句话建站）
+
+```bash
+bash scripts/ai-company/site-factory-verify.sh          # 16 项验收
+bash scripts/ai-company/feishu-site-factory-smoke.sh    # 飞书等价路径 smoke
+bash scripts/ai-company/feishu-site-factory-live-watch.sh 5  # Live 发消息后检查
+bash scripts/ai-company/site-factory.sh --intake "做一个 XX 网站" --dry-run
+```
+
+烟测参考：`hello-cf-smoke`（Cloudflare Pages + 多 Agent 派单）。详见 `.ai-company/docs/15-feishu-site-factory.md`。
+
 API includes `/api/multica-runtime` (daemon limits, per-agent concurrency, local CLI process breakdown). Same snapshot from CLI:
 
 ```bash
@@ -153,3 +171,18 @@ bash scripts/ai-company/ceo-reconcile-queue.sh            # fix stale agent-* la
 Dispatch log (background): `~/.multica/ceo-nightly-dispatch.log`
 
 See `.ai-company/runbooks/nightly-ceo-brief.md`.
+
+## ceo-feishu-approval.sh
+
+Multica + Feishu dual CEO approval (BLOCKED / green PR). Syncs GitHub → Multica issue, pushes Feishu interactive cards, handles `/批` commands.
+
+```bash
+bash scripts/ai-company/setup-feishu-approval.sh --test
+bash scripts/ai-company/ceo-feishu-approval-server.py   # callback :9478
+bash scripts/ai-company/ceo-feishu-approval.sh list
+bash scripts/ai-company/ceo-feishu-approval.sh sync
+bash scripts/ai-company/ceo-feishu-approval.sh push
+bash scripts/ai-company/ceo-feishu-approval.sh approve beatscape 42 说明
+```
+
+Set `CEO_FEISHU_APPROVAL_PUSH=1` in `local.env` to push cards after nightly brief. See `.ai-company/runbooks/feishu-approval.md`.

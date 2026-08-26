@@ -308,6 +308,7 @@ def start_site_factory_job(
     create_repo: bool = False,
     notify: bool = True,
     max_dispatch: int = 2,
+    dry_run: bool = False,
 ) -> dict[str, Any]:
     intake = intake.strip()
     if not intake:
@@ -325,6 +326,8 @@ def start_site_factory_job(
         "--max-dispatch",
         str(max_dispatch),
     ]
+    if dry_run:
+        cmd.append("--dry-run")
     if create_repo:
         cmd.extend(["--create-repo", "--push"])
     if notify:
@@ -344,6 +347,7 @@ def start_site_factory_job(
         "intake": intake,
         "create_repo": create_repo,
         "max_dispatch": max_dispatch,
+        "dry_run": dry_run,
         "status": "running",
         "pid": proc.pid,
         "log_path": str(log_path),
@@ -511,6 +515,7 @@ class Handler(BaseHTTPRequestHandler):
                     create_repo=bool(body.get("create_repo", False)),
                     notify=body.get("notify", True) is not False,
                     max_dispatch=int(body.get("max_dispatch", 2)),
+                    dry_run=bool(body.get("dry_run", False)),
                 )
                 self._send_json(HTTPStatus.ACCEPTED, job)
                 return

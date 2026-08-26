@@ -94,6 +94,61 @@ else
 fi
 
 echo ""
+echo "7. 飞书 intake 路径（模拟 workbench POST dry-run）"
+if python3 - <<'PY'
+import re
+samples = [
+    ("做一个 JSON 格式化网站", "JSON 格式化"),
+    ("site-factory: 海外 SEO 工具", "海外 SEO 工具"),
+    ("建站：极简 Hello 页", "极简 Hello 页"),
+]
+patterns = [
+    re.compile(r"^(?:请)?(?:帮我)?(?:做|建|开发|创建)(?:一个|个)?(.+?)(?:网站|站点|网页)(?:吧|吗|？|\?|!|！|\.|…)*$", re.S),
+    re.compile(r"^site-factory[:\uff1a]\s*(.+)$", re.I),
+    re.compile(r"^建站[:\uff1a]\s*(.+)$", re.I),
+]
+def match_intent(text):
+    t = text.strip()
+    for p in patterns:
+        m = p.match(t)
+        if m and m.group(1).strip():
+            return m.group(1).strip()
+    return None
+for text, want in samples:
+    got = match_intent(text)
+    if got != want:
+        raise SystemExit(f"intent mismatch: {text!r} -> {got!r} want {want!r}")
+print("ok")
+PY
+then
+  pass "飞书建站意图解析"
+else
+  bad "飞书建站意图解析失败"
+fi
+
+if curl -fsS --max-time 2 "http://127.0.0.1:9477/api/site-factory" >/dev/null 2>&1; then
+  if curl -fsS --max-time 15 -X POST "http://127.0.0.1:9477/api/site-factory" \
+    -H 'Content-Type: application/json' \
+    -d '{"intake":"做一个 JSON 格式化网站","dry_run":true,"notify":false,"create_repo":false}' \
+    | python3 -c "import json,sys; j=json.load(sys.stdin); assert j.get('mode')=='site-factory' and j.get('id')"; then
+    pass "workbench POST dry-run 建站 job"
+  else
+    bad "workbench POST dry-run 失败（需重启 workbench 加载新 API）"
+  fi
+else
+  note "跳过 workbench POST dry-run（workbench 未运行）"
+fi
+
+echo ""
+echo "8. 飞书等价路径 smoke"
+if bash "$SCRIPT_DIR/feishu-site-factory-smoke.sh" >/tmp/feishu-site-factory-smoke.log 2>&1; then
+  pass "feishu-site-factory-smoke.sh"
+else
+  tail -3 /tmp/feishu-site-factory-smoke.log >&2 || true
+  bad "feishu-site-factory-smoke 失败"
+fi
+
+echo ""
 printf "结果: %s 通过 · %s 警告 · %s 失败\n" "$ok" "$warn" "$fail"
 rm -rf "$(dirname "$SMOKE")" 2>/dev/null || true
 [ "$fail" -eq 0 ]

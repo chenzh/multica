@@ -10,7 +10,7 @@
 | **beatscape** 注册表 | ✅ | `project-registry.yaml` → `chenzh/MusicSaas` |
 | MusicSaas harness 已 push `main` | ✅ | commit `baa6520` |
 | GitHub Issues B01–B04 | ✅ | #6 #8 #9 #11 |
-| 首次 dispatch（本地 CLI） | ✅ | issue #6 → PR [#12](https://github.com/chenzh/MusicSaas/pull/12) 已 merge |
+| 首次 dispatch（本地 CLI） | ✅ | PR [#12](https://github.com/chenzh/MusicSaas/pull/12) [#13](https://github.com/chenzh/MusicSaas/pull/13) [#14](https://github.com/chenzh/MusicSaas/pull/14) 已 merge |
 | `PORTFOLIO_GH_TOKEN` | ✅ | `chenzh/multica` Secrets |
 | `portfolio-agent-dispatch.yml` | ✅ | `chenzh/multica` main，cron + manual |
 | multica harness fork | ✅ | `chenzh/multica` PR #1 #2 已合并 |
@@ -48,6 +48,5 @@ bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
 
 ## 可选后续
 
-- 等 issue #11 agent 完成 → review PR + merge
-- 其他产品仓 clone 到 `~/Projects` 或配置 `local.env` 后即可从工作台派单
+- Clone `landing-tool-a` / `saas-stripe-mvp` 到 `~/Projects` 或配置 `local.env` 后继续派单
 - MusicSaas 本地 WIP：`preview/beatscape-try` 上 `git stash pop`（stash: `wip-all`）

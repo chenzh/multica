@@ -170,6 +170,8 @@ if [ "$JSON" -eq 0 ]; then
 
   if [ "$needs_action" -eq 1 ]; then
     echo "⚠️  ACTION: 处理 BLOCKED → runbooks/blocked-triage.md"
+  elif [ "$total_safe" -eq 0 ] && [ "$needs_action" -eq 0 ]; then
+    echo "✅ 无 BLOCKED、队列已空 — 可躺平（从 backlog 补票见 sync-backlog-to-issues.sh）"
   elif [ "$total_merged" -eq 0 ] && [ "$total_safe" -gt 0 ]; then
     echo "💤 队列有粮但未交付 — 考虑: ceo-dashboard.sh --dispatch"
   else

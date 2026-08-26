@@ -184,6 +184,9 @@ if total_blocked > 0:
 elif pending_merge_section:
     verdict = f"🟢 {len(pending_merge_section)} 条绿 PR 待 merge"
     action = "回复「merge #xx」或开启 CEO_AUTO_MERGE=1 自动合并"
+elif total_safe == 0 and total_blocked == 0:
+    verdict = "✅ 无 BLOCKED、队列已空 — 可躺平"
+    action = "从 backlog 补 agent-safe 票（sync-backlog-to-issues.sh）或 unpause 项目"
 elif total_merged == 0 and total_safe > 0:
     verdict = "💤 队列有粮、昨夜零交付 — 建议派单"
     action = "运行: ceo-dashboard.sh --dispatch 或工作台「智能派单」"

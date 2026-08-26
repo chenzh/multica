@@ -18,3 +18,8 @@
 ### TICKET-004 [agent-safe] Privacy / Terms 静态页
 
 - **AC:** AC-3  
+
+### TICKET-005 [agent-safe] favicon 与 web manifest
+
+- **What:** `apps/web/public/favicon.ico`、`site.webmanifest`（name/theme_color）  
+- **AC:** `pnpm typecheck` exit 0；`/manifest.webmanifest` 或等价路由可访问  

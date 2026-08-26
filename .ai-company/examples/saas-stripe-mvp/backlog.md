@@ -15,3 +15,8 @@
 ### TICKET-004 [agent-safe] GET /v1/me mock handler
 
 - **AC:** AC-3、AC-N2（Go test）  
+
+### TICKET-005 [agent-safe] GET /health 存活探针
+
+- **What:** `server` 增加 `GET /health` 返回 `{"status":"ok"}`  
+- **AC:** Go test 覆盖 handler；`make check` exit 0  

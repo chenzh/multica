@@ -302,6 +302,68 @@ def start_dispatch_job(*, mode: str, repo: str = "", issue: str = "", max_total:
     return job
 
 
+def start_site_factory_job(
+    *,
+    intake: str,
+    create_repo: bool = False,
+    notify: bool = True,
+    max_dispatch: int = 2,
+) -> dict[str, Any]:
+    intake = intake.strip()
+    if not intake:
+        raise ValueError("intake is required")
+
+    job_id = uuid.uuid4().hex[:12]
+    log_path = JOBS_DIR / f"{job_id}.log"
+    JOBS_DIR.mkdir(parents=True, exist_ok=True)
+
+    cmd = [
+        "bash",
+        str(SCRIPT_DIR / "site-factory.sh"),
+        "--intake",
+        intake,
+        "--max-dispatch",
+        str(max_dispatch),
+    ]
+    if create_repo:
+        cmd.extend(["--create-repo", "--push"])
+    if notify:
+        cmd.append("--notify")
+
+    with open(log_path, "w", encoding="utf-8") as log_file:
+        proc = subprocess.Popen(
+            cmd,
+            cwd=MULTICA_ROOT,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+        )
+
+    job = {
+        "id": job_id,
+        "mode": "site-factory",
+        "intake": intake,
+        "create_repo": create_repo,
+        "max_dispatch": max_dispatch,
+        "status": "running",
+        "pid": proc.pid,
+        "log_path": str(log_path),
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "finished_at": None,
+        "exit_code": None,
+    }
+    save_job(job)
+
+    def watcher() -> None:
+        code = proc.wait()
+        job["status"] = "success" if code == 0 else "failed"
+        job["exit_code"] = code
+        job["finished_at"] = datetime.now(timezone.utc).isoformat()
+        save_job(job)
+
+    threading.Thread(target=watcher, daemon=True).start()
+    return job
+
+
 def tail_log(path: str, lines: int = 40) -> str:
     file_path = Path(path)
     if not file_path.is_file():
@@ -385,6 +447,17 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(HTTPStatus.OK, {"jobs": load_jobs()})
                 return
 
+            if path == "/api/site-factory":
+                self._send_json(
+                    HTTPStatus.OK,
+                    {
+                        "ok": True,
+                        "method": "POST",
+                        "fields": ["intake", "create_repo", "notify", "max_dispatch"],
+                    },
+                )
+                return
+
             match = re.fullmatch(r"/api/jobs/([a-f0-9]+)", path)
             if match:
                 job_id = match.group(1)
@@ -427,6 +500,21 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         try:
+            if parsed.path == "/api/site-factory":
+                body = self._read_json()
+                intake = str(body.get("intake", "")).strip()
+                if not intake:
+                    self._send_json(HTTPStatus.BAD_REQUEST, {"error": "intake is required"})
+                    return
+                job = start_site_factory_job(
+                    intake=intake,
+                    create_repo=bool(body.get("create_repo", False)),
+                    notify=body.get("notify", True) is not False,
+                    max_dispatch=int(body.get("max_dispatch", 2)),
+                )
+                self._send_json(HTTPStatus.ACCEPTED, job)
+                return
+
             if parsed.path != "/api/dispatch":
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "not found"})
                 return

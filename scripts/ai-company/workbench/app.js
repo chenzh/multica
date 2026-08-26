@@ -242,6 +242,21 @@ async function dispatchPortfolio(maxTotal) {
   document.getElementById("log-box").textContent = `Started job ${job.id}\n${job.log_path || ""}`;
 }
 
+async function launchSiteFactory() {
+  const intake = document.getElementById("site-factory-intake").value.trim();
+  if (!intake) {
+    alert("请输入建站想法，例如：做一个 JSON 格式化网站");
+    return;
+  }
+  const createRepo = document.getElementById("site-factory-create-repo").checked;
+  const job = await api("/api/site-factory", {
+    method: "POST",
+    body: JSON.stringify({ intake, create_repo: createRepo, notify: true, max_dispatch: 2 }),
+  });
+  await refreshAll();
+  document.getElementById("log-box").textContent = `Site factory job ${job.id}\n${job.log_path || ""}`;
+}
+
 async function dispatchIssue(issue) {
   const project = state.selectedProject;
   if (!project?.local_path) {
@@ -276,6 +291,9 @@ function bindEvents() {
   document.getElementById("dispatch-portfolio").addEventListener("click", async () => {
     const maxTotal = Number(document.getElementById("max-total").value || "1");
     await dispatchPortfolio(maxTotal);
+  });
+  document.getElementById("site-factory-submit").addEventListener("click", async () => {
+    await launchSiteFactory();
   });
   document.getElementById("dispatch-one").addEventListener("click", async () => {
     const data = await api(`/api/queue?repo=${encodeURIComponent(state.selectedRepo)}`);

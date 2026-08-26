@@ -116,6 +116,9 @@ done
 copy_tree "$SCRIPT_DIR/scaffold/.github/workflows/api-contract-gate.yml" \
   "$TARGET/.github/workflows/api-contract-gate.yml"
 
+copy_tree "$SCRIPT_DIR/scaffold/.github/workflows/cloudflare-pages-check.yml" \
+  "$TARGET/.github/workflows/cloudflare-pages-check.yml"
+
 # Issue template for agent-safe tasks
 copy_tree "$SCRIPT_DIR/scaffold/.github/ISSUE_TEMPLATE/agent_safe_task.yml" \
   "$TARGET/.github/ISSUE_TEMPLATE/agent_safe_task.yml"

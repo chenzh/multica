@@ -16,6 +16,12 @@ permissions:
   pull-requests: write
 
 jobs:
+  skip:
+    if: hashFiles('api/openapi.yaml') == ''
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No api/openapi.yaml — API contract gate skipped"
+
   lint-openapi:
     if: hashFiles('api/openapi.yaml') != ''
     runs-on: ubuntu-latest

@@ -43,11 +43,13 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | [docs/12-ceo-dashboard.md](./docs/12-ceo-dashboard.md) | 老板仪表盘：看什么、何时介入 |
 | [docs/13-implementation-roadmap.md](./docs/13-implementation-roadmap.md) | P0→P3 分阶段路线图 |
 | [docs/14-multica-autopilot-portfolio.md](./docs/14-multica-autopilot-portfolio.md) | **Portfolio 夜间调度 + Multica Autopilot** |
+| [docs/15-feishu-site-factory.md](./docs/15-feishu-site-factory.md) | **飞书一句话建站：竞品 → MVP → Cloudflare → 多 Agent** |
 
 ### 运营 Runbook
 
 | 文档 | 说明 |
 |------|------|
+| [runbooks/feishu-one-line-site.md](./runbooks/feishu-one-line-site.md) | **飞书「做一个 XX 网站」建站 runbook** |
 | [runbooks/ceo-daily.md](./runbooks/ceo-daily.md) | CEO 每日 15 分钟 |
 | [runbooks/nightly-ceo-brief.md](./runbooks/nightly-ceo-brief.md) | **每晚 21:00 自动派单 + 日报** |
 | [runbooks/ceo-weekly.md](./runbooks/ceo-weekly.md) | CEO 每周治理 |

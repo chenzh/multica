@@ -5,7 +5,17 @@ set -euo pipefail
 ISSUE_NUMBER="${1:?usage: dispatch-cursor-agent.sh <issue_number>}"
 REPO="${GITHUB_REPOSITORY:-multica-ai/multica}"
 REPO_URL="https://github.com/${REPO}"
-API_KEY="${CURSOR_API_KEY:?CURSOR_API_KEY is required}"
+
+# Local CEO machine: use cursor-agent CLI session when no Cloud API key.
+if [ -z "${CURSOR_API_KEY:-}" ]; then
+  if [ "${DISPATCH_FORCE_CLOUD:-}" != "1" ] && command -v cursor-agent &>/dev/null && cursor-agent status &>/dev/null; then
+    exec bash "$(dirname "$0")/dispatch-cursor-agent-cli.sh" "$ISSUE_NUMBER"
+  fi
+  echo "error: CURSOR_API_KEY is required for Cloud dispatch (or log in: cursor-agent login)" >&2
+  exit 1
+fi
+
+API_KEY="$CURSOR_API_KEY"
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d)"

@@ -171,13 +171,18 @@ if [ "$JSON" -eq 0 ]; then
   fi
   echo ""
   echo "Commands:"
-  echo "  bash scripts/ai-company/portfolio-dispatch.sh --max-total $MAX_TOTAL"
+  echo "  bash scripts/ai-company/portfolio-dispatch.sh --local --max-total $MAX_TOTAL"
   echo "  bash scripts/ai-company/ceo-dashboard.sh --dispatch"
 fi
 
 if [ "$DISPATCH" -eq 1 ]; then
   echo ""
-  echo ">> portfolio-dispatch --max-total $MAX_TOTAL"
-  bash "$MULTICA_ROOT/scripts/ai-company/portfolio-dispatch.sh" \
-    --registry "$REGISTRY" --max-total "$MAX_TOTAL"
+  dispatch_args=(--registry "$REGISTRY" --max-total "$MAX_TOTAL")
+  if command -v cursor-agent &>/dev/null && cursor-agent status &>/dev/null; then
+    dispatch_args+=(--local)
+    echo ">> portfolio-dispatch --local --max-total $MAX_TOTAL (cursor-agent session)"
+  else
+    echo ">> portfolio-dispatch --max-total $MAX_TOTAL (GHA — needs CURSOR_API_KEY)"
+  fi
+  bash "$MULTICA_ROOT/scripts/ai-company/portfolio-dispatch.sh" "${dispatch_args[@]}"
 fi

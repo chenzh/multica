@@ -19,16 +19,27 @@
 
 ## 仍需你手动完成（约 5 分钟）
 
-### 1. GitHub Secrets — `CURSOR_API_KEY`
+### 1. 派单方式（二选一）
 
-在 **每个** 要跑 agent 的仓库设置：
+**A. 本地 CLI（推荐，你已登录 cursor-agent）**
 
 ```bash
-gh secret set CURSOR_API_KEY -R chenzh/MusicSaas
-gh secret set CURSOR_API_KEY -R chenzh/landing-tool-a
+# 派 beatscape 一单
+GITHUB_REPOSITORY=chenzh/MusicSaas \
+REPO_ROOT=/Users/zhenhuachen/Desktop/MusicSaas \
+bash ~/Projects/multica/scripts/agent-delivery/dispatch-cursor-agent-cli.sh 6
+
+# 或 portfolio 本地派单
+bash ~/Projects/multica/scripts/ai-company/portfolio-dispatch.sh --local --max-total 1
 ```
 
-值来自 [Cursor Dashboard → Integrations → User API Keys](https://cursor.com/settings)。
+**B. GitHub Actions 云端（需 Secret）**
+
+```bash
+export CURSOR_API_KEY=crsr_...
+bash ~/Projects/multica/scripts/ai-company/setup-secrets.sh
+gh workflow run agent-delivery-dispatch.yml -R chenzh/MusicSaas -f max_tasks=1
+```
 
 ### 2. 跨仓 portfolio dispatch（可选，睡后自动派单）
 

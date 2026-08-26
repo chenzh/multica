@@ -6,6 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MULTICA_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 # shellcheck source=lib/source-local-env.sh
 source "$SCRIPT_DIR/lib/source-local-env.sh"
+# shellcheck source=lib/agent-queue.sh
+source "$SCRIPT_DIR/lib/agent-queue.sh"
 
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 GITHUB_ORG="${GITHUB_ORG:-chenzh}"
@@ -91,6 +93,15 @@ while IFS= read -r repo; do
         echo "warn: merge failed $repo#$num" >&2
         continue
       }
+      linked="$(
+        gh pr view "$num" -R "$repo" \
+          --json closingIssuesReferences -q '.closingIssuesReferences[].number' 2>/dev/null || true
+      )"
+      for issue_num in $linked; do
+        [ -z "$issue_num" ] && continue
+        strip_agent_labels "$repo" "$issue_num"
+        echo "  cleaned labels on linked issue #$issue_num"
+      done
     fi
     merged=$((merged + 1))
   done

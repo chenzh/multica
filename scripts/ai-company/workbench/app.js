@@ -4,6 +4,7 @@ const state = {
   selectedRepo: "",
   selectedProject: null,
   meta: {},
+  runtime: {},
   jobs: [],
   pollTimer: null,
 };
@@ -77,6 +78,51 @@ function renderMeta() {
   pill.textContent = ready ? "本地 cursor-agent 已登录" : "未登录 cursor-agent";
   pill.className = `pill ${ready ? "good" : "warn"}`;
   document.getElementById("org-label").textContent = `org: ${state.meta.org || "-"}`;
+}
+
+function renderRuntime() {
+  const runtime = state.runtime || {};
+  const daemonPill = document.getElementById("runtime-daemon");
+  const agentsEl = document.getElementById("runtime-agents");
+  const cliEl = document.getElementById("runtime-cli");
+
+  if (!runtime.api_ok) {
+    daemonPill.textContent = runtime.api_error || "Multica API 不可用";
+    daemonPill.className = "pill warn";
+    agentsEl.innerHTML = `<div class="empty">无法读取智能体并发</div>`;
+    cliEl.textContent = "本机 cursor-agent 进程: -";
+    return;
+  }
+
+  const daemon = runtime.daemon || {};
+  const maxTasks = daemon.max_concurrent_tasks ?? "-";
+  const runtimes = daemon.runtimes || "-";
+  daemonPill.textContent = `daemon 上限 ${maxTasks} · ${runtimes}`;
+  daemonPill.className = "pill good";
+
+  const agents = runtime.agents || [];
+  if (!agents.length) {
+    agentsEl.innerHTML = `<div class="empty">无智能体</div>`;
+  } else {
+    agentsEl.innerHTML = agents
+      .map((agent) => {
+        const running = Number(agent.running_task_count || 0);
+        const max = agent.max_concurrent_tasks ?? "-";
+        const active = running > 0 ? "good" : "";
+        return `
+          <div class="runtime-agent">
+            <div class="runtime-agent-name">${agent.name || agent.id}</div>
+            <div class="runtime-agent-meta">
+              上限 ${max} · 跑 task <span class="pill ${active}">${running}</span>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  const cli = runtime.local_cursor_cli || {};
+  cliEl.textContent = `本机 cursor-agent/agent 进程: ${cli.total ?? 0}（portfolio ${cli.portfolio ?? 0}，multica daemon ${cli.multica_daemon ?? 0}，飞书桥接 ${cli.feishu_claw ?? 0}，其他 ${cli.other ?? 0}）· Multica task 合计 ${runtime.working_agents_total_running ?? 0}`;
 }
 
 async function selectProject(project) {
@@ -170,7 +216,7 @@ async function loadJobs() {
     .map(
       (job) => `
       <div class="job-item" data-job="${job.id}">
-        <div><strong>${job.mode}</strong> ${job.repo || "portfolio"} ${job.issue ? `#${job.issue}` : ""}</div>
+        <div><strong>${job.mode}</strong> ${job.intake ? job.intake.slice(0, 40) : job.repo || "portfolio"} ${job.issue ? `#${job.issue}` : ""}</div>
         <div class="job-status">${job.status} · ${job.started_at || ""}</div>
         <button class="view-log" data-job="${job.id}">看日志</button>
       </div>
@@ -215,8 +261,13 @@ async function dispatchIssue(issue) {
   document.getElementById("log-box").textContent = `Started job ${job.id}\n${job.log_path || ""}`;
 }
 
+async function loadRuntime() {
+  state.runtime = await api("/api/multica-runtime");
+  renderRuntime();
+}
+
 async function refreshAll() {
-  await Promise.all([loadMeta(), loadProjects(), loadJobs()]);
+  await Promise.all([loadMeta(), loadRuntime(), loadProjects(), loadJobs()]);
   if (state.selectedRepo) await loadQueue();
 }
 
@@ -239,7 +290,10 @@ function bindEvents() {
 async function main() {
   bindEvents();
   await refreshAll();
-  state.pollTimer = window.setInterval(loadJobs, 5000);
+  state.pollTimer = window.setInterval(() => {
+    loadJobs();
+    loadRuntime();
+  }, 5000);
 }
 
 main().catch((error) => {

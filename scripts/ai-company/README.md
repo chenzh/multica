@@ -60,6 +60,15 @@ bash scripts/ai-company/ceo-workbench.sh
 
 Requires: `python3`, `gh`, logged-in `cursor-agent` for local dispatch.
 
+API includes `/api/multica-runtime` (daemon limits, per-agent concurrency, local CLI process breakdown). Same snapshot from CLI:
+
+```bash
+bash scripts/ai-company/multica-runtime-status.sh
+bash scripts/ai-company/multica-runtime-status.sh --json
+```
+
+`ceo-dashboard.sh` prints the human snapshot at the bottom.
+
 Local checkout paths are machine-specific — configure in `.ai-company/config/local.env`
 (`MUSIC_SAAS_PATH` or `AI_REPO_PATH_<id>`), or let `resolve-repo-path.sh` auto-discover
 under `~/Projects` / `~/Desktop`.
@@ -132,11 +141,15 @@ bash scripts/ai-company/push-fork.sh
 
 ## ceo-nightly.sh / ceo-daily-brief.sh
 
-21:00 cron: dispatch + markdown brief + optional Slack/Feishu webhook.
+21:00 cron: reconcile → auto-merge → reconcile → background dispatch → brief + Feishu/Slack.
 
 ```bash
 bash scripts/ai-company/install-nightly-cron.sh --install
-bash scripts/ai-company/ceo-nightly.sh --no-dispatch   # brief only
+bash scripts/ai-company/ceo-nightly.sh --no-dispatch      # brief only
+bash scripts/ai-company/ceo-nightly.sh --sync-dispatch    # wait for agents before brief
+bash scripts/ai-company/ceo-reconcile-queue.sh            # fix stale agent-* labels
 ```
+
+Dispatch log (background): `~/.multica/ceo-nightly-dispatch.log`
 
 See `.ai-company/runbooks/nightly-ceo-brief.md`.

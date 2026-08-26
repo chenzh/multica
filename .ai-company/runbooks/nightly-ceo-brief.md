@@ -2,9 +2,15 @@
 
 ## 做什么
 
-1. **派单**（可选）：`portfolio-dispatch --local`，消化 `agent-safe` 队列  
-2. **日报**：汇总 BLOCKED / 交付 / 建议动作  
-3. **推送**：飞书或 Slack webhook（只推摘要，不推 diff）
+1. **reconcile**：修复僵死 `agent-*` 标签（有 open PR 标 `agent-done`，无 PR 回 `agent-safe`）
+2. **auto-merge**：合并 CI 全绿的 agent PR，并清理关联 issue 标签
+3. **派单**（后台）：`portfolio-dispatch --local`，不阻塞日报；日志见 `~/.multica/ceo-nightly-dispatch.log`
+4. **日报 + 飞书**：汇总 BLOCKED / 交付 / Multica 并发 / 建议动作
+
+```bash
+bash scripts/ai-company/verify-hands-off.sh   # 脱手验收
+bash scripts/ai-company/ceo-nightly.sh --sync-dispatch  # 若要等派单完成再收日报
+```
 
 ## 一次性配置
 
@@ -39,3 +45,4 @@ bash scripts/ai-company/install-nightly-cron.sh --install
 
 - 日报 markdown：`~/.multica/ceo-briefs/brief-*.md`
 - nightly 日志：`~/.multica/ceo-nightly.log`
+- 后台派单：`~/.multica/ceo-nightly-dispatch.log`

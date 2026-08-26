@@ -11,6 +11,8 @@ REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}
 GITHUB_ORG="${GITHUB_ORG:-chenzh}"
 MAX_TOTAL="${MAX_TOTAL:-5}"
 DISPATCH="${CEO_NIGHTLY_DISPATCH:-1}"
+DISPATCH_BG="${CEO_NIGHTLY_DISPATCH_BG:-1}"
+DISPATCH_LOG="${CEO_NIGHTLY_DISPATCH_LOG:-$HOME/.multica/ceo-nightly-dispatch.log}"
 AUTO_MERGE="${CEO_AUTO_MERGE:-1}"
 BRIEF=1
 SINCE="${SINCE:-@yesterday}"
@@ -26,14 +28,17 @@ Options:
   --dispatch          Force portfolio dispatch before brief
   --no-dispatch       Brief only
   --brief-only        Alias for --no-dispatch
+  --sync-dispatch     Wait for dispatch to finish (blocks brief until agents done)
   --max-total N       Dispatch cap (default: 5)
   --registry PATH
   --org ORG
   -h, --help
 
 Environment:
-  CEO_NIGHTLY_DISPATCH=1|0   default 1
-  CEO_AUTO_MERGE=1|0         default 1 — merge green open PRs before dispatch
+  CEO_NIGHTLY_DISPATCH=1|0       default 1
+  CEO_NIGHTLY_DISPATCH_BG=1|0    default 1 — background dispatch so brief fires immediately
+  CEO_AUTO_MERGE=1|0             default 1 — merge green open PRs before dispatch
+  CEO_RECONCILE_QUEUE=1|0        default 1 — fix stale agent-* labels
   SLACK_WEBHOOK_URL / FEISHU_WEBHOOK_URL in local.env
 EOF
 }
@@ -42,6 +47,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --dispatch) DISPATCH=1; shift ;;
     --no-dispatch|--brief-only) DISPATCH=0; shift ;;
+    --sync-dispatch) DISPATCH_BG=0; shift ;;
     --max-total) MAX_TOTAL="${2:?}"; shift 2 ;;
     --registry) REGISTRY="${2:?}"; shift 2 ;;
     --org) GITHUB_ORG="${2:?}"; shift 2 ;;
@@ -51,7 +57,20 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+reconcile_queue() {
+  bash "$SCRIPT_DIR/ceo-reconcile-queue.sh" \
+    --registry "$REGISTRY" \
+    --org "$GITHUB_ORG" || {
+    echo "warn: reconcile failed (continuing)" >&2
+  }
+}
+
 echo "=== ceo-nightly $(date -Iseconds) ==="
+
+if [ "$AUTO_MERGE" -eq 1 ] || [ "${CEO_RECONCILE_QUEUE:-1}" -eq 1 ]; then
+  echo ">> reconcile queue labels (pre-merge)"
+  reconcile_queue
+fi
 
 if [ "$AUTO_MERGE" -eq 1 ]; then
   echo ">> auto-merge green PRs"
@@ -60,17 +79,31 @@ if [ "$AUTO_MERGE" -eq 1 ]; then
     --org "$GITHUB_ORG" || {
     echo "warn: auto-merge failed (continuing)" >&2
   }
+  if [ "${CEO_RECONCILE_QUEUE:-1}" -eq 1 ]; then
+    echo ">> reconcile queue labels (post-merge)"
+    reconcile_queue
+  fi
 fi
 
 if [ "$DISPATCH" -eq 1 ]; then
-  echo ">> dispatch (max_total=$MAX_TOTAL)"
-  bash "$SCRIPT_DIR/ceo-dashboard.sh" \
-    --registry "$REGISTRY" \
-    --org "$GITHUB_ORG" \
-    --dispatch \
-    --max-total "$MAX_TOTAL" || {
-    echo "warn: dispatch failed (continuing to brief)" >&2
-  }
+  dispatch_cmd=(
+    bash "$SCRIPT_DIR/ceo-dashboard.sh"
+    --registry "$REGISTRY"
+    --org "$GITHUB_ORG"
+    --dispatch
+    --max-total "$MAX_TOTAL"
+  )
+  if [ "$DISPATCH_BG" -eq 1 ]; then
+    mkdir -p "$(dirname "$DISPATCH_LOG")"
+    echo ">> dispatch (max_total=$MAX_TOTAL) background → $DISPATCH_LOG"
+    nohup "${dispatch_cmd[@]}" >>"$DISPATCH_LOG" 2>&1 &
+    echo "dispatch pid: $!"
+  else
+    echo ">> dispatch (max_total=$MAX_TOTAL) sync"
+    "${dispatch_cmd[@]}" || {
+      echo "warn: dispatch failed (continuing to brief)" >&2
+    }
+  fi
 fi
 
 if [ "$BRIEF" -eq 1 ]; then

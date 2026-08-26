@@ -6,6 +6,8 @@ set -euo pipefail
 MULTICA_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=lib/source-local-env.sh
 source "$(dirname "$0")/lib/source-local-env.sh"
+# shellcheck source=lib/agent-queue.sh
+source "$(dirname "$0")/lib/agent-queue.sh"
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 MAX_TOTAL="${MAX_TOTAL:-5}"
 DRY_RUN=0
@@ -164,6 +166,10 @@ for idx in "${ORDER[@]}"; do
       issue="$(pick_next_issue "$repo")"
       if [ -z "$issue" ]; then
         echo "  no eligible agent-safe issues in $repo"
+        break
+      fi
+      if issue_dispatch_active "$issue"; then
+        echo "  skip $repo#$issue (dispatch already in progress)"
         break
       fi
       if [ "$DRY_RUN" -eq 1 ]; then

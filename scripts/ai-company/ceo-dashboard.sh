@@ -181,6 +181,8 @@ if [ "$JSON" -eq 0 ]; then
   echo "Commands:"
   echo "  bash scripts/ai-company/portfolio-dispatch.sh --local --max-total $MAX_TOTAL"
   echo "  bash scripts/ai-company/ceo-dashboard.sh --dispatch"
+  echo ""
+  bash "$SCRIPT_DIR/multica-runtime-status.sh" --human 2>/dev/null || true
 fi
 
 if [ "$DISPATCH" -eq 1 ]; then

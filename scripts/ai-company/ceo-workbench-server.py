@@ -98,6 +98,19 @@ def cursor_agent_ready() -> bool:
     return result.returncode == 0 and "Logged in" in (result.stdout + result.stderr)
 
 
+def multica_runtime_status() -> dict[str, Any]:
+    result = run_cmd(
+        ["bash", str(SCRIPT_DIR / "multica-runtime-status.sh"), "--json"],
+        timeout=60,
+    )
+    if result.returncode != 0:
+        return {"api_ok": False, "api_error": result.stderr.strip() or "multica-runtime-status failed"}
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return {"api_ok": False, "api_error": "invalid JSON from multica-runtime-status"}
+
+
 def resolve_repo_path(project_id: str = "", repo: str = "") -> str:
     cmd = ["bash", str(SCRIPT_DIR / "resolve-repo-path.sh"), "--quiet"]
     if project_id:
@@ -336,6 +349,10 @@ class Handler(BaseHTTPRequestHandler):
                         "dispatch_mode": "local-cli" if cursor_agent_ready() else "gha",
                     },
                 )
+                return
+
+            if path == "/api/multica-runtime":
+                self._send_json(HTTPStatus.OK, multica_runtime_status())
                 return
 
             if path == "/api/projects":

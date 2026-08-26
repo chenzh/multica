@@ -37,9 +37,9 @@ fi
 
 echo ""
 echo "2. 夜间 cron"
-if crontab -l 2>/dev/null | grep -q multica-ai-company-nightly; then
+if crontab -l 2>/dev/null | grep -qE 'multica-ai-company-nightly|ceo-nightly\.sh'; then
   pass "21:00 ceo-nightly crontab 已安装"
-  crontab -l 2>/dev/null | grep -A1 multica-ai-company-nightly | sed 's/^/     /'
+  crontab -l 2>/dev/null | grep -E 'multica-ai-company-nightly|ceo-nightly\.sh' | sed 's/^/     /'
 else
   bad "未安装 cron — bash scripts/ai-company/install-nightly-cron.sh --install"
 fi
@@ -77,12 +77,28 @@ else
 fi
 
 echo ""
-echo "5. 试跑 nightly（不派单）"
-if bash "$SCRIPT_DIR/ceo-nightly.sh" --no-dispatch >>/tmp/verify-hands-off-nightly.log 2>&1; then
-  pass "ceo-nightly --no-dispatch 成功（见 /tmp/verify-hands-off-nightly.log）"
-  grep -E '^(notify:|brief:)' /tmp/verify-hands-off-nightly.log 2>/dev/null | sed 's/^/     /' || true
+echo "4b. Multica 并发可观测"
+if bash "$SCRIPT_DIR/multica-runtime-status.sh" --json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); assert d.get('api_ok'); print('agents', len(d.get('agents',[])))"; then
+  pass "multica-runtime-status API 可读"
 else
-  bad "ceo-nightly 失败 — 见 /tmp/verify-hands-off-nightly.log"
+  note "multica-runtime-status 不可用（Multica 未登录或 daemon 未跑）"
+fi
+
+echo ""
+echo "4c. 队列 reconcile"
+if bash "$SCRIPT_DIR/ceo-reconcile-queue.sh" --dry-run >>/tmp/verify-hands-off-reconcile.log 2>&1; then
+  pass "ceo-reconcile-queue --dry-run 成功"
+else
+  bad "ceo-reconcile-queue 失败 — /tmp/verify-hands-off-reconcile.log"
+fi
+
+echo ""
+echo "5. 试跑 nightly（brief only，不发通知）"
+if bash "$SCRIPT_DIR/ceo-daily-brief.sh" --no-notify --quiet >>/tmp/verify-hands-off-nightly.log 2>&1; then
+  pass "ceo-daily-brief --no-notify 成功（见 /tmp/verify-hands-off-nightly.log）"
+  grep -E '^brief:' /tmp/verify-hands-off-nightly.log 2>/dev/null | tail -1 | sed 's/^/     /' || true
+else
+  bad "ceo-daily-brief 失败 — 见 /tmp/verify-hands-off-nightly.log"
 fi
 
 echo ""

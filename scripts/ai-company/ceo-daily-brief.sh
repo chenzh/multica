@@ -72,9 +72,14 @@ JSON_LINES="$(
     --json
 )"
 
+RUNTIME_JSON="$(
+  bash "$SCRIPT_DIR/multica-runtime-status.sh" --json 2>/dev/null || echo '{"api_ok":false}'
+)"
+
 export BRIEF_FILE="$brief_file"
 export BRIEF_SINCE="$SINCE"
 export BRIEF_JSON_LINES="$JSON_LINES"
+export BRIEF_RUNTIME_JSON="$RUNTIME_JSON"
 
 python3 <<'PY'
 import json
@@ -85,6 +90,7 @@ from pathlib import Path
 
 brief_file = os.environ["BRIEF_FILE"]
 since = os.environ["BRIEF_SINCE"]
+runtime = json.loads(os.environ.get("BRIEF_RUNTIME_JSON", "{}"))
 rows = [
     json.loads(line)
     for line in os.environ["BRIEF_JSON_LINES"].splitlines()
@@ -202,6 +208,28 @@ cursor_ready = (
     else "no"
 )
 
+runtime_lines = []
+if runtime.get("api_ok"):
+    daemon = runtime.get("daemon") or {}
+    cli = runtime.get("local_cursor_cli") or {}
+    runtime_lines.append(
+        f"- daemon 上限 **{daemon.get('max_concurrent_tasks', '-')}** · "
+        f"运行时 {daemon.get('runtimes', '-')}"
+    )
+    runtime_lines.append(
+        f"- Multica task 合计在跑: **{runtime.get('working_agents_total_running', 0)}** · "
+        f"本机 CLI 进程: portfolio {cli.get('portfolio', 0)} / "
+        f"daemon {cli.get('multica_daemon', 0)} / 飞书 {cli.get('feishu_claw', 0)}"
+    )
+    for agent in runtime.get("agents") or []:
+        runtime_lines.append(
+            f"  - {agent.get('name', agent.get('id'))}: "
+            f"上限 {agent.get('max_concurrent_tasks', '-')} · "
+            f"跑 task {agent.get('running_task_count', 0)}"
+        )
+else:
+    runtime_lines.append(f"- _不可用_ ({runtime.get('api_error', 'unknown')})")
+
 ts = datetime.now().strftime("%Y-%m-%d %H:%M %Z")
 body = f"""# AI 公司日报 — {ts}
 
@@ -214,6 +242,10 @@ body = f"""# AI 公司日报 — {ts}
 | {total_blocked} | {total_running} | {total_safe} | {total_merged} |
 
 派单模式: {cursor_ready}
+
+## Multica / 本机 CLI
+
+{chr(10).join(runtime_lines)}
 
 ## 项目
 

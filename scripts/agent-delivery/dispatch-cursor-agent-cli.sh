@@ -122,9 +122,15 @@ set -e
 
 if [ "$exit_code" -eq 0 ]; then
   gh issue edit "$ISSUE_NUMBER" --remove-label "agent-running" --add-label "agent-done" 2>/dev/null || true
-  gh issue comment "$ISSUE_NUMBER" --body "✅ Local cursor-agent finished (exit 0). Check worktree \`${WORKTREE_NAME}\` and open PR if not auto-created."
+  gh issue comment "$ISSUE_NUMBER" --body "$(cat <<EOF
+✅ Local cursor-agent finished (exit 0). Check worktree \`${WORKTREE_NAME}\` and open PR if not auto-created.
+EOF
+)"
 else
   gh issue edit "$ISSUE_NUMBER" --remove-label "agent-running" --add-label "agent-blocked" 2>/dev/null || true
-  gh issue comment "$ISSUE_NUMBER" --body "❌ Local cursor-agent failed (exit $exit_code). See log: \`${LOG_FILE}\`"
+  gh issue comment "$ISSUE_NUMBER" --body "$(cat <<EOF
+❌ Local cursor-agent failed (exit $exit_code). See log: \`${LOG_FILE}\`
+EOF
+)"
   exit "$exit_code"
 fi

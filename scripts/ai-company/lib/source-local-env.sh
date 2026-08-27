@@ -36,6 +36,12 @@ if [ -f "$FEISHU_BOT_NOTIFY_ENV" ]; then
   source "$FEISHU_BOT_NOTIFY_ENV"
 fi
 
+FEISHU_APPROVAL_ENV="$MULTICA_ROOT/.ai-company/config/feishu-approval.env"
+if [ -f "$FEISHU_APPROVAL_ENV" ]; then
+  # shellcheck disable=SC1090
+  source "$FEISHU_APPROVAL_ENV"
+fi
+
 SECOND_BRAIN_FEISHU="${SECOND_BRAIN_FEISHU_JSON:-$HOME/Documents/SecondBrain/10-SYSTEM/control-plane-tunnel/feishu.local.json}"
 if [ -z "${FEISHU_WEBHOOK_URL:-}" ] && [ -f "$SECOND_BRAIN_FEISHU" ]; then
   FEISHU_WEBHOOK_URL="$(

@@ -41,7 +41,16 @@ bash scripts/ai-company/ceo-feishu-cloudflare-tunnel.sh quick-install   # 或 se
 bash scripts/ai-company/ceo-feishu-cloudflare-tunnel.sh quick-url       # 飞书 Request URL
 ```
 
-`local.env` 可选：
+`local.env` 或独立文件（推荐，避免与 local.env 混写）:
+
+```bash
+cp .ai-company/config/feishu-approval.env.example .ai-company/config/feishu-approval.env
+# 填入 Verification Token 后:
+bash scripts/ai-company/ceo-feishu-approval-service.sh install
+bash scripts/ai-company/print-feishu-inbound-setup.sh
+```
+
+`local.env` 也可:
 
 ```bash
 export MULTICA_FRONTEND_URL=http://localhost:3000

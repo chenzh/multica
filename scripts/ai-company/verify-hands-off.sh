@@ -83,10 +83,31 @@ if curl -fsS --max-time 2 "http://127.0.0.1:${CEO_FEISHU_APPROVAL_PORT:-9478}/he
 else
   note "飞书审批回调未跑 — bash scripts/ai-company/ceo-feishu-approval-service.sh install"
 fi
-if [ -n "${FEISHU_VERIFICATION_TOKEN:-}" ]; then
+if [ -n "${FEISHU_VERIFICATION_TOKEN:-}" ] && [[ "${FEISHU_VERIFICATION_TOKEN}" != YOUR_* ]]; then
   pass "FEISHU_VERIFICATION_TOKEN 已配置"
 else
   note "未设 FEISHU_VERIFICATION_TOKEN — 飞书事件订阅需填 token 后写入 local.env"
+fi
+
+echo ""
+echo "3b. Cloudflare 公网回调"
+if launchctl print "gui/$(id -u)/com.multica.ceo-feishu-cloudflare" &>/dev/null; then
+  pass "Cloudflare tunnel LaunchAgent 在跑"
+else
+  note "Cloudflare tunnel 未跑 — bash scripts/ai-company/ceo-feishu-cloudflare-tunnel.sh quick-install"
+fi
+url_file="${CEO_FEISHU_CF_TUNNEL_URL_FILE:-$HOME/.multica/ceo-feishu-cloudflare-url.txt}"
+if [ -f "$url_file" ]; then
+  pub_url="$(tr -d '[:space:]' <"$url_file")"
+  if [ -n "$pub_url" ]; then
+    if curl -fsS --max-time 15 "${pub_url}/health" >/dev/null 2>&1; then
+      pass "公网 /health 可达: ${pub_url}"
+    else
+      note "公网 URL 已记录但 /health 不可达 — 检查代理或 bash scripts/ai-company/ceo-feishu-cloudflare-tunnel.sh logs"
+    fi
+  fi
+else
+  note "尚无公网 URL — quick-install 或 token-install 后写入 $url_file"
 fi
 
 echo ""

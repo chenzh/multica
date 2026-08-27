@@ -12,7 +12,8 @@
 | 补票 | `sync-portfolio-backlogs.sh`（`--skip-existing`） |
 | 验收 | `verify-hands-off.sh` → 应全绿 |
 | Multica 并发 | `multica-runtime-status.sh`、工作台 `:9477` |
-| 飞书审批（可选） | `setup-feishu-approval.sh` + `CEO_FEISHU_APPROVAL_PUSH=1` + `ceo-feishu-cloudflare-tunnel.sh` |
+| 飞书审批（可选） | `setup-feishu-approval.sh` + `CEO_FEISHU_APPROVAL_PUSH=1` + `ceo-feishu-cloudflare-tunnel.sh quick-install` |
+| 飞书 inbound 最后一步 | `setup-feishu-approval-token.sh` → `feishu-approval.env` → `print-feishu-inbound-setup.sh` |
 
 ## 一次性配置（若尚未做）
 

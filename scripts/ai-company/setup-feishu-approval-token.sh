@@ -2,7 +2,7 @@
 # Guide user to copy Verification Token into feishu-approval.env (not available via API).
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MULTICA_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 OUT="$MULTICA_ROOT/.ai-company/config/feishu-approval.env"
 EXAMPLE="$MULTICA_ROOT/.ai-company/config/feishu-approval.env.example"
@@ -12,34 +12,34 @@ source "$SCRIPT_DIR/lib/source-local-env.sh"
 
 APP_ID="${FEISHU_BOT_APP_ID:-}"
 
-echo "=== 飞书 Verification Token 配置 ==="
+echo "=== Feishu Verification Token ==="
 echo ""
-echo "Verification Token 只能在开放平台控制台查看，API 无法读取。"
+echo "Verification Token is console-only (not available via API)."
 echo ""
 if [ -n "$APP_ID" ]; then
-  echo "1. 打开: https://open.feishu.cn/app/${APP_ID}/event"
-  echo "   （开发配置 → 事件与回调 → 加密策略 → Verification Token）"
+  echo "1. Open: https://open.feishu.cn/app/${APP_ID}/event"
+  echo "   Events and callbacks -> Encryption -> Verification Token"
 else
-  echo "1. 打开飞书开放平台 → 你的 Bot 应用 → 事件与回调 → 加密策略"
+  echo "1. Open Feishu developer console -> your bot -> Events and callbacks"
 fi
 echo ""
-echo "2. 复制 Verification Token，写入:"
+echo "2. Copy Verification Token into:"
 echo "   $OUT"
 echo ""
 if [ -f "$OUT" ]; then
   if grep -q 'YOUR_FEISHU_VERIFICATION_TOKEN' "$OUT" 2>/dev/null; then
-    echo "   ⚠️  $OUT 存在但仍是占位符"
+    echo "   WARN: $OUT exists but still has placeholder"
   else
-    echo "   ✅ $OUT 已存在"
+    echo "   OK: $OUT configured"
     bash "$SCRIPT_DIR/ceo-feishu-approval-service.sh" install
     bash "$SCRIPT_DIR/print-feishu-inbound-setup.sh"
     exit 0
   fi
 else
   cp "$EXAMPLE" "$OUT"
-  echo "   已创建 $OUT — 请编辑填入 token"
+  echo "   Created $OUT -- edit and paste token"
 fi
 echo ""
-echo "3. 保存后运行:"
+echo "3. After saving:"
 echo "   bash $SCRIPT_DIR/ceo-feishu-approval-service.sh install"
 echo "   bash $SCRIPT_DIR/print-feishu-inbound-setup.sh"

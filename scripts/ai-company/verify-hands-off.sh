@@ -102,6 +102,14 @@ if [ -f "$url_file" ]; then
   if [ -n "$pub_url" ]; then
     if curl -fsS --max-time 15 "${pub_url}/health" >/dev/null 2>&1; then
       pass "公网 /health 可达: ${pub_url}"
+      if curl -fsS --max-time 15 -X POST "${pub_url}/feishu/event" \
+        -H 'Content-Type: application/json' \
+        -d '{"challenge":"verify-hands-off"}' 2>/dev/null \
+        | python3 -c "import json,sys; d=json.load(sys.stdin); assert d.get('challenge')=='verify-hands-off'"; then
+        pass "公网飞书 URL challenge 校验通过"
+      else
+        note "公网 /feishu/event challenge 失败 — 检查审批服务 :9478"
+      fi
     else
       note "公网 URL 已记录但 /health 不可达 — 检查代理或 bash scripts/ai-company/ceo-feishu-cloudflare-tunnel.sh logs"
     fi

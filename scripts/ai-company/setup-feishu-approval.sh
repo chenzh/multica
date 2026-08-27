@@ -55,33 +55,43 @@ fi
 
 PORT="${CEO_FEISHU_APPROVAL_PORT:-9478}"
 FRONTEND="${MULTICA_FRONTEND_URL:-http://localhost:3000}"
+URL_FILE="${CEO_FEISHU_CF_TUNNEL_URL_FILE:-$HOME/.multica/ceo-feishu-cloudflare-url.txt}"
+PUB_URL=""
+if [ -f "$URL_FILE" ]; then
+  PUB_URL="$(tr -d '[:space:]' <"$URL_FILE")"
+fi
 
 cat <<EOF
 
 === Multica + 飞书 双向审批 — 下一步 ===
 
-1) 启动回调服务（本机或内网穿透）:
-   bash $SCRIPT_DIR/ceo-feishu-approval-server.py --port $PORT
+1) 回调服务（LaunchAgent）:
+   bash $SCRIPT_DIR/ceo-feishu-approval-service.sh install
+   bash $SCRIPT_DIR/ceo-feishu-approval-service.sh status
 
-2) 飞书开放平台 → 你的 Bot 应用 → 事件订阅:
-   - 请求地址: https://<公网可达>/feishu/event
+2) 公网 tunnel（quick 或 named）:
+   bash $SCRIPT_DIR/ceo-feishu-cloudflare-tunnel.sh quick-install
+   bash $SCRIPT_DIR/ceo-feishu-cloudflare-tunnel.sh refresh-quick-url
+
+3) 飞书开放平台 → 你的 Bot 应用 → 事件订阅:
+   - 请求地址: ${PUB_URL:-https://<公网可达>}/feishu/event
    - 订阅事件: card.action.trigger, im.message.receive_v1
-   - 把 Verification Token 写入 local.env:
-     export FEISHU_VERIFICATION_TOKEN=...
+   - Verification Token → local.env FEISHU_VERIFICATION_TOKEN，然后:
+     bash $SCRIPT_DIR/ceo-feishu-approval-service.sh install
 
-3) 手动推送审批卡片:
+4) 手动推送审批卡片:
    bash $SCRIPT_DIR/ceo-feishu-approval.sh sync
    bash $SCRIPT_DIR/ceo-feishu-approval.sh push
 
-4) 飞书文字命令（卡片按钮也需要第 1、2 步）:
+5) 飞书文字命令（卡片按钮也需要第 1–3 步）:
    /批 beatscape 42 说明
    /打回 beatscape 42 说明
 
-5) Multica Web 审批:
+6) Multica Web 审批:
    打开 $FRONTEND 收件箱 / issue，评论后:
    bash $SCRIPT_DIR/ceo-feishu-approval.sh approve beatscape 42 说明
 
-6) 夜间自动推卡片（可选）:
+7) 夜间自动推卡片（可选）:
    echo 'export CEO_FEISHU_APPROVAL_PUSH=1' >> $MULTICA_ROOT/.ai-company/config/local.env
 
 EOF

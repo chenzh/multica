@@ -58,7 +58,7 @@ Usage: ceo-feishu-cloudflare-tunnel.sh <command>
 Commands:
   quick              Start quick tunnel; print public URL (trycloudflare.com)
   quick-install      LaunchAgent: quick tunnel (URL changes on restart)
-  quick-url          Show last captured public URL
+  refresh-quick-url  Update URL file from tunnel log (after restart)
   token-install      LaunchAgent: tunnel run token (file or CLOUDFLARE_TUNNEL_TOKEN)
   fetch-run-token    Account API Token → scoped run token file (REST API)
   verify-api-token   Verify API token + list tunnels
@@ -244,8 +244,22 @@ show_quick_url() {
     echo "公网 URL: $url"
     echo "飞书 Request URL: ${url}/feishu/event"
   else
-    echo "尚无 URL — 先跑: bash $0 quick"
+    echo "尚无 URL — 先跑: bash $0 quick-install 或 bash $0 refresh-quick-url"
   fi
+}
+
+cmd_refresh_quick_url() {
+  local url=""
+  if [ -f "$LOG_FILE" ]; then
+    url="$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$LOG_FILE" 2>/dev/null | tail -1 || true)"
+  fi
+  if [ -z "$url" ]; then
+    echo "error: no trycloudflare URL in $LOG_FILE — is quick tunnel running?" >&2
+    exit 1
+  fi
+  echo "$url" >"$URL_FILE"
+  echo "  ✅ URL 已刷新: $url"
+  show_quick_url
 }
 
 generate_quick_plist() {
@@ -771,6 +785,7 @@ case "${1:-}" in
   quick) capture_quick_url ;;
   quick-install) cmd_quick_install ;;
   quick-url) show_quick_url ;;
+  refresh-quick-url) cmd_refresh_quick_url ;;
   login) need_cloudflared; "$CLOUDFLARED" tunnel login ;;
   setup-named) cmd_setup_named ;;
   named-install) cmd_named_install ;;

@@ -69,6 +69,10 @@ reconcile_queue() {
 
 echo "=== ceo-nightly $(date -Iseconds) ==="
 
+if launchctl print "gui/$(id -u)/com.multica.ceo-feishu-cloudflare" &>/dev/null; then
+  bash "$SCRIPT_DIR/ceo-feishu-cloudflare-tunnel.sh" refresh-quick-url >>"$HOME/.multica/ceo-feishu-cloudflare-url-refresh.log" 2>&1 || true
+fi
+
 if [ "$AUTO_MERGE" -eq 1 ] || [ "${CEO_RECONCILE_QUEUE:-1}" -eq 1 ]; then
   echo ">> reconcile queue labels (pre-merge)"
   reconcile_queue

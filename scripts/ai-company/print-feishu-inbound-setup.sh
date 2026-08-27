@@ -37,6 +37,5 @@ if [ -n "${FEISHU_VERIFICATION_TOKEN:-}" ] && [[ "${FEISHU_VERIFICATION_TOKEN}" 
   echo "  若刚写入 token: bash scripts/ai-company/ceo-feishu-approval-service.sh install"
 else
   echo "FEISHU_VERIFICATION_TOKEN: 未配置"
-  echo "  cp .ai-company/config/feishu-approval.env.example .ai-company/config/feishu-approval.env"
-  echo "  填入开放平台「事件订阅 → Verification Token」"
+  echo "  bash scripts/ai-company/setup-feishu-approval-token.sh"
 fi

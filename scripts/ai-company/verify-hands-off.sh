@@ -86,7 +86,7 @@ fi
 if [ -n "${FEISHU_VERIFICATION_TOKEN:-}" ] && [[ "${FEISHU_VERIFICATION_TOKEN}" != YOUR_* ]]; then
   pass "FEISHU_VERIFICATION_TOKEN 已配置"
 else
-  note "未设 FEISHU_VERIFICATION_TOKEN — 飞书事件订阅需填 token 后写入 local.env"
+  note "未设 FEISHU_VERIFICATION_TOKEN — cp .ai-company/config/feishu-approval.env.example feishu-approval.env"
 fi
 
 echo ""

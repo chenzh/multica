@@ -44,6 +44,8 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | [docs/13-implementation-roadmap.md](./docs/13-implementation-roadmap.md) | P0→P3 分阶段路线图 |
 | [docs/14-multica-autopilot-portfolio.md](./docs/14-multica-autopilot-portfolio.md) | **Portfolio 夜间调度 + Multica Autopilot** |
 | [docs/15-feishu-site-factory.md](./docs/15-feishu-site-factory.md) | **飞书一句话建站：竞品 → MVP → Cloudflare → 多 Agent** |
+| [docs/16-disaster-recovery.md](./docs/16-disaster-recovery.md) | **灾备策略摘要：GitHub 放什么 / 密钥不放什么** |
+| [docs/system-evolution/README.md](./docs/system-evolution/README.md) | **系统进化**（周报目录，真相源在 Multica） |
 
 ### 运营 Runbook
 
@@ -56,6 +58,8 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | [runbooks/onboard-new-project.md](./runbooks/onboard-new-project.md) | 新网站 / 新项目接入清单 |
 | [runbooks/blocked-triage.md](./runbooks/blocked-triage.md) | BLOCKED 分拣与澄清 |
 | [runbooks/incident-response.md](./runbooks/incident-response.md) | CI 挂、泄露、合规事件 |
+| [runbooks/disaster-recovery.md](./runbooks/disaster-recovery.md) | **换机 / 盘挂：恢复顺序 + Host Inventory** |
+| [runbooks/employee-autopilot.md](./runbooks/employee-autopilot.md) | 白天员工 Autopilot |
 
 ### 模板与配置
 

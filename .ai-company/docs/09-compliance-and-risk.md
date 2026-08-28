@@ -64,9 +64,14 @@ Multica task 历史 + GitHub Actions logs = 审计链。
 
 见 [runbooks/incident-response.md](../runbooks/incident-response.md)。
 
+## 灾备
+
+文档与脚本进 GitHub；密钥不进明文仓。见 [16-disaster-recovery.md](./16-disaster-recovery.md) 与 [runbooks/disaster-recovery.md](../runbooks/disaster-recovery.md)。
+
 ---
 
 ## 相关文档
 
 - [07-quality-gates.md](./07-quality-gates.md)  
 - [06-task-grading.md](./06-task-grading.md)  
+- [16-disaster-recovery.md](./16-disaster-recovery.md) 

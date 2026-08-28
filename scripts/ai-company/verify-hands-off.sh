@@ -40,6 +40,12 @@ echo "2. 夜间 cron"
 if crontab -l 2>/dev/null | grep -qE 'multica-ai-company-nightly|ceo-nightly\.sh'; then
   pass "21:00 ceo-nightly crontab 已安装"
   crontab -l 2>/dev/null | grep -E 'multica-ai-company-nightly|ceo-nightly\.sh' | sed 's/^/     /'
+  if env -i HOME="$HOME" USER="${USER:-$(id -un)}" PATH=/usr/bin:/bin:/sbin \
+    bash -lc "source '$SCRIPT_DIR/lib/source-local-env.sh' && command -v gh" &>/dev/null; then
+    pass "cron 最小 PATH 下 gh 可解析（source-local-env bootstrap）"
+  else
+    note "cron PATH 下 gh 不可见 — 已修请重跑 install 或确认 source-local-env"
+  fi
 else
   bad "未安装 cron — bash scripts/ai-company/install-nightly-cron.sh --install"
 fi
@@ -86,7 +92,16 @@ fi
 if [ -n "${FEISHU_VERIFICATION_TOKEN:-}" ] && [[ "${FEISHU_VERIFICATION_TOKEN}" != YOUR_* ]]; then
   pass "FEISHU_VERIFICATION_TOKEN 已配置"
 else
-  note "未设 FEISHU_VERIFICATION_TOKEN — cp .ai-company/config/feishu-approval.env.example feishu-approval.env"
+  note "未设 FEISHU_VERIFICATION_TOKEN — bash scripts/ai-company/setup-feishu-approval-token.sh"
+  if [ -n "${FEISHU_BOT_APP_ID:-}" ]; then
+    echo "     控制台: https://open.feishu.cn/app/${FEISHU_BOT_APP_ID}/event"
+  fi
+  if [ -f "${CEO_FEISHU_CF_TUNNEL_URL_FILE:-$HOME/.multica/ceo-feishu-cloudflare-url.txt}" ]; then
+    _pub="$(tr -d '[:space:]' <"${CEO_FEISHU_CF_TUNNEL_URL_FILE:-$HOME/.multica/ceo-feishu-cloudflare-url.txt}")"
+    if [ -n "$_pub" ]; then
+      echo "     Request URL: ${_pub}/feishu/event"
+    fi
+  fi
 fi
 
 echo ""
@@ -107,6 +122,16 @@ if [ -f "$url_file" ]; then
         -d '{"challenge":"verify-hands-off"}' 2>/dev/null \
         | python3 -c "import json,sys; d=json.load(sys.stdin); assert d.get('challenge')=='verify-hands-off'"; then
         pass "公网飞书 URL challenge 校验通过"
+        if [ -n "${FEISHU_VERIFICATION_TOKEN:-}" ] && [[ "${FEISHU_VERIFICATION_TOKEN}" != YOUR_* ]]; then
+          if curl -fsS --max-time 15 -X POST "${pub_url}/feishu/event" \
+            -H 'Content-Type: application/json' \
+            -d '{"token":"verify-hands-off-invalid","type":"event_callback"}' 2>/dev/null \
+            | python3 -c "import json,sys; d=json.load(sys.stdin); assert d.get('error')=='invalid token'"; then
+            pass "公网 token 校验拒绝无效 token"
+          else
+            note "公网 token 校验异常 — 重装 ceo-feishu-approval-service.sh install"
+          fi
+        fi
       else
         note "公网 /feishu/event challenge 失败 — 检查审批服务 :9478"
       fi

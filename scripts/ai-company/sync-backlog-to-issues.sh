@@ -3,6 +3,10 @@
 # Requires: gh CLI authenticated, agent-* labels created on the repo.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/source-local-env.sh
+source "$SCRIPT_DIR/lib/source-local-env.sh"
+
 usage() {
   cat <<'EOF'
 Usage: sync-backlog-to-issues.sh [options]

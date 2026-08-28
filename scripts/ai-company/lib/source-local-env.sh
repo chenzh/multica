@@ -3,6 +3,27 @@
 set -euo pipefail
 
 MULTICA_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+
+# Cron/LaunchAgent shells often ship a minimal PATH; gh/cursor-agent live under ~/.local/bin.
+_ai_company_bootstrap_path() {
+  local dir
+  for dir in \
+    "${HOME}/.local/bin" \
+    "${HOME}/.homebrew/bin" \
+    "${HOME}/.homebrew/sbin" \
+    "/opt/homebrew/bin" \
+    "/opt/homebrew/sbin" \
+    "/usr/local/bin" \
+    "${HOME}/.bun/bin" \
+    "${HOME}/.codebuddy/bin"; do
+    if [ -d "$dir" ] && [[ ":${PATH}:" != *":${dir}:"* ]]; then
+      PATH="${dir}:${PATH}"
+    fi
+  done
+  export PATH
+}
+_ai_company_bootstrap_path
+
 LOCAL_ENV="$MULTICA_ROOT/.ai-company/config/local.env"
 PROXY_ENV="$MULTICA_ROOT/.ai-company/config/proxy.env"
 

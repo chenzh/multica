@@ -165,9 +165,9 @@ run_agent_phase() {
       fi
       ;;
     mvp)
-      for f in brief.md accept_cases.md backlog.md; do
+      for f in brief.md accept_cases.md backlog.md competitor_inventory.md wont_do.md; do
         if [ ! -f "$delivery_dir/$f" ]; then
-          echo "warn: $f missing after $phase" >&2
+          echo "warn: $f missing after $phase (visual replica gate)" >&2
           return 1
         fi
       done

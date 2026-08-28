@@ -19,6 +19,7 @@ Use the Write tool to create:
    - SEO/keyword notes (top 5)
    - Risks & compliance flags (if any)
    - **Recommended MVP scope** (bullet list, ≤5 items)
+   - **Capture notes for inventory** (seed for MVP phase): key pages, hero/nav/CTA blocks; if a site is behind Cloudflare bot wall, say so and name a fallback reference URL
 
 ## Rules
 
@@ -26,6 +27,7 @@ Use the Write tool to create:
 - Do NOT write production code.
 - Do NOT expand scope beyond a shippable MVP.
 - Stack constraint: **Cloudflare only** (Pages + Workers + Wrangler). No Vercel, no production Docker.
+- Do **not** attempt to bypass competitor bot protection; document blocked sources instead.
 - If the idea is too vague, write `NEED_CLARIFY` at the top of research.md with numbered questions.
 
 ## CEO idea

@@ -50,27 +50,36 @@ fi
 WORKTREE_NAME="${WORKTREE_NAME:-cursor-issue-${ISSUE_NUMBER}}"
 USE_WORKTREE="${USE_WORKTREE:-1}"
 
+mkdir -p "$LOG_DIR"
+TS="$(date -u +%Y%m%dT%H%M%SZ)"
+LOG_FILE="$LOG_DIR/issue-${ISSUE_NUMBER}-${TS}.log"
+{
+  echo "=== dispatch-cursor-agent-cli.sh ==="
+  echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  echo "issue=#${ISSUE_NUMBER} root=${REPO_ROOT}"
+} >>"$LOG_FILE"
+
 if [ -z "$REPO" ]; then
   REPO="$(gh repo view "$REPO_ROOT" --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)"
 fi
 if [ -z "$REPO" ]; then
   echo "error: set GITHUB_REPOSITORY or run inside a gh-linked repo" >&2
+  echo "error: could not resolve GITHUB_REPOSITORY" >>"$LOG_FILE"
   exit 1
 fi
+echo "repo=$REPO" >>"$LOG_FILE"
 
 if ! command -v "$CURSOR_AGENT_BIN" &>/dev/null; then
   echo "error: $CURSOR_AGENT_BIN not found on PATH" >&2
+  echo "error: $CURSOR_AGENT_BIN not found" >>"$LOG_FILE"
   exit 1
 fi
 
 if ! "$CURSOR_AGENT_BIN" status &>/dev/null; then
   echo "error: cursor-agent not logged in — run: cursor-agent login" >&2
+  echo "error: cursor-agent not logged in" >>"$LOG_FILE"
   exit 1
 fi
-
-mkdir -p "$LOG_DIR"
-TS="$(date -u +%Y%m%dT%H%M%SZ)"
-LOG_FILE="$LOG_DIR/issue-${ISSUE_NUMBER}-${TS}.log"
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT

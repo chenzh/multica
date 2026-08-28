@@ -55,3 +55,16 @@ projects:
     paused: false
     delivery_slug: saas-stripe-mvp
     notes: "Payment human-only; repo bootstrapped 2026-08-26"
+
+  - id: json-site
+    repo: github.com/chenzh/json-site
+    tier: experiment
+    priority: 12
+    stack: cloudflare-pages
+    autopilot_id: null
+    max_nightly_tickets: 2
+    openapi: false
+    e2e: false
+    paused: false
+    delivery_slug: json-site
+    notes: "Feishu site-factory 2026-08-27 — json 格式化"

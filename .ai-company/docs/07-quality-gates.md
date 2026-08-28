@@ -82,6 +82,28 @@ jobs:
 
 E2E **不在 Agent 环内全跑**（太慢）→ CI 跑；Agent 环可跑 smoke 子集。
 
+### L4-视觉 — 复刻 / 落地页完整度（Visual Replica Gate）
+
+**适用：** Site Factory 产出站、竞品复刻、营销落地页。
+
+| 产物 | 必须存在 |
+|------|----------|
+| `competitor_inventory.md` | 路由 + 组件表 + 交互矩阵 |
+| `wont_do.md` | 显式不做 |
+| `accept_cases.md` | Structure / Interaction / Visual 三类 AC |
+| `make visual-check` | Playwright `@visual` 截图对比 |
+
+规则：
+
+1. Planner 无 `wont_do` / 空 inventory → **NEED_CLARIFY**，不得派 Implementer。
+2. Verifier **必须跑** `make visual-check`（或 `pnpm exec playwright test --grep @visual`）；exit ≠ 0 → **BLOCKED**。
+3. 禁止口头「很像 / 完整复刻」替代命令输出。
+4. 默认容差 `maxDiffPixelRatio ≤ 0.02`；基线提交进 git（`e2e/**/*-snapshots/`）。
+5. 不绕过竞品 bot 墙；抓不到则 inventory 标注 fallback 参考站。
+6. **不**把 Chromatic/Percy 当硬依赖（先本地 Playwright）。
+
+最低视觉用例：首页 desktop + 移动端 **375** 宽。
+
 ---
 
 ## L5 — Merge Policy
@@ -120,10 +142,27 @@ PR head 分支前缀 cursor/*
 - ❌ 跳过 required checks merge  
 - ❌ `--no-verify`  
 - ❌ Agent 修改 `merge-policy.json` 扩大 auto-merge 范围（human-only）
+- ❌ 口头宣称「很像 / 干完了」替代 DoD 命令输出
+- ❌ 安静时段外无脑刷满本机 cursor-agent 并发（Autopilot 默认 ≤2）
+
+---
+
+## Employee Autopilot（自己干活）
+
+白天由 `scripts/ai-company/autopilot-dispatch.sh` 当值班经理：
+
+- `QUEUE>0` 且未满并发 → `portfolio-dispatch --local`
+- 仅 BLOCKED → 不派，升级通知
+- 连续派单 QUEUE 不降 → 空转告警
+- 23:00–06:00 不自动派（见 [employee-autopilot.md](../runbooks/employee-autopilot.md)）
+
+CEO 职责收缩为：处理 Human 档升级 + 抽检 merge。
 
 ---
 
 ## 相关文档
 
 - [09-compliance-and-risk.md](./09-compliance-and-risk.md)  
-- [templates/accept_cases.md](../templates/accept_cases.md)  
+- [templates/accept_cases.md](../templates/accept_cases.md)
+- [runbooks/employee-autopilot.md](../runbooks/employee-autopilot.md)
+- [runbooks/visual-replica-gate.md](../runbooks/visual-replica-gate.md)

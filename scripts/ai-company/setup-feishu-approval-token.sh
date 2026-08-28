@@ -29,6 +29,7 @@ echo ""
 if [ -f "$OUT" ]; then
   if grep -q 'YOUR_FEISHU_VERIFICATION_TOKEN' "$OUT" 2>/dev/null; then
     echo "   WARN: $OUT exists but still has placeholder"
+    bash "$SCRIPT_DIR/print-feishu-inbound-setup.sh" 2>/dev/null | sed 's/^/   /' || true
   else
     echo "   OK: $OUT configured"
     bash "$SCRIPT_DIR/ceo-feishu-approval-service.sh" install

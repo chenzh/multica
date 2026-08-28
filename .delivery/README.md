@@ -30,7 +30,9 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │  门禁层（只信 exit code）                                         │
 │  1. Verifier 跑 make check / 范围更窄的 pnpm test + make test     │
-│  2. GitHub CI（现有 ci.yml）                                     │
+│     · 复刻/落地页另跑 make visual-check（Playwright @visual）     │
+│     · 需 competitor_inventory.md + wont_do.md（见 Visual Replica）│
+│  2. GitHub CI（现有 ci.yml / cloudflare-pages-check）             │
 │  3. agent-delivery-gate：路径白名单 → 可选 auto-merge            │
 └───────────────────────────┬─────────────────────────────────────┘
                             ▼

@@ -31,6 +31,37 @@ if [ -f "$MULTICA_ROOT/.ai-company/templates/site-factory/research-prompt.md" ];
 else
   bad "site-factory 模板缺失"
 fi
+if [ -f "$MULTICA_ROOT/.ai-company/templates/competitor_inventory.md" ] \
+  && [ -f "$MULTICA_ROOT/.ai-company/templates/wont_do.md" ]; then
+  pass "visual replica 模板 (inventory + wont_do)"
+else
+  bad "缺少 competitor_inventory.md / wont_do.md 模板"
+fi
+if [ -f "$MULTICA_ROOT/.ai-company/runbooks/visual-replica-gate.md" ]; then
+  pass "runbook visual-replica-gate.md"
+else
+  bad "缺少 visual-replica-gate runbook"
+fi
+if [ -x "$SCRIPT_DIR/autopilot-dispatch.sh" ] || [ -f "$SCRIPT_DIR/autopilot-dispatch.sh" ]; then
+  pass "autopilot-dispatch.sh"
+else
+  bad "缺少 autopilot-dispatch.sh"
+fi
+if [ -f "$MULTICA_ROOT/.ai-company/runbooks/employee-autopilot.md" ]; then
+  pass "runbook employee-autopilot.md"
+else
+  bad "缺少 employee-autopilot runbook"
+fi
+if grep -q 'visual-check' "$SCRIPT_DIR/scaffold-cloudflare.sh"; then
+  pass "scaffold 含 visual-check"
+else
+  bad "scaffold-cloudflare.sh 未接入 visual-check"
+fi
+if grep -q 'L4-视觉\|Visual Replica' "$MULTICA_ROOT/.ai-company/docs/07-quality-gates.md"; then
+  pass "quality-gates L4-视觉"
+else
+  bad "07-quality-gates.md 缺少 L4-视觉"
+fi
 
 echo ""
 echo "2. 解析 / dry-run"

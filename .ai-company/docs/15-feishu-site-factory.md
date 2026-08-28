@@ -7,12 +7,14 @@
 | 阶段 | 执行者 | 产出 |
 |------|--------|------|
 | 1 解析 | `site-factory.sh` | slug、目录、流水线日志 |
-| 2 竞品调研 | cursor-agent（research 模板） | `.delivery/<slug>/research.md` |
-| 3 MVP 定义 | cursor-agent（mvp 模板） | `brief.md` / `accept_cases.md` / `backlog.md` |
-| 4 脚手架 | `scaffold-cloudflare.sh` | Cloudflare Pages + Vite + harness |
+| 2 竞品调研 | cursor-agent（research 模板） | `.delivery/<slug>/research.md`（含 inventory 种子 / bot 墙说明） |
+| 3 MVP 定义 | cursor-agent（mvp 模板） | `brief.md` / `competitor_inventory.md` / `wont_do.md` / `accept_cases.md` / `backlog.md` |
+| 4 脚手架 | `scaffold-cloudflare.sh` | Cloudflare Pages + Vite + Playwright `@visual` harness |
 | 5 接入 | `bootstrap-project.sh` | GitHub labels、Issues |
 | 6 登记 | `project-registry.yaml` | 纳入夜间组合调度 |
 | 7 派单 | `dispatch-cursor-agent-cli.sh` | Planner→Implementer→Verifier 流水线 |
+
+**完整度门禁（Visual Replica Gate）：** MVP 阶段必须产出 inventory + wont_do；Verifier 对复刻/落地页必须跑 `make visual-check`。详见 [07-quality-gates.md](./07-quality-gates.md) L4-视觉 与 [runbooks/visual-replica-gate.md](../runbooks/visual-replica-gate.md)。
 
 **栈约束：** 仅 Cloudflare（Pages + Workers + Wrangler）。不用 Vercel、不用生产 Docker。
 

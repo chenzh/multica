@@ -36,9 +36,11 @@ cat >"$TARGET/package.json" <<EOF
   "scripts": {
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
-    "build": "pnpm --filter $PKG build"
+    "build": "pnpm --filter $PKG build",
+    "visual-check": "playwright test --grep @visual"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.0",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5",
     "wrangler": "^4.14.0"
@@ -79,7 +81,7 @@ pages_build_output_dir = "apps/web/dist"
 EOF
 
 cat >"$TARGET/Makefile" <<'EOF'
-.PHONY: check test build
+.PHONY: check test build visual-check
 test:
 	@echo "no go server"
 check:
@@ -87,6 +89,8 @@ check:
 	pnpm test
 build:
 	pnpm build
+visual-check:
+	pnpm exec playwright test --grep @visual
 EOF
 
 mkdir -p "$TARGET/apps/web/src" "$TARGET/apps/web/public"
@@ -169,9 +173,16 @@ EOF
 cat >"$TARGET/apps/web/src/App.tsx" <<'EOF'
 export function App() {
   return (
-    <main style={{ padding: "2rem", fontFamily: "system-ui, sans-serif", maxWidth: 720, margin: "0 auto" }}>
-      <h1>Site placeholder</h1>
+    <main
+      data-testid="c-main"
+      style={{ padding: "2rem", fontFamily: "system-ui, sans-serif", maxWidth: 720, margin: "0 auto" }}
+    >
+      <header data-testid="c-nav">
+        <strong>Site brand</strong>
+      </header>
+      <h1 data-testid="c-hero">Site placeholder</h1>
       <p>Implement core UI in TICKET-003 per brief.md.</p>
+      <button type="button" data-testid="i-cta">Primary CTA</button>
     </main>
   );
 }
@@ -185,12 +196,66 @@ describe("app shell", () => {
 });
 EOF
 
+cat >"$TARGET/playwright.config.ts" <<EOF
+import { defineConfig, devices } from "@playwright/test";
+
+export default defineConfig({
+  testDir: "e2e",
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  reporter: "list",
+  use: {
+    baseURL: "http://127.0.0.1:4173",
+    trace: "on-first-retry",
+  },
+  expect: {
+    toHaveScreenshot: { maxDiffPixelRatio: 0.02 },
+  },
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], channel: process.env.PW_CHANNEL || "chrome" } }],
+  webServer: {
+    command: "pnpm --filter $PKG exec vite --host 127.0.0.1 --port 4173",
+    url: "http://127.0.0.1:4173",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
+});
+EOF
+
+mkdir -p "$TARGET/e2e"
+cat >"$TARGET/e2e/visual.spec.ts" <<'EOF'
+import { test, expect } from "@playwright/test";
+
+test.describe("@visual replica gate", () => {
+  test("home desktop", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("c-hero")).toBeVisible();
+    await expect(page).toHaveScreenshot("home-desktop.png", {
+      maxDiffPixelRatio: 0.02,
+    });
+  });
+
+  test("home mobile 375", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/");
+    await expect(page.getByTestId("c-hero")).toBeVisible();
+    await expect(page).toHaveScreenshot("home-mobile-375.png", {
+      maxDiffPixelRatio: 0.02,
+    });
+  });
+});
+EOF
+
 cat >"$TARGET/.gitignore" <<'EOF'
 node_modules
 dist
 .wrangler
 .env*
 .DS_Store
+test-results
+playwright-report
+blob-report
+# Keep e2e/**/*-snapshots/ committed as visual baselines
 EOF
 
 cat >"$TARGET/README.md" <<EOF
@@ -213,5 +278,6 @@ if [ ! -d "$TARGET/.git" ]; then
 fi
 
 echo "Done. Next:"
-echo "  cd $TARGET && pnpm install && make check"
+echo "  cd $TARGET && pnpm install && pnpm exec playwright install chromium"
+echo "  make check && make visual-check   # first run: pnpm exec playwright test --grep @visual --update-snapshots"
 echo "  bash $MULTICA_ROOT/scripts/ai-company/bootstrap-project.sh $TARGET --create-repo --push --sync-backlog"

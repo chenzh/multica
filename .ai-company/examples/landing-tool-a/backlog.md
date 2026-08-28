@@ -33,3 +33,18 @@
 
 - **What:** `app/not-found.tsx` 最小文案；`metadata` title 为站点名  
 - **AC:** `pnpm typecheck` exit 0  
+
+### TICKET-008 [agent-safe] JSON minify 模式切换
+
+- **What:** 工具页增加 format / minify 切换；minify 输出紧凑 JSON  
+- **AC:** AC-1、AC-2；`pnpm typecheck` exit 0  
+
+### TICKET-009 [agent-safe] 键盘快捷键 Format
+
+- **What:** textarea 聚焦时 Cmd/Ctrl+Enter 触发 format  
+- **AC:** 单测或组件测试覆盖快捷键；`pnpm test` exit 0  
+
+### TICKET-010 [agent-safe] Footer 站点链接与版权行
+
+- **What:** 全局 footer 链到 `/privacy`、`/terms`；版权年份  
+- **AC:** `pnpm typecheck` exit 0  

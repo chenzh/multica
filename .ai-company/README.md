@@ -60,6 +60,7 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | [runbooks/incident-response.md](./runbooks/incident-response.md) | CI 挂、泄露、合规事件 |
 | [runbooks/disaster-recovery.md](./runbooks/disaster-recovery.md) | **换机 / 盘挂：恢复顺序 + Host Inventory** |
 | [runbooks/employee-autopilot.md](./runbooks/employee-autopilot.md) | 白天员工 Autopilot |
+| [runbooks/work-finder.md](./runbooks/work-finder.md) | **找活工：队列薄时自己造 agent-safe 票** |
 
 ### 模板与配置
 

@@ -48,3 +48,17 @@
 
 - **What:** 全局 footer 链到 `/privacy`、`/terms`；版权年份  
 - **AC:** `pnpm typecheck` exit 0  
+
+### TICKET-011 [agent-safe] 补齐验收：AC-1: `/` 渲染工具输入框与格式化按钮
+
+- **Owner:** Implementer
+- **What:** 实现或加固未勾选验收项：AC-1: `/` 渲染工具输入框与格式化按钮
+- **AC / DoD:** 对应 accept_cases 项可验证；`make check` 或项目默认 check exit 0
+- **Source:** work-finder heuristic 2026-08-29
+
+### TICKET-012 [agent-safe] OG tags 补齐
+
+- **Owner:** Implementer
+- **What:** layout metadata 增加 openGraph 字段
+- **AC / DoD:** `pnpm typecheck` exit 0
+- **Source:** work-finder heuristic 2026-08-29

@@ -39,9 +39,11 @@ export CEO_FEISHU_APPROVAL_PUSH=1
 ## 仍需你偶尔介入的边界
 
 - **BLOCKED** 需求澄清（或配置飞书审批卡）
-- **backlog 新票**：在 `examples/<slug>/backlog.md` 加 `TICKET-007+`；nightly 会自动 `skip-existing` 同步
+- **新品线**：飞书一句话 / site-factory（Work-Finder **不**擅自开新站）
 - **paused 项目**（如 `music-game-sea`）不会派单 — 取消 `paused` 才会消化
 - **Mac 21:00 勿睡眠**（或 cron 跑在常开机器）
+
+补票：`work-finder.sh` 在 QUEUE 薄时自动往已有产品 backlog 加 agent-safe 小票并 sync（见 runbooks/work-finder.md）。
 
 ## 日常只看飞书
 

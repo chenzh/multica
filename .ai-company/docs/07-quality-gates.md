@@ -158,6 +158,10 @@ PR head 分支前缀 cursor/*
 
 CEO 职责收缩为：处理 Human 档升级 + 抽检 merge。
 
+## Work-Finder（自己找活）
+
+`scripts/ai-company/work-finder.sh`：QUEUE 低于目标时往已有产品 `backlog.md` 追加 agent-safe 小票并 sync。见 [work-finder.md](../runbooks/work-finder.md)。
+
 ---
 
 ## 相关文档
@@ -165,4 +169,5 @@ CEO 职责收缩为：处理 Human 档升级 + 抽检 merge。
 - [09-compliance-and-risk.md](./09-compliance-and-risk.md)  
 - [templates/accept_cases.md](../templates/accept_cases.md)
 - [runbooks/employee-autopilot.md](../runbooks/employee-autopilot.md)
+- [runbooks/work-finder.md](../runbooks/work-finder.md)
 - [runbooks/visual-replica-gate.md](../runbooks/visual-replica-gate.md)

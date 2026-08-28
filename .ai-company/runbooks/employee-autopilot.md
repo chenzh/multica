@@ -14,7 +14,7 @@
 | 组合派单 | `scripts/ai-company/portfolio-dispatch.sh --local` |
 | 状态 | `~/.multica/autopilot-state.json` |
 | 日志 | `~/.multica/autopilot-logs/` |
-| 工作区 cron | `feishu-cursor-workspace/cron-jobs.json`：工作日每小时；**周末每 30 分钟**（6–22） |
+| 工作区 cron | 工作日 Autopilot 每小时；**周末每 30 分钟**；**Work-Finder** 周末每 2h / 工作日 08:00 |
 | 心跳 | `.cursor/HEARTBEAT.md` 白天可补一刀 |
 
 ## 行为规则

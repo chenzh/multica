@@ -31,3 +31,10 @@ JSON 格式化站点；TICKET-001～005 已在 GitHub 关闭。续票供夜间 s
 
 - **What:** footer 链到 `/privacy`、`/terms`、`/sitemap.xml`  
 - **AC:** `make check` exit 0  
+
+### TICKET-012 [agent-safe] 404 页与基础 metadata
+
+- **Owner:** Implementer
+- **What:** 增加最小 not-found / 404 文案与站点 title metadata
+- **AC / DoD:** `pnpm typecheck` exit 0
+- **Source:** work-finder heuristic 2026-08-29

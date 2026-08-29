@@ -89,23 +89,24 @@ if [ "$JSON" -eq 1 ]; then
   exit 0
 fi
 
-md="$(echo "$metrics" | python3 -c "
-import json, sys
-m=json.load(sys.stdin)
-print('## 本周脉搏（自动）')
+md="$(METRICS_JSON="$metrics" python3 <<'PY'
+import json, os
+m = json.loads(os.environ["METRICS_JSON"])
+print("## 本周脉搏（自动）")
 print()
-print(f\"> generated: {m['generated_at']} · since merged: \`{m['since']}\` · dispatch: \`{m['portfolio_dispatch_mode']}\`")
+print(f"> generated: {m['generated_at']} · since merged: `{m['since']}` · dispatch: `{m['portfolio_dispatch_mode']}`")
 print()
-print('| 指标 | 值 | 说明 |')
-print('|------|-----|------|')
-print(f\"| 堵 BLOCKED | {m['blocked']} | 需 CEO 介入 |\")
-print(f\"| 跑 RUNNING | {m['running']} | agent-running |\")
-print(f\"| 队 QUEUE | {m['queue_agent_safe']} | 可派 agent-safe |\")
-print(f\"| 绿 MERGED | {m['merged_prs']} | cursor/* since {m['since']} |\")
-print(f\"| 活跃项目 | {m['projects_active']} | 非 paused 且可访问 |\")
+print("| 指标 | 值 | 说明 |")
+print("|------|-----|------|")
+print(f"| 堵 BLOCKED | {m['blocked']} | 需 CEO 介入 |")
+print(f"| 跑 RUNNING | {m['running']} | agent-running |")
+print(f"| 队 QUEUE | {m['queue_agent_safe']} | 可派 agent-safe |")
+print(f"| 绿 MERGED | {m['merged_prs']} | cursor/* since {m['since']} |")
+print(f"| 活跃项目 | {m['projects_active']} | 非 paused 且可访问 |")
 print()
-print('$/merged PR：Cursor 账单 ÷ 绿 MERGED（见 [10-cost-and-budget.md](../10-cost-and-budget.md)）。')
-")"
+print("$/merged PR：Cursor 账单 ÷ 绿 MERGED（见 [10-cost-and-budget.md](../10-cost-and-budget.md)）。")
+PY
+)"
 
 [ "$QUIET" -eq 0 ] && echo "$md"
 

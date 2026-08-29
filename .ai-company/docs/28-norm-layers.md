@@ -185,6 +185,7 @@ Kickoff 模板（产品仓）：[templates/orchestrator-kickoff-product.md](../t
 - [19-asset-registry.md](./19-asset-registry.md) — 调度台账 vs 本机资产  
 - [27-norm-sync.md](./27-norm-sync.md) — 同步命令与 manifest  
 - [29-harness-layout.md](./29-harness-layout.md) — **按类型放哪、examples 与 harness**  
+- [30-silicon-valley-doc-standards.md](./30-silicon-valley-doc-standards.md) — 硅谷文档纪律（与 conventions 对齐）  
 - [08-multi-project-portfolio.md](./08-multi-project-portfolio.md) — registry 与 harness  
 - [runbooks/onboard-new-project.md](../runbooks/onboard-new-project.md) — 接入时创建层 2  
 - [templates/CLAUDE.project.md](../templates/CLAUDE.project.md) — 项目 CLAUDE 模板  

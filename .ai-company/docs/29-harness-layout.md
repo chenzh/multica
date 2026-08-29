@@ -58,6 +58,7 @@
 | 27 | norm-sync | 同步管道 |
 | 28 | norm-layers | 通用 vs 项目 vs 任务 |
 | 29 | harness-layout | **本文** |
+| 30 | silicon-valley-doc-standards | 硅谷文档纪律（conventions 对齐） |
 
 另：`HANDS-OFF-COMPLETE.md`、`runbooks/*`（3）、`templates/*`（3）— 见 manifest 全文。
 

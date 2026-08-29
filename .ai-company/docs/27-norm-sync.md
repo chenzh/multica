@@ -189,8 +189,8 @@ HQ 仓（multica）本身 **不需要** 跑 `sync-company-norms` — 权威源�
 ## 相关文档
 
 - [28-norm-layers.md](./28-norm-layers.md) — 通用 vs 项目 vs 任务放哪
-- [29-harness-layout.md](./29-harness-layout.md) — 按类型索引（docs / examples / harness）
 - [29-harness-layout.md](./29-harness-layout.md) — 按类型索引（docs / examples / harness / multica 本仓）  
+- [30-silicon-valley-doc-standards.md](./30-silicon-valley-doc-standards.md) — 硅谷文档规范  
 - [08-multi-project-portfolio.md](./08-multi-project-portfolio.md) — registry 与 harness   策略  
 - [17-ceo-cockpit.md](./17-ceo-cockpit.md) — 一屏总览  
 - [harness/README.md](../harness/README.md) — 执行 harness 安装  

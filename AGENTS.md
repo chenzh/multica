@@ -75,8 +75,8 @@ See CLAUDE.md for the authoritative rules and common commands.
 
 | 范围 | 权威文档 |
 |------|----------|
-| Multica **产品代码**（Go/TS/apps/packages） | 根目录 `CLAUDE.md` |
-| **AI 公司 OS**（portfolio、DoD、.harness、examples） | `.ai-company/docs/29-harness-layout.md` |
+| Multica **产品代码**（Go/TS/apps/packages） | 根目录 `CLAUDE.md` + [conventions.mdx](apps/docs/content/docs/developers/conventions.mdx) |
+| **AI 公司 OS**（portfolio、DoD、.harness、examples） | `.ai-company/docs/29-harness-layout.md` · 硅谷纪律 `docs/30-silicon-valley-doc-standards.md` |
 
 - 改全公司规则 → `.ai-company/docs/` + `sync-company-norms.sh`
 - 复制新产品种子 → `.ai-company/examples/<slug>/`（见 `examples/README.md`）

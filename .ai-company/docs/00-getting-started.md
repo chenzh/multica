@@ -12,6 +12,7 @@
 - [ ] [04-architecture.md](./04-architecture.md)
 - [ ] [28-norm-layers.md](./28-norm-layers.md) — 通用 / 项目 / 任务放哪
 - [ ] [29-harness-layout.md](./29-harness-layout.md) — examples vs templates vs harness
+- [ ] [30-silicon-valley-doc-standards.md](./30-silicon-valley-doc-standards.md) — 硅谷文档纪律（SSOT / 英文代码面）
 
 ## Day 2 — 搭基础设施（4h）
 

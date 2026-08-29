@@ -47,6 +47,7 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | [docs/27-norm-sync.md](./docs/27-norm-sync.md) | **规范同步**：三层管道 + `sync-company-norms.sh` |
 | [docs/28-norm-layers.md](./docs/28-norm-layers.md) | **规范分层**：通用 vs 项目 vs 任务 |
 | [docs/29-harness-layout.md](./docs/29-harness-layout.md) | **Harness 布局**：按类型放哪、examples vs templates、multica 本仓 |
+| [docs/30-silicon-valley-doc-standards.md](./docs/30-silicon-valley-doc-standards.md) | **硅谷文档规范**：SSOT、英文代码面、Issue=Spec、语言分工 |
 | [docs/18-definition-of-done.md](./docs/18-definition-of-done.md) | **DoD** 完成定义 |
 | [docs/20-issue-brief-style-guide.md](./docs/20-issue-brief-style-guide.md) | Issue / brief 写作规范 |
 | [docs/21-label-state-machine.md](./docs/21-label-state-machine.md) | Label 状态机与 BLOCKED 原因码 |

@@ -127,3 +127,4 @@
 - [18-definition-of-done.md](./18-definition-of-done.md)  
 - [06-task-grading.md](./06-task-grading.md)  
 - [21-label-state-machine.md](./21-label-state-machine.md)  
+- [30-silicon-valley-doc-standards.md](./30-silicon-valley-doc-standards.md) — 硅谷对齐总纲  

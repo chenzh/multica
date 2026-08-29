@@ -38,3 +38,10 @@ JSON 格式化站点；TICKET-001～005 已在 GitHub 关闭。续票供夜间 s
 - **What:** 增加最小 not-found / 404 文案与站点 title metadata
 - **AC / DoD:** `pnpm typecheck` exit 0
 - **Source:** work-finder heuristic 2026-08-29
+
+### TICKET-013 [agent-safe] OG / Twitter card meta
+
+- **Owner:** Implementer
+- **What:** 首页补充 openGraph / twitter meta 占位
+- **AC / DoD:** `pnpm typecheck` exit 0
+- **Source:** work-finder heuristic 2026-08-29

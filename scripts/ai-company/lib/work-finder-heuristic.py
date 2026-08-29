@@ -44,6 +44,14 @@ CATALOG: dict[str, list[tuple[str, str, str]]] = {
         ("无障碍：主控件 label", "主交互控件补 aria-label", "`pnpm test` exit 0"),
         ("环境变量示例文档对齐", "README 或 .env.example 与真实键名对齐（不写密钥）", "文档 diff 可审；`pnpm test` 不红"),
     ],
+    "visual-replica": [
+        ("Gallery 卡片 detail overlay", "卡片点击打开 detail overlay；375 宽可关闭", "`make visual-check` exit 0"),
+        ("Locale 持久化 zh/en", "localStorage 记住语言；刷新保持", "`make check` exit 0"),
+        ("Skills 向导键盘与 a11y", "Skills 步骤 aria-label；Esc 关闭", "`make check` exit 0"),
+        ("Studio mobile 375 布局", "`/#studio` 单列 dock 不溢出", "`make visual-check` exit 0"),
+        ("OG / Twitter meta 占位", "index.html title/description/OG 字段", "`make check` exit 0"),
+        ("404 与基础 metadata", "最小 404 文案与 title metadata", "`make check` exit 0"),
+    ],
 }
 
 DEFAULT_CATALOG = CATALOG["cloudflare-pages"]

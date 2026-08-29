@@ -25,6 +25,7 @@
 | [json-site](./json-site/) | `json-site` | Cloudflare Pages | brief, backlog |
 | [cloudflare-site](./cloudflare-site/) | site-factory 示范 | CF Pages | brief, backlog, accept_cases |
 | [beatscape](./beatscape/) | `beatscape` | Vite / 子应用 | brief, backlog |
+| [meigen-replica](./meigen-replica/) | `meigen-replica` | Visual replica (static + Playwright) | brief, AC, backlog, inventory, wont_do |
 
 ---
 

@@ -351,6 +351,7 @@ bash scripts/ai-company/ceo-dashboard.sh --json     # QUEUE>0 时能派
 
 ## 相关文档
 
+- [35-product-intel-lounge.md](./35-product-intel-lounge.md) — 产品情报站（好用版 · 热点 → 口令 → Issue）
 - [06-task-grading.md](./06-task-grading.md) — agent-safe vs human-only  
 - [18-definition-of-done.md](./18-definition-of-done.md)  
 - [22-git-and-remotes.md](./22-git-and-remotes.md) — fork 纪律  

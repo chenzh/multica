@@ -83,6 +83,7 @@
 | 16 | disaster-recovery | 灾备摘要 |
 | 32 | opc-harness-knowledge-design | **设计方案总览**（战略/arch，不下发） |
 | 33 | autonomous-iteration | **自主迭代完整方案**（硅谷 · 刘小排对表） |
+| 35 | product-intel-lounge | **产品情报站**（好用版 · 飞书卡片 + 口令开票） |
 
 ---
 

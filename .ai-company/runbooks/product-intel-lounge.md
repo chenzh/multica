@@ -22,16 +22,22 @@ bash scripts/ai-company/install-nightly-cron.sh --install
 
 ```bash
 mkdir -p docs/intel
-touch docs/intel/.gitkeep
-# 可选：添加 .github/ISSUE_TEMPLATE/intel-daily.yml
-git add docs/intel && git commit -m "chore(intel): add product intel lounge directory"
+# README + issue template 已在 multica 主仓
+```
+
+### 1b. Multica + 标签 + Autopilot（本机）
+
+```bash
+bash scripts/ai-company/setup-product-intel-lounge.sh
+# 预览：--dry-run
 ```
 
 ### 2. 飞书
 
 - 建群 `产品情报站`
-- 置顶群规（见 35 号文「飞书群 SOP」）
-- 拉 CEO + 可选 1 真人 + 3 Bot
+- 置顶群规：`cat .ai-company/templates/intel-lounge/feishu-group-pin.txt`
+- 拉 CEO + 可选 1 真人 + 3 Bot（intel-scout / product-analyst / intel-moderator）
+- ID 快照：`~/.multica/intel-lounge.json`（`setup-product-intel-lounge.sh` 写入）
 
 ### 3. Multica
 

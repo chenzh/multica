@@ -10,6 +10,13 @@
 
 **一个 CEO、多个产品线** = 一个 Multica workspace（或多 workspace 按业务线分）+ 多个 repo。
 
+**业务线类型：**
+
+| `kind` | 执行面 | HQ 本机 path |
+|--------|--------|----------------|
+| `product`（默认） | cursor-agent / GHA | 需要 `AI_REPO_PATH_*`（`--local`） |
+| `content` | 远程 Hermes | **不需要**；见 [24-content-operations.md](./24-content-operations.md) |
+
 ---
 
 ## 项目台账

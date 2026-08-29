@@ -15,6 +15,7 @@ paths:
   - docs/21-label-state-machine.md
   - docs/22-git-and-remotes.md
   - docs/23-local-agent-environment.md
+  - docs/24-content-operations.md
   - docs/17-ceo-cockpit.md
   - docs/27-norm-sync.md
   - docs/28-norm-layers.md

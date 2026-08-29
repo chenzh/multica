@@ -86,6 +86,18 @@ git init company-harness && cd company-harness
 
 ---
 
+## 内容线 harness（自媒体 / 远程 Hermes）
+
+```bash
+bash .ai-company/harness/install-content-harness.sh /path/to/content-repo
+# 或
+bash scripts/ai-company/install-content-harness.sh /path/to/content-repo
+```
+
+见 [../docs/24-content-operations.md](../docs/24-content-operations.md)。
+
+---
+
 ## 相关
 
 - [../README.md](../README.md) — AI 公司 OS 总索引  

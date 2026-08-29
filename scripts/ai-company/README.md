@@ -102,6 +102,18 @@ bash scripts/ai-company/portfolio-dispatch.sh --max-total 5
 
 Enabled via `.github/workflows/portfolio-agent-dispatch.yml` (cron + manual).
 
+**Content line** (`kind: content` in registry): triggers `content-delivery-dispatch.yml` on remote Hermes repo — no local path. See `.ai-company/docs/24-content-operations.md`.
+
+## install-content-harness.sh
+
+Remote **Hermes media machine** — content repo (drafts, calendar, no CEO local clone):
+
+```bash
+bash scripts/ai-company/install-content-harness.sh /path/to/content-youtube-sea
+```
+
+Then register in `project-registry.yaml` with `kind: content`, `dispatch_mode: gha` or `remote-pull`.
+
 ## print-multica-autopilot-commands.sh
 
 ```bash

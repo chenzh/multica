@@ -53,6 +53,7 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | [docs/13-implementation-roadmap.md](./docs/13-implementation-roadmap.md) | P0→P3 分阶段路线图 |
 | [docs/14-multica-autopilot-portfolio.md](./docs/14-multica-autopilot-portfolio.md) | **Portfolio 夜间调度 + Multica Autopilot** |
 | [docs/15-feishu-site-factory.md](./docs/15-feishu-site-factory.md) | **飞书一句话建站：竞品 → MVP → Cloudflare → 多 Agent** |
+| [docs/24-content-operations.md](./docs/24-content-operations.md) | **自媒体线：远程 Hermes + registry + 派单** |
 | [docs/16-disaster-recovery.md](./docs/16-disaster-recovery.md) | **灾备策略摘要：GitHub 放什么 / 密钥不放什么** |
 | [docs/system-evolution/README.md](./docs/system-evolution/README.md) | **系统进化**（周报目录，真相源在 Multica） |
 

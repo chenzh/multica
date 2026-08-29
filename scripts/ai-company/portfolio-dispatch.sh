@@ -57,8 +57,10 @@ fi
 
 # Parse YAML projects block (line-oriented; matches our template shape).
 declare -a IDS=() REPOS=() PRIORITIES=() CAPS=() PAUSED=()
+declare -a KINDS=() DISPATCH_MODES=() WORKFLOWS=()
 
 current_id="" current_repo="" current_priority="0" current_cap="1" current_paused="false"
+current_kind="product" current_dispatch_mode="" current_workflow=""
 
 flush_project() {
   if [ -z "$current_id" ] || [ -z "$current_repo" ]; then
@@ -69,11 +71,17 @@ flush_project() {
   PRIORITIES+=("$current_priority")
   CAPS+=("$current_cap")
   PAUSED+=("$current_paused")
+  KINDS+=("$current_kind")
+  DISPATCH_MODES+=("$current_dispatch_mode")
+  WORKFLOWS+=("$current_workflow")
   current_id=""
   current_repo=""
   current_priority="0"
   current_cap="1"
   current_paused="false"
+  current_kind="product"
+  current_dispatch_mode=""
+  current_workflow=""
 }
 
 while IFS= read -r line; do
@@ -104,6 +112,18 @@ while IFS= read -r line; do
   fi
   if [[ "$line" =~ ^paused:\ (.+)$ ]]; then
     current_paused="${BASH_REMATCH[1]}"
+    continue
+  fi
+  if [[ "$line" =~ ^kind:\ (.+)$ ]]; then
+    current_kind="${BASH_REMATCH[1]}"
+    continue
+  fi
+  if [[ "$line" =~ ^dispatch_mode:\ (.+)$ ]]; then
+    current_dispatch_mode="${BASH_REMATCH[1]}"
+    continue
+  fi
+  if [[ "$line" =~ ^workflow:\ (.+)$ ]]; then
+    current_workflow="${BASH_REMATCH[1]}"
     continue
   fi
 done <"$REGISTRY"
@@ -154,7 +174,37 @@ for idx in "${ORDER[@]}"; do
     cap="$remaining"
   fi
   repo="${REPOS[$idx]}"
-  echo "→ ${IDS[$idx]} ($repo) max_tasks=$cap priority=${PRIORITIES[$idx]}"
+  kind="${KINDS[$idx]}"
+  dispatch_mode="${DISPATCH_MODES[$idx]}"
+  project_workflow="${WORKFLOWS[$idx]}"
+  if [ -z "$dispatch_mode" ]; then
+    if [ "$kind" = "content" ]; then
+      dispatch_mode="gha"
+    elif [ "$LOCAL" -eq 1 ]; then
+      dispatch_mode="local"
+    else
+      dispatch_mode="gha"
+    fi
+  fi
+  if [ -z "$project_workflow" ]; then
+    if [ "$kind" = "content" ]; then
+      project_workflow="content-delivery-dispatch.yml"
+    else
+      project_workflow="$WORKFLOW"
+    fi
+  fi
+
+  echo "→ ${IDS[$idx]} ($repo) kind=$kind dispatch=$dispatch_mode max_tasks=$cap priority=${PRIORITIES[$idx]}"
+
+  if [ "$dispatch_mode" = "remote-pull" ]; then
+    echo "  skip dispatch (remote-pull — Hermes host runs pull-dispatch.sh)"
+    continue
+  fi
+
+  if [ "$LOCAL" -eq 1 ] && [ "$kind" = "content" ]; then
+    echo "  skip local dispatch for content line — use GHA or remote-pull" >&2
+    continue
+  fi
 
   if [ "$LOCAL" -eq 1 ]; then
     root="$(bash "$MULTICA_ROOT/scripts/ai-company/resolve-repo-path.sh" --id "${IDS[$idx]}" --repo "$repo" --quiet 2>/dev/null || true)"
@@ -189,7 +239,7 @@ for idx in "${ORDER[@]}"; do
   fi
 
   if [ "$DRY_RUN" -eq 1 ]; then
-    echo "  gh workflow run $WORKFLOW -R $repo -f max_tasks=$cap"
+    echo "  gh workflow run $project_workflow -R $repo -f max_tasks=$cap"
   else
     if ! gh repo view "$repo" &>/dev/null; then
       echo "  warning: cannot access repo $repo — skip" >&2
@@ -198,7 +248,7 @@ for idx in "${ORDER[@]}"; do
     default_branch="$(gh repo view "$repo" --json defaultBranchRef -q '.defaultBranchRef.name' 2>/dev/null || echo main)"
     workflow_id="$(
       gh api "repos/$repo/actions/workflows" \
-        --jq ".workflows[] | select(.path == \".github/workflows/$WORKFLOW\") | .id" 2>/dev/null || true
+        --jq ".workflows[] | select(.path == \".github/workflows/$project_workflow\") | .id" 2>/dev/null || true
     )"
     if [ -n "$workflow_id" ]; then
       if gh workflow run "$workflow_id" -R "$repo" --ref "$default_branch" -f "max_tasks=$cap"; then
@@ -208,7 +258,12 @@ for idx in "${ORDER[@]}"; do
       fi
       echo "  warning: workflow dispatch failed for $repo — trying local CLI" >&2
     else
-      echo "  workflow $WORKFLOW not registered on $repo — falling back to local CLI" >&2
+      echo "  workflow $project_workflow not registered on $repo" >&2
+      if [ "$kind" = "content" ]; then
+        echo "  content projects need install-content-harness.sh on remote repo — skip local fallback" >&2
+        continue
+      fi
+      echo "  falling back to local CLI" >&2
     fi
     root="$(bash "$MULTICA_ROOT/scripts/ai-company/resolve-repo-path.sh" --id "${IDS[$idx]}" --repo "$repo" --quiet 2>/dev/null || true)"
     if [ -z "$root" ] || [ ! -d "$root" ]; then

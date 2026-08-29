@@ -175,22 +175,32 @@ set +e
   cp "$PROMPT" "$PROMPT_KEEP"
   if [ "$USE_WORKTREE" = "1" ]; then
     echo "agent: starting cursor-agent (worktree=$WORKTREE_NAME)" >>"$LOG_FILE"
-    if ! "$CURSOR_AGENT_BIN" -p --force --trust \
+    nohup "$CURSOR_AGENT_BIN" -p --force --trust \
       --worktree "$WORKTREE_NAME" \
       --worktree-base "$WORKTREE_BASE_REF" \
       --output-format text \
-      <"$PROMPT_KEEP" \
-      >>"$LOG_FILE" 2>&1; then
+      <"$PROMPT_KEEP" >>"$LOG_FILE" 2>&1 &
+    agent_pid=$!
+    echo "agent: pid=$agent_pid" >>"$LOG_FILE"
+    if declare -f record_dispatch_agent_pid >/dev/null 2>&1; then
+      record_dispatch_agent_pid "$REPO_ROOT" "$ISSUE_NUMBER" "$agent_pid"
+    fi
+    if ! wait "$agent_pid"; then
       echo "agent: exited $?" >>"$LOG_FILE"
       exit 1
     fi
   else
     echo "agent: starting cursor-agent (branch=$WORKTREE_NAME)" >>"$LOG_FILE"
     git checkout -B "$WORKTREE_NAME" "$WORKTREE_BASE" 2>/dev/null || git checkout "$WORKTREE_NAME" 2>/dev/null
-    if ! "$CURSOR_AGENT_BIN" -p --force --trust \
+    nohup "$CURSOR_AGENT_BIN" -p --force --trust \
       --output-format text \
-      <"$PROMPT_KEEP" \
-      >>"$LOG_FILE" 2>&1; then
+      <"$PROMPT_KEEP" >>"$LOG_FILE" 2>&1 &
+    agent_pid=$!
+    echo "agent: pid=$agent_pid" >>"$LOG_FILE"
+    if declare -f record_dispatch_agent_pid >/dev/null 2>&1; then
+      record_dispatch_agent_pid "$REPO_ROOT" "$ISSUE_NUMBER" "$agent_pid"
+    fi
+    if ! wait "$agent_pid"; then
       echo "agent: exited $?" >>"$LOG_FILE"
       exit 1
     fi

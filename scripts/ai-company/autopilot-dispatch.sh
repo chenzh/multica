@@ -67,6 +67,12 @@ while [ $# -gt 0 ]; do
 done
 
 mkdir -p "$STATE_DIR" "$LOG_DIR"
+
+if ! acquire_singleton_lock "autopilot-dispatch" "$STATE_DIR" 7200; then
+  echo "another autopilot-dispatch is running — skip (singleton lock)"
+  exit 0
+fi
+
 TS="$(date '+%Y%m%dT%H%M%S%z')"
 LOG_FILE="$LOG_DIR/autopilot-$TS.log"
 exec > >(tee -a "$LOG_FILE") 2>&1

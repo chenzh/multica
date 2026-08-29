@@ -5,6 +5,36 @@
 DISPATCH_LEASE_SECONDS="${DISPATCH_LEASE_SECONDS:-7200}"
 DISPATCH_CLEANUP_MIN_AGE_SEC="${DISPATCH_CLEANUP_MIN_AGE_SEC:-120}"
 
+# macOS has no flock(1); mkdir lock dir is portable.
+_SINGLETON_LOCK_DIR=""
+
+_release_singleton_lock() {
+  if [ -n "${_SINGLETON_LOCK_DIR:-}" ]; then
+    rm -rf "$_SINGLETON_LOCK_DIR"
+    _SINGLETON_LOCK_DIR=""
+  fi
+}
+
+acquire_singleton_lock() {
+  local name="${1:?}" state_dir="${2:?}" stale_sec="${3:-7200}"
+  local lock="${state_dir}/${name}.lock.d" now mtime age
+  if [ -d "$lock" ]; then
+    now="$(date +%s)"
+    mtime="$(stat -f %m "$lock" 2>/dev/null || stat -c %Y "$lock" 2>/dev/null || echo 0)"
+    age=$((now - mtime))
+    if [ "$age" -gt "$stale_sec" ]; then
+      rm -rf "$lock"
+    fi
+  fi
+  if mkdir "$lock" 2>/dev/null; then
+    _SINGLETON_LOCK_DIR="$lock"
+    printf '%s\n' "$$" >"$lock/pid"
+    trap '_release_singleton_lock' EXIT
+    return 0
+  fi
+  return 1
+}
+
 _dispatch_lock_path() {
   local repo_root="${1:?}" num="${2:?}"
   echo "$repo_root/.delivery/.agent-runs/.dispatch-issue-${num}.lock"
@@ -36,19 +66,34 @@ _dispatch_lock_expired() {
 }
 
 write_dispatch_lock() {
-  local repo_root="${1:?}" num="${2:?}" pid="${3:?}"
+  local repo_root="${1:?}" num="${2:?}" pid="${3:?}" agent_pid="${4:-}"
   local lock_file
   lock_file="$(_dispatch_lock_path "$repo_root" "$num")"
   mkdir -p "$(dirname "$lock_file")"
   local now expiry
   now="$(date +%s)"
   expiry=$((now + DISPATCH_LEASE_SECONDS))
-  printf '%s\n%s\n%s\n' "$pid" "$now" "$expiry" >"$lock_file"
+  if [ -n "$agent_pid" ]; then
+    printf '%s\n%s\n%s\n%s\n' "$pid" "$now" "$expiry" "$agent_pid" >"$lock_file"
+  else
+    printf '%s\n%s\n%s\n' "$pid" "$now" "$expiry" >"$lock_file"
+  fi
 }
 
 clear_dispatch_lock() {
   local repo_root="${1:?}" num="${2:?}"
   rm -f "$(_dispatch_lock_path "$repo_root" "$num")"
+}
+
+record_dispatch_agent_pid() {
+  local repo_root="${1:?}" num="${2:?}" agent_pid="${3:?}"
+  local lock_file dispatch_pid started expiry
+  lock_file="$(_dispatch_lock_path "$repo_root" "$num")"
+  [ -f "$lock_file" ] || return 0
+  dispatch_pid="$(sed -n '1p' "$lock_file" 2>/dev/null || true)"
+  started="$(sed -n '2p' "$lock_file" 2>/dev/null || true)"
+  expiry="$(sed -n '3p' "$lock_file" 2>/dev/null || true)"
+  printf '%s\n%s\n%s\n%s\n' "$dispatch_pid" "$started" "$expiry" "$agent_pid" >"$lock_file"
 }
 
 # cursor-agent CLI often appears as: cursor-agent --use-system-ca .../index.js -p --worktree cursor-issue-N
@@ -86,6 +131,10 @@ _dispatch_lock_alive() {
   pid="$(sed -n '1p' "$lock_file" 2>/dev/null || true)"
   issue="$(_dispatch_lock_issue "$lock_file" 2>/dev/null || true)"
   if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    return 0
+  fi
+  agent_pid="$(sed -n '4p' "$lock_file" 2>/dev/null || true)"
+  if [ -n "$agent_pid" ] && kill -0 "$agent_pid" 2>/dev/null; then
     return 0
   fi
   if [ -n "$issue" ] && _pgrep_portfolio_agent_for_issue "$issue"; then

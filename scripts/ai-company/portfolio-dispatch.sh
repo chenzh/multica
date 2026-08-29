@@ -8,6 +8,8 @@ MULTICA_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 source "$(dirname "$0")/lib/source-local-env.sh"
 # shellcheck source=lib/agent-queue.sh
 source "$(dirname "$0")/lib/agent-queue.sh"
+# shellcheck source=lib/multica-dispatch.sh
+source "$(dirname "$0")/lib/multica-dispatch.sh"
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 MAX_TOTAL="${MAX_TOTAL:-5}"
 DRY_RUN=0
@@ -21,7 +23,9 @@ Usage: portfolio-dispatch.sh [options]
 
 Reads project-registry.yaml and dispatches agent-safe issues per repo.
 
-Product repos (kind=product): **local cursor-agent CLI only** on the CEO machine.
+Product repos (kind=product):
+  dispatch_mode=local     — cursor-agent CLI on CEO machine (legacy default)
+  dispatch_mode=multica   — Multica L1 queue (daemon assign; visible on :3000)
 Content repos: GHA workflow (dispatch_mode=gha) or skip (remote-pull).
 
 Options:
@@ -59,10 +63,10 @@ fi
 
 # Parse YAML projects block (line-oriented; matches our template shape).
 declare -a IDS=() REPOS=() PRIORITIES=() CAPS=() PAUSED=()
-declare -a KINDS=() DISPATCH_MODES=() WORKFLOWS=()
+declare -a KINDS=() DISPATCH_MODES=() WORKFLOWS=() SLUGS=()
 
 current_id="" current_repo="" current_priority="0" current_cap="1" current_paused="false"
-current_kind="product" current_dispatch_mode="" current_workflow=""
+current_kind="product" current_dispatch_mode="" current_workflow="" current_slug=""
 
 flush_project() {
   if [ -z "$current_id" ] || [ -z "$current_repo" ]; then
@@ -76,6 +80,7 @@ flush_project() {
   KINDS+=("$current_kind")
   DISPATCH_MODES+=("$current_dispatch_mode")
   WORKFLOWS+=("$current_workflow")
+  SLUGS+=("${current_slug:-$current_id}")
   current_id=""
   current_repo=""
   current_priority="0"
@@ -84,6 +89,7 @@ flush_project() {
   current_kind="product"
   current_dispatch_mode=""
   current_workflow=""
+  current_slug=""
 }
 
 while IFS= read -r line; do
@@ -128,6 +134,10 @@ while IFS= read -r line; do
     current_workflow="${BASH_REMATCH[1]}"
     continue
   fi
+  if [[ "$line" =~ ^delivery_slug:\ (.+)$ ]]; then
+    current_slug="${BASH_REMATCH[1]}"
+    continue
+  fi
 done <"$REGISTRY"
 flush_project
 
@@ -152,13 +162,7 @@ remaining="$MAX_TOTAL"
 total_dispatched=0
 
 pick_next_issue() {
-  local repo="$1"
-  gh issue list -R "$repo" \
-    --label "agent-safe" \
-    --state open \
-    --json number,labels \
-    --jq '.[] | select([.labels[].name] | (index("agent-running") | not) and (index("agent-blocked") | not) and (index("agent-done") | not)) | .number' \
-    | head -n 1
+  pick_next_agent_safe_issue "$1"
 }
 
 dispatch_local_issues() {
@@ -239,6 +243,32 @@ for idx in "${ORDER[@]}"; do
 
   if [ "$dispatch_mode" = "remote-pull" ]; then
     echo "  skip dispatch (remote-pull — Hermes host runs pull-dispatch.sh)"
+    continue
+  fi
+
+  if [ "$dispatch_mode" = "multica" ]; then
+    root="$(bash "$MULTICA_ROOT/scripts/ai-company/resolve-repo-path.sh" --id "${IDS[$idx]}" --repo "$repo" --quiet 2>/dev/null || true)"
+    if [ -z "$root" ] || [ ! -d "$root" ]; then
+      echo "  warning: no local checkout for ${IDS[$idx]} ($repo) — set AI_REPO_PATH in local.env" >&2
+      continue
+    fi
+    log_file="$root/.delivery/.agent-runs/portfolio-multica-$(date -u +%Y%m%dT%H%M%SZ).log"
+    if [ "$DRY_RUN" -eq 1 ]; then
+      if portfolio_dispatch_via_multica "$repo" "$root" "${SLUGS[$idx]}" "$cap" "$log_file" 1 "$REGISTRY" "${IDS[$idx]}"; then
+        preview="$(pick_next_agent_safe_issue "$repo")"
+        [ -n "$preview" ] && total_dispatched=$((total_dispatched + 1))
+      fi
+    else
+      before="$total_dispatched"
+      if portfolio_dispatch_via_multica "$repo" "$root" "${SLUGS[$idx]}" "$cap" "$log_file" 0 "$REGISTRY" "${IDS[$idx]}"; then
+        assigned="$(grep -cE 'multica dispatch: github #|already active for github #' "$log_file" 2>/dev/null || echo 0)"
+        total_dispatched=$((total_dispatched + assigned))
+        remaining=$((remaining - assigned))
+      else
+        echo "  warning: multica dispatch failed for ${IDS[$idx]} (see $log_file)" >&2
+      fi
+      [ "$total_dispatched" -gt "$before" ] || true
+    fi
     continue
   fi
 

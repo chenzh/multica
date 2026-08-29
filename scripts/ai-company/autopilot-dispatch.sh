@@ -11,6 +11,8 @@ source "$SCRIPT_DIR/lib/source-local-env.sh"
 source "$SCRIPT_DIR/lib/notify.sh"
 # shellcheck source=lib/agent-queue.sh
 source "$SCRIPT_DIR/lib/agent-queue.sh"
+# shellcheck source=lib/multica-dispatch.sh
+source "$SCRIPT_DIR/lib/multica-dispatch.sh"
 # shellcheck source=lib/budget-guard.sh
 source "$SCRIPT_DIR/lib/budget-guard.sh"
 
@@ -95,7 +97,14 @@ in_quiet_hours() {
 }
 
 local_running_estimate() {
-  local_dispatch_running_count
+  local cli multica_busy
+  cli="$(local_dispatch_running_count)"
+  multica_busy="$(multica_dispatch_busy_count 2>/dev/null || echo 0)"
+  if [ "$multica_busy" -gt "$cli" ]; then
+    echo "$multica_busy"
+  else
+    echo "$cli"
+  fi
 }
 
 aggregate_queue() {
@@ -250,7 +259,7 @@ log: $LOG_FILE"
       SLOTS="$TOTAL_QUEUE"
     fi
     ACTION="dispatch"
-    echo "decision: dispatch up to $SLOTS (local-cli, background)"
+    echo "decision: dispatch up to $SLOTS (portfolio: multica L1 + legacy local-cli)"
     if [ "$DRY_RUN" -eq 1 ]; then
       echo "[dry-run] would run: portfolio-dispatch.sh --local --max-total $SLOTS"
       DISPATCHED="$SLOTS"

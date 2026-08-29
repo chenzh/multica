@@ -96,6 +96,8 @@ multica autopilot trigger-add <AUTOPILOT_ID> \
 与 Portfolio 本机派单 **分工**：
 
 - **本机 portfolio-dispatch**：硬触发、公平配额、不依赖 LLM  
+- **`dispatch_mode: multica`**：L1 队列在 Multica（`:3000` 可见）；GitHub 为 spec 镜像 — 见 [34-multica-single-queue.md](./34-multica-single-queue.md)  
+- **`multica_agent_id`**：每项目指定 Multica agent（instructions 须覆盖该 repo，勿误派 MusicSaas 等单仓 agent）
 - **Multica Autopilot**：可视化、人工 `@agent`、run 审计  
 
 ### 生成命令脚本

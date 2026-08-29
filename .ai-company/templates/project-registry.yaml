@@ -7,7 +7,10 @@
 #
 # 内容线（自媒体 / Hermes 远程机）额外字段：
 #   kind: product | content          （默认 product）
-#   dispatch_mode: gha | remote-pull | local
+#   dispatch_mode: gha | remote-pull | local | multica
+#       product + multica  → Multica L1 queue (portfolio_dispatch_via_multica); see docs/34-multica-single-queue.md
+#       multica_agent_id   → required per multica project (daemon assignee; must match repo scope)
+#       product + local    → legacy cursor-agent CLI dispatch (default when omitted)
 #       content + gha     → CEO 触发 content-delivery-dispatch（self-hosted runner）
 #       content + remote-pull → 仅统计；远程 cron 跑 pull-dispatch.sh
 #   workflow: content-delivery-dispatch.yml  （可选，默认按 kind 推断）
@@ -97,13 +100,15 @@ projects:
     tier: experiment
     priority: 17
     stack: visual-replica
+    dispatch_mode: multica
+    multica_agent_id: 675dcb2c-8198-4ce0-bed5-032793368a2a
     autopilot_id: null
     max_nightly_tickets: 2
     openapi: false
     e2e: true
     paused: false
     delivery_slug: meigen-replica
-    notes: "MeiGen AI gallery+studio replica — visual gate + autopilot"
+    notes: "MeiGen AI gallery+studio replica — Multica L1 queue pilot (visual gate)"
 
   # ── OpenWorld 系（出海 monorepo + MetaViewer）— 先登记；装 harness 后取消 paused ──
   - id: metadata-viewer

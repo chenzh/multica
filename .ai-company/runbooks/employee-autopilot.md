@@ -57,6 +57,7 @@ bash scripts/ai-company/ceo-dashboard.sh
 
 ## 相关
 
+- **[34 — Multica 单队列 L1](../docs/34-multica-single-queue.md)**（`dispatch_mode: multica` pilot）
 - **[33 — 自主迭代完整方案](../docs/33-autonomous-iteration.md)**（硅谷 · 刘小排对表 · 端到端闭环）
 - [35 — 产品情报站](../docs/35-product-intel-lounge.md) · [product-intel-lounge.md](./product-intel-lounge.md)（好用版上线清单）
 - [visual-replica-gate.md](./visual-replica-gate.md)

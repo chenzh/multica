@@ -46,7 +46,7 @@
 | **http://127.0.0.1:9477** | 拉：**唯一 CEO 入口**（工程队列 + 资产 + 流程灯 + **内容线** + **OpenWorld 系**） | 想「一眼看全公司」时 |
 | **https://hq.revoices.app/** | 拉：**内容 pack 审稿**（lighthouse；从 `:9477` 一键打开） | 审自媒体稿、过 pack 时 |
 | **https://hermes.nowifiwebgames.com** / **www.nowifiwebgames.com** | OpenWorld：Hermes 面板 / MetaViewer 生产站（从 `:9477` 深链） | 看出海 App、No WiFi 站 |
-| **http://localhost:3000** Multica | 单 workspace 运行时（Agent / Autopilot / daemon） | 调试并发、看单次 run |
+| **http://localhost:3000** Multica | **L1 队列**（`dispatch_mode: multica` 项目）+ runtime / daemon | 看派单、run 历史、调试并发 |
 | **GitHub** | 交付真相源（Issues / PR / labels / CI） | 深入某票、审 merge |
 | **SecondBrain OPC map** | 经营真相源（主线 / 杀线 / 值得做） | 周度战略，见 [13-opc-bridge.md](./13-opc-bridge.md) |
 
@@ -152,7 +152,7 @@
 |------|------|
 | ✅ 完全脱手 | 在 BLOCKED 可飞书解的前提下，靠 cron，不靠盯盘 |
 | ✅ 一屏总览 | 资产、队列、流程健康、规范入口 — 只开 `:9477` |
-| ✅ Multica 不打架 | `:3000` 只管 runtime，不做公司 OS |
+| Multica `:3000` 只管 runtime，不做公司 OS | **L1 pilot**：`dispatch_mode: multica` 项目在 `:3000/local/issues`；指挥舱仍聚合全 portfolio |
 | ❌ 非 Figma 级完美 | 够用、可维护优先 |
 | ❌ 非文档替代品 | 规范仍在 `.ai-company/`，界面只链过去 |
 

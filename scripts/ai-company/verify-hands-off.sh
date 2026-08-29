@@ -193,6 +193,35 @@ else
 fi
 
 echo ""
+echo "4e. Multica L1 队列（dispatch_mode: multica）"
+if grep -E '^[[:space:]]*dispatch_mode:[[:space:]]*multica' \
+  "$MULTICA_ROOT/.ai-company/templates/project-registry.yaml" >/dev/null 2>&1; then
+  if multica daemon status 2>/dev/null | grep -qi '^Daemon:[[:space:]]*running'; then
+    pass "multica daemon running（L1 派单必需）"
+  else
+    bad "multica daemon 未运行 — multica 模式项目无法派单（multica daemon start）"
+  fi
+  # shellcheck source=lib/site-factory-runtime.sh
+  source "$SCRIPT_DIR/lib/site-factory-runtime.sh"
+  if site_factory_runtime_ready; then
+    pass "Multica API /readyz 可达（L1 派单）"
+  else
+    bad "Multica API 不可达 — make selfhost 或检查 MULTICA_SERVER_URL"
+  fi
+  # shellcheck source=lib/multica-dispatch.sh
+  source "$SCRIPT_DIR/lib/multica-dispatch.sh"
+  if registry_dispatch_mode_for_repo "$MULTICA_ROOT/.ai-company/templates/project-registry.yaml" "chenzh/meigen-replica" | grep -q '^multica$'; then
+    pass "project-registry dispatch_mode=multica（meigen pilot）"
+  elif bash "$SCRIPT_DIR/portfolio-dispatch.sh" --dry-run --max-total 50 2>/dev/null | grep -qE 'dispatch=multica|\[dry-run\] multica assign'; then
+    pass "portfolio-dispatch 识别 dispatch_mode=multica"
+  else
+    note "portfolio-dispatch dry-run 未看到 multica 项目"
+  fi
+else
+  note "无 dispatch_mode: multica 项目 — 见 docs/34-multica-single-queue.md"
+fi
+
+echo ""
 if bash "$SCRIPT_DIR/verify-intel-lounge.sh" 2>/dev/null; then
   pass "产品情报站 smoke 通过"
 else

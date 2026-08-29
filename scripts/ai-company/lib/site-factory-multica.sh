@@ -2,35 +2,12 @@
 # Dispatch site-factory tickets through Multica self-host (daemon runtime).
 # shellcheck shell=bash
 
+_MDCA_SF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=multica-dispatch.sh
+source "$_MDCA_SF_DIR/multica-dispatch.sh"
+
 site_factory_resolve_multica_agent() {
-  if [ -n "${SITE_FACTORY_MULTICA_AGENT_ID:-}" ]; then
-    echo "$SITE_FACTORY_MULTICA_AGENT_ID"
-    return 0
-  fi
-  if [ -n "${MULTICA_DEV_AGENT_ID:-}" ]; then
-    echo "$MULTICA_DEV_AGENT_ID"
-    return 0
-  fi
-  multica agent list --output json 2>/dev/null | python3 -c "
-import json, sys
-raw = sys.stdin.read().strip()
-if not raw:
-    sys.exit(1)
-agents = json.loads(raw)
-candidates = []
-for row in agents:
-    if row.get('archived_at'):
-        continue
-    if row.get('runtime_bound') and row.get('runtime_mode') == 'local':
-        candidates.append(row)
-if not candidates:
-    candidates = [r for r in agents if not r.get('archived_at')]
-if not candidates:
-    sys.exit(1)
-# Prefer idle agents; stable sort by name
-candidates.sort(key=lambda r: (r.get('status') != 'idle', r.get('name') or ''))
-print(candidates[0]['id'])
-"
+  multica_dispatch_resolve_agent
 }
 
 site_factory_dispatch_via_multica() {

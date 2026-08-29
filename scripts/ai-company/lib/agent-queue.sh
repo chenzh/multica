@@ -255,13 +255,17 @@ cleanup_stale_local_dispatches() {
 }
 
 reconcile_stale_running_labels() {
-  local repo="${1:?}" repo_root="${2:-}" dry="${3:-0}"
+  local repo="${1:?}" repo_root="${2:-}" dry="${3:-0}" dispatch_mode="${4:-local}"
   local num labels quiet=0
   [ "$dry" -eq 1 ] && quiet=1
   numbers="$(gh issue list -R "$repo" -s open -l agent-running --json number -q '.[].number' 2>/dev/null || true)"
   for num in $numbers; do
     [ -z "$num" ] && continue
-    if issue_dispatch_active "$num" "$repo_root"; then
+    if [ "$dispatch_mode" = "multica" ]; then
+      if issue_multica_mirror_active "$repo" "$num"; then
+        continue
+      fi
+    elif issue_dispatch_active "$num" "$repo_root"; then
       continue
     fi
     if [ "$quiet" -eq 0 ]; then

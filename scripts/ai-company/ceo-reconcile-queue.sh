@@ -8,6 +8,8 @@ MULTICA_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/lib/source-local-env.sh"
 # shellcheck source=lib/agent-queue.sh
 source "$SCRIPT_DIR/lib/agent-queue.sh"
+# shellcheck source=lib/multica-dispatch.sh
+source "$SCRIPT_DIR/lib/multica-dispatch.sh"
 
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 GITHUB_ORG="${GITHUB_ORG:-chenzh}"
@@ -78,11 +80,14 @@ PY
 )"
 
 fixed=0
+REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 while IFS= read -r repo; do
   [ -n "$repo" ] || continue
   root="$(bash "$SCRIPT_DIR/resolve-repo-path.sh" --repo "$repo" --quiet 2>/dev/null || true)"
+  dispatch_mode="$(registry_dispatch_mode_for_repo "$REGISTRY" "$repo")"
+  [ -z "$dispatch_mode" ] && dispatch_mode="local"
 
-  reconcile_stale_running_labels "$repo" "$root" "$DRY_RUN"
+  reconcile_stale_running_labels "$repo" "$root" "$DRY_RUN" "$dispatch_mode"
   reconcile_auth_blocked_retries "$repo" "$DRY_RUN"
 
   open_prs="$(
@@ -94,6 +99,10 @@ while IFS= read -r repo; do
   while IFS=$'\t' read -r issue_num pr_num; do
     [ -z "$issue_num" ] && continue
     if issue_dispatch_active "$issue_num" "$root"; then
+      continue
+    fi
+    if [ "$dispatch_mode" = "multica" ] && issue_multica_mirror_active "$repo" "$issue_num"; then
+      echo "reconcile: skip $repo#$issue_num (Multica mirror active)"
       continue
     fi
     mergeable="$(
@@ -141,6 +150,10 @@ while IFS= read -r repo; do
     [ -z "$num" ] && continue
     if issue_dispatch_active "$num" "$root"; then
       echo "reconcile: skip $repo#$num (dispatch in progress)"
+      continue
+    fi
+    if [ "$dispatch_mode" = "multica" ] && issue_multica_mirror_active "$repo" "$num"; then
+      echo "reconcile: skip $repo#$num (Multica mirror active)"
       continue
     fi
     merged_refs="$(

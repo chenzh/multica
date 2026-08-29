@@ -79,6 +79,58 @@ function renderContentCockpit() {
     .join("");
 }
 
+function renderOpenworldCockpit() {
+  const ow = state.overview?.openworld;
+  if (!ow) return;
+
+  const hermesLink = document.getElementById("openworld-hermes-link");
+  const metaLink = document.getElementById("openworld-metaviewer-link");
+  if (hermesLink) hermesLink.href = ow.hermes_dashboard_url || "https://hermes.nowifiwebgames.com";
+  if (metaLink) metaLink.href = ow.metadata_viewer_site || "https://www.nowifiwebgames.com";
+
+  const hint = document.getElementById("openworld-hint");
+  if (hint) {
+    hint.innerHTML =
+      "monorepo <code>openworld</code> + 生产站 <code>metadata-viewer</code>；本机路径经 <code>repo-paths.local.yaml</code>；装 harness 后取消 <code>paused</code> 进夜间队列。";
+  }
+
+  const totals = ow.totals || {};
+  const metrics = document.getElementById("openworld-metrics");
+  if (metrics) {
+    metrics.innerHTML = `
+      <div class="card"><div class="metric-label">OpenWorld BLOCKED</div><div class="metric-value">${totals.blocked ?? 0}</div></div>
+      <div class="card"><div class="metric-label">OpenWorld RUNNING</div><div class="metric-value">${totals.running ?? 0}</div></div>
+      <div class="card"><div class="metric-label">OpenWorld QUEUE</div><div class="metric-value">${totals.agent_safe ?? 0}</div></div>
+    `;
+  }
+
+  const lines = ow.lines || [];
+  const tbody = document.getElementById("openworld-body");
+  if (!tbody) return;
+  if (!lines.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="cell-muted">registry 无 portfolio_group:openworld — 见 project-registry.yaml</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lines
+    .map((line) => {
+      const wb = line.workbench_url || (line.id === "metadata-viewer" ? ow.metadata_viewer_site : ow.hermes_dashboard_url);
+      const pathOk = line.local_path_resolved;
+      const pathLabel = pathOk ? `✓ ${(line.local_path || "").split("/").slice(-2).join("/")}` : "✗ 未配置";
+      const linkLabel = line.domain ? line.domain : line.id === "openworld" ? "Hermes →" : "生产站 →";
+      return `<tr>
+        <td>
+          <div class="project-name">${line.id}${line.paused ? " ⏸" : ""}</div>
+          <div class="project-repo">${line.repo}</div>
+          <div class="cell-muted">${line.notes || ""}</div>
+        </td>
+        <td class="cell-muted">${pathLabel}</td>
+        <td>B${line.blocked} R${line.running} Q${line.agent_safe}</td>
+        <td><a href="${wb}" target="_blank" rel="noreferrer">${linkLabel}</a></td>
+      </tr>`;
+    })
+    .join("");
+}
+
 function renderOverview() {
   const ov = state.overview;
   if (!ov) return;
@@ -157,6 +209,7 @@ function renderOverview() {
     .join("");
 
   renderContentCockpit();
+  renderOpenworldCockpit();
 }
 
 function formatTotals() {

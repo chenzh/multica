@@ -15,6 +15,8 @@ source "$SCRIPT_DIR/lib/site-factory-runtime.sh"
 source "$SCRIPT_DIR/lib/site-factory-multica.sh"
 # shellcheck source=lib/site-factory-fallback.sh
 source "$SCRIPT_DIR/lib/site-factory-fallback.sh"
+# shellcheck source=lib/site-factory-activate.sh
+source "$SCRIPT_DIR/lib/site-factory-activate.sh"
 
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 PROJECTS_BASE="${SITE_FACTORY_PROJECTS_BASE:-$HOME/Projects}"
@@ -39,6 +41,10 @@ PUSH=0
 MAX_DISPATCH=2
 USE_MULTICA="${SITE_FACTORY_USE_MULTICA:-auto}"
 BACKGROUND=0
+ACTIVATE_AUTOPILOT=-1
+EXPLICIT_SKIP_REGISTRY=0
+EXPLICIT_SKIP_BOOTSTRAP=0
+EXPLICIT_SKIP_DISPATCH=0
 
 usage() {
   cat <<'EOF'
@@ -58,7 +64,9 @@ Options:
   --slug SLUG         Force project slug
   --idea TEXT         Force idea text
   --target DIR        Project directory (default: ~/Projects/<slug>)
-  --create-repo       gh repo create + push (bootstrap)
+  --create-repo       gh repo create + push (bootstrap Issues)
+  --activate-autopilot  接入自迭代：registry + 本机路径 + 首票派单（与 --create-repo 合用）
+  --no-autopilot      不接入自迭代（非交互默认）
   --push              git push with --create-repo
   --max-dispatch N    Dispatch up to N agent-safe tickets (default: 2)
   --notify            Feishu/Slack summary via notify.sh
@@ -362,12 +370,19 @@ pipeline_main() {
   fi
 
   append_registry
+  site_factory_ensure_local_repo_path "$SLUG" "$TARGET" "$MULTICA_ROOT" "$SCRIPT_DIR" "$DRY_RUN"
   dispatch_tickets
+
+  local autopilot_note="自迭代: 已接入"
+  if [ "${ACTIVATE_AUTOPILOT:-0}" -ne 1 ]; then
+    autopilot_note="自迭代: 未接入（activate-project-autopilot.sh 可补开）"
+  fi
 
   local summary="🏭 建站流水线完成
 项目: $SLUG
 目录: $TARGET
 想法: $IDEA
+$autopilot_note
 日志: $LOG_FILE
 运行服务: $(site_factory_multica_api || echo ${MULTICA_SERVER_URL:-http://localhost:8081})
 下一步: CEO 工作台 → 处理 BLOCKED → 勾 AC"
@@ -386,6 +401,8 @@ while [ $# -gt 0 ]; do
     --idea) IDEA="${2:?}"; shift 2 ;;
     --target) TARGET="${2:?}"; shift 2 ;;
     --create-repo) CREATE_REPO=1; shift ;;
+    --activate-autopilot) ACTIVATE_AUTOPILOT=1; shift ;;
+    --no-autopilot) ACTIVATE_AUTOPILOT=0; shift ;;
     --push) PUSH=1; CREATE_REPO=1; shift ;;
     --max-dispatch) MAX_DISPATCH="${2:?}"; shift 2 ;;
     --notify) NOTIFY=1; shift ;;
@@ -393,9 +410,9 @@ while [ $# -gt 0 ]; do
     --skip-research) SKIP_RESEARCH=1; shift ;;
     --skip-mvp) SKIP_MVP=1; shift ;;
     --skip-scaffold) SKIP_SCAFFOLD=1; shift ;;
-    --skip-bootstrap) SKIP_BOOTSTRAP=1; shift ;;
-    --skip-registry) SKIP_REGISTRY=1; shift ;;
-    --skip-dispatch) SKIP_DISPATCH=1; shift ;;
+    --skip-bootstrap) SKIP_BOOTSTRAP=1; EXPLICIT_SKIP_BOOTSTRAP=1; shift ;;
+    --skip-registry) SKIP_REGISTRY=1; EXPLICIT_SKIP_REGISTRY=1; shift ;;
+    --skip-dispatch) SKIP_DISPATCH=1; EXPLICIT_SKIP_DISPATCH=1; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
@@ -417,16 +434,23 @@ if [ -z "$TARGET" ]; then
   TARGET="$PROJECTS_BASE/$SLUG"
 fi
 
+site_factory_resolve_autopilot_choice "$CREATE_REPO"
+
 echo "== Site factory =="
 echo "  idea:   $IDEA"
 echo "  slug:   $SLUG"
 echo "  target: $TARGET"
+if [ "$CREATE_REPO" -eq 1 ]; then
+  echo "  autopilot: $([ "$ACTIVATE_AUTOPILOT" -eq 1 ] && echo yes || echo no)"
+fi
 echo ""
 
 if [ "$BACKGROUND" -eq 1 ] && [ "$DRY_RUN" -eq 0 ]; then
   nohup bash "$0" \
     --slug "$SLUG" --idea "$IDEA" --target "$TARGET" \
     ${CREATE_REPO:+--create-repo} ${PUSH:+--push} \
+    $( [ "$ACTIVATE_AUTOPILOT" -eq 1 ] && echo --activate-autopilot ) \
+    $( [ "$ACTIVATE_AUTOPILOT" -eq 0 ] && echo --no-autopilot ) \
     --max-dispatch "$MAX_DISPATCH" \
     ${NOTIFY:+--notify} \
     >>"$RUN_LOGS/site-factory-${SLUG}-nohup.log" 2>&1 &

@@ -102,6 +102,56 @@ bash scripts/ai-company/site-factory.sh --intake "测试站点" --dry-run
 
 ---
 
+## 自迭代如何开启
+
+新建项目（`--create-repo`）时**会询问是否接入自迭代**：
+
+| 场景 | 行为 |
+|------|------|
+| **CLI 交互** | 提示 `接入自迭代? [Y/n]`，默认 **Y** |
+| **CEO 工作台** | 勾选「创建 GitHub 仓库」后出现「接入自迭代」复选框，默认 **勾选** |
+| **飞书 / 后台** | 非交互默认 **不接入**；需显式 `--activate-autopilot` 或工作台勾选 |
+
+接入自迭代 = 登记 `project-registry.yaml` + 写入 `repo-paths.local.yaml` + 派首张 `agent-safe` 票。  
+不接入时仍会 `bootstrap` GitHub Issues，可稍后补开：
+
+```bash
+bash scripts/ai-company/activate-project-autopilot.sh --id <slug> --target ~/Projects/<slug>
+```
+
+已有项目（如 **MeiGen AI / `meigen-replica`**）一次性激活：
+
+```bash
+bash scripts/ai-company/activate-project-autopilot.sh \
+  --id meigen-replica \
+  --target ~/Projects/meigen-replica \
+  --repo chenzh/meigen-replica \
+  --stack visual-replica \
+  --from TICKET-001 --to TICKET-003
+```
+
+之后白天 **Employee Autopilot** 会自动派单（无需 CEO 每次喊「派单」）：
+
+| 入口 | 命令 / URL |
+|------|------------|
+| 自动（推荐） | `autopilot-dispatch.sh`（LaunchAgent/cron 已装则后台跑） |
+| 手动一刀 | `bash scripts/ai-company/autopilot-dispatch.sh --force` |
+| CEO 工作台 | http://127.0.0.1:9477 → 项目队列 →「派这一单」 |
+| 单票 | `bash scripts/agent-delivery/dispatch-cursor-agent-cli.sh <issue#>` |
+
+**前提检查：**
+
+```bash
+cursor-agent status
+bash scripts/ai-company/resolve-repo-path.sh --id meigen-replica
+bash scripts/ai-company/multica-runtime-status.sh
+gh issue list -R chenzh/meigen-replica -l agent-safe
+```
+
+暂停自迭代：在 `project-registry.yaml` 把该项目设为 `paused: true`。
+
+---
+
 ## CEO 仍须负责
 
 - BLOCKED / NEED_CLARIFY 答复

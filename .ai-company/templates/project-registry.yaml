@@ -15,6 +15,9 @@
 #   publish_policy: ceo-approve        （文档用；发布 human-only）
 #   channels: [youtube, x]            （可选）
 #   content_workbench_url: https://hq.revoices.app/#content/review  （内容审稿 HQ，默认此 URL）
+# OpenWorld 系（出海 monorepo + No WiFi / MetaViewer）：
+#   portfolio_group: openworld
+#   workbench_url: https://...   （生产站或外部 HQ，指挥舱深链）
 # 内容仓 **不需要** CEO 本机 AI_REPO_PATH_*。
 # 职责划分（Harness）：harness/content-hq-split.md → 内容仓 .delivery/CONTENT-HQ-SPLIT.md
 # 运营接线：docs/24-content-operations.md
@@ -101,6 +104,39 @@ projects:
     paused: false
     delivery_slug: meigen-replica
     notes: "MeiGen AI gallery+studio replica — visual gate + autopilot"
+
+  # ── OpenWorld 系（出海 monorepo + MetaViewer）— 先登记；装 harness 后取消 paused ──
+  - id: metadata-viewer
+    repo: github.com/chenzh/metadata-viewer
+    portfolio_group: openworld
+    tier: production
+    priority: 16
+    stack: next-static-pwa
+    autopilot_id: null
+    max_nightly_tickets: 1
+    openapi: false
+    e2e: false
+    paused: true
+    delivery_slug: metadata-viewer
+    domain: www.nowifiwebgames.com
+    cloudflare_project: no-wifi-games
+    workbench_url: https://www.nowifiwebgames.com
+    notes: "MetaViewer / No WiFi Games — install-harness.sh then agent-safe queue"
+
+  - id: openworld
+    repo: github.com/chenzh/openworld
+    portfolio_group: openworld
+    tier: staging
+    priority: 17
+    stack: monorepo-opc
+    autopilot_id: null
+    max_nightly_tickets: 1
+    openapi: false
+    e2e: false
+    paused: true
+    delivery_slug: openworld
+    workbench_url: https://hermes.nowifiwebgames.com
+    notes: "出海 monorepo — hermes-mobile/revoice/games/workshop; SecondBrain projects/openworld"
 
   # ── 自媒体线（Hermes 远程机）示例 — 起号前保持 paused ──
   - id: content-youtube-sea

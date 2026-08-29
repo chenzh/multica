@@ -44,6 +44,8 @@
 | `kind` | `product`（默认）或 `content` | `content` |
 | `dispatch_mode` | 内容线：`remote-pull` / `gha` | `remote-pull` |
 | `content_workbench_url` | 内容审稿 HQ（默认 `hq.revoices.app/#content/review`） | 见 `company-defaults.yaml` → `content.workbench_url` |
+| `portfolio_group` | UI 分组（如 `openworld`） | `openworld` |
+| `workbench_url` | 外部生产站 / Hermes 深链 | `https://www.nowifiwebgames.com` |
 
 示例（注释写在项目块旁，不必所有仓都有）：
 

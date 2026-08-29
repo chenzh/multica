@@ -72,11 +72,14 @@ button:hover {
   border-color: var(--accent);
 }
 
-button.primary {
+button.primary,
+a.primary.link-btn {
   background: linear-gradient(180deg, #4d8dff, #3a74e8);
-  border-color: transparent;
+  border: 1px solid transparent;
   color: white;
   font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 10px;
 }
 
 button:disabled {

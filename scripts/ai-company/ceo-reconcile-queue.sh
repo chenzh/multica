@@ -80,6 +80,7 @@ PY
 fixed=0
 while IFS= read -r repo; do
   [ -n "$repo" ] || continue
+  root="$(bash "$SCRIPT_DIR/resolve-repo-path.sh" --repo "$repo" --quiet 2>/dev/null || true)"
 
   open_prs="$(
     gh pr list -R "$repo" -s open \
@@ -89,7 +90,7 @@ while IFS= read -r repo; do
   )"
   while IFS=$'\t' read -r issue_num pr_num; do
     [ -z "$issue_num" ] && continue
-    if issue_dispatch_active "$issue_num"; then
+    if issue_dispatch_active "$issue_num" "$root"; then
       continue
     fi
     mergeable="$(
@@ -135,7 +136,7 @@ while IFS= read -r repo; do
   )"
   for num in $numbers; do
     [ -z "$num" ] && continue
-    if issue_dispatch_active "$num"; then
+    if issue_dispatch_active "$num" "$root"; then
       echo "reconcile: skip $repo#$num (dispatch in progress)"
       continue
     fi

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ISSUE_JSON="${1:?usage: build-prompt.sh <issue.json>}"
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 
 title="$(jq -r '.title' "$ISSUE_JSON")"
 body="$(jq -r '.body // ""' "$ISSUE_JSON")"

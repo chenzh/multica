@@ -170,18 +170,26 @@ dispatch_local_issues() {
       echo "  no eligible agent-safe issues in $repo"
       break
     fi
-    if issue_dispatch_active "$issue"; then
+    if issue_dispatch_active "$issue" "$root"; then
       echo "  skip $repo#$issue (dispatch already in progress)"
       break
     fi
     if [ "$DRY_RUN" -eq 1 ]; then
       echo "  GITHUB_REPOSITORY=$repo REPO_ROOT=$root dispatch-cursor-agent-cli.sh $issue"
     else
-      GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
-        bash "$MULTICA_ROOT/scripts/agent-delivery/dispatch-cursor-agent-cli.sh" "$issue" || {
-        echo "  warning: local dispatch failed for $repo#$issue" >&2
-        continue
-      }
+      DISPATCH_LOG="$root/.delivery/.agent-runs/portfolio-dispatch-${issue}-$(date -u +%Y%m%dT%H%M%SZ).log"
+      if [ "${PORTFOLIO_DISPATCH_ASYNC:-1}" = "1" ]; then
+        echo "  async dispatch $repo#$issue log=$DISPATCH_LOG"
+        nohup env GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
+          bash "$MULTICA_ROOT/scripts/agent-delivery/dispatch-cursor-agent-cli.sh" "$issue" \
+          >>"$DISPATCH_LOG" 2>&1 &
+      else
+        GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
+          bash "$MULTICA_ROOT/scripts/agent-delivery/dispatch-cursor-agent-cli.sh" "$issue" || {
+          echo "  warning: local dispatch failed for $repo#$issue" >&2
+          continue
+        }
+      fi
     fi
     total_dispatched=$((total_dispatched + 1))
     remaining=$((remaining - 1))

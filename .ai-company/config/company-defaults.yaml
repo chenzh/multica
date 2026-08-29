@@ -56,3 +56,8 @@ content:
   workbench_url: https://hq.revoices.app/#content/review   # 内容审稿 HQ（lighthouse）
   agent_url: https://agent.revoices.app/                   # Worker / tunnel
   remote_ssh: lighthouse                                   # ssh 别名
+
+openworld:
+  hermes_dashboard_url: https://hermes.nowifiwebgames.com
+  metadata_viewer_site: https://www.nowifiwebgames.com
+  monorepo_root_env: OPENWORLD_ROOT                        # 换机可覆盖 checkout 路径

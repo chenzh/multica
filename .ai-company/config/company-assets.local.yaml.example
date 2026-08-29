@@ -57,3 +57,25 @@ projects:
     github_secrets:
       - SLACK_WEBHOOK_URL
       - CLOUDFLARE_API_TOKEN
+
+  metadata-viewer:
+    repo: chenzh/metadata-viewer
+    tier: production
+    domains:
+      production: www.nowifiwebgames.com
+    hosting:
+      provider: cloudflare-pages
+      project: no-wifi-games
+    github_secrets: []
+    notes: "MetaViewer / No WiFi Games — WIN-METAVIEWER lineage"
+
+  openworld:
+    repo: chenzh/openworld
+    tier: staging
+    domains:
+      production: hermes.nowifiwebgames.com
+    hosting:
+      provider: ""
+      project: ""
+    github_secrets: []
+    notes: "出海 monorepo — hermes-mobile/revoice/games/workshop"

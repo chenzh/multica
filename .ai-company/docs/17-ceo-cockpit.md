@@ -43,8 +43,9 @@
 | 入口 | 角色 | 何时打开 |
 |------|------|----------|
 | **飞书 Bot** | 推：日报 + BLOCKED + 可选审批卡 | 每天必看（无告警可 0 回复） |
-| **http://127.0.0.1:9477** | 拉：**唯一 CEO 入口**（工程队列 + 资产 + 流程灯 + **内容线深链**） | 想「一眼看全公司」时 |
+| **http://127.0.0.1:9477** | 拉：**唯一 CEO 入口**（工程队列 + 资产 + 流程灯 + **内容线** + **OpenWorld 系**） | 想「一眼看全公司」时 |
 | **https://hq.revoices.app/** | 拉：**内容 pack 审稿**（lighthouse；从 `:9477` 一键打开） | 审自媒体稿、过 pack 时 |
+| **https://hermes.nowifiwebgames.com** / **www.nowifiwebgames.com** | OpenWorld：Hermes 面板 / MetaViewer 生产站（从 `:9477` 深链） | 看出海 App、No WiFi 站 |
 | **http://localhost:3000** Multica | 单 workspace 运行时（Agent / Autopilot / daemon） | 调试并发、看单次 run |
 | **GitHub** | 交付真相源（Issues / PR / labels / CI） | 深入某票、审 merge |
 | **SecondBrain OPC map** | 经营真相源（主线 / 杀线 / 值得做） | 周度战略，见 [13-opc-bridge.md](./13-opc-bridge.md) |
@@ -66,6 +67,7 @@
 | **运行** | Multica daemon 并发、本机 cursor-agent 进程 | `multica-runtime-status.sh` |
 | **动作** | 智能派单、试跑 nightly（`--no-dispatch`）、打开某 repo | 现有 workbench API / 脚本 |
 | **OPC** | 本周主线 / 杀线（只读外链） | SecondBrain `*-map-portfolio-opc.md` |
+| **OpenWorld** | `openworld` monorepo + `metadata-viewer` 路径、队列、Hermes / 生产站链接 | `portfolio_group: openworld` in registry |
 
 ### 规范入口（指挥舱固定链，实现时照抄）
 

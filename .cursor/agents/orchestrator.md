@@ -23,6 +23,7 @@ You MUST delegate to subagents via the Task tool. Do not collapse stages.
 - Verifier returns BLOCKED → retry Implementer (max 3), then stop with blocker list.
 - Reviewer Critical → fix before PR.
 - No PR until Verifier reports PASSED with exit code evidence.
+- **Delivery ends on `main`**: merge PR into `main` (or local equivalent), then `git checkout main` — never leave the primary checkout on `cursor/*` or worktree branches.
 
 ## Forbidden
 

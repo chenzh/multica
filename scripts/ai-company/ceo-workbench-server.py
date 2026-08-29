@@ -50,6 +50,8 @@ class Project:
     kind: str = "product"
     dispatch_mode: str = ""
     content_workbench_url: str = ""
+    portfolio_group: str = ""
+    workbench_url: str = ""
     executor: str = ""
     publish_policy: str = ""
     channels: list[str] = field(default_factory=list)
@@ -61,6 +63,15 @@ CONTENT_WORKBENCH_URL = os.environ.get(
 )
 CONTENT_AGENT_URL = os.environ.get("CONTENT_AGENT_URL", "https://agent.revoices.app/")
 CONTENT_REMOTE_SSH = os.environ.get("CONTENT_REMOTE_SSH", "lighthouse")
+
+OPENWORLD_HERMES_URL = os.environ.get(
+    "OPENWORLD_HERMES_URL",
+    "https://hermes.nowifiwebgames.com",
+)
+OPENWORLD_METADATA_VIEWER_SITE = os.environ.get(
+    "OPENWORLD_METADATA_VIEWER_SITE",
+    "https://www.nowifiwebgames.com",
+)
 
 
 NORM_LINKS: list[tuple[str, str]] = [
@@ -264,6 +275,7 @@ def company_overview(*, refresh_verify: bool = False) -> dict[str, Any]:
     registry = {p.id: p for p in parse_registry()}
     projects_out: list[dict[str, Any]] = []
     content_lines: list[dict[str, Any]] = []
+    openworld_lines: list[dict[str, Any]] = []
     row_by_id = {row.get("id", ""): row for row in rows}
     for row in rows:
         pid = row.get("id", "")
@@ -280,6 +292,24 @@ def company_overview(*, refresh_verify: bool = False) -> dict[str, Any]:
                     "publish_policy": reg.publish_policy if reg else "",
                     "channels": reg.channels if reg else [],
                     "workbench_url": (reg.content_workbench_url if reg and reg.content_workbench_url else CONTENT_WORKBENCH_URL),
+                    "blocked": int(row.get("blocked", 0)),
+                    "running": int(row.get("running", 0)),
+                    "agent_safe": int(row.get("agent_safe", 0)),
+                    "notes": reg.notes if reg else row.get("notes", ""),
+                }
+            )
+            continue
+        if reg and reg.portfolio_group == "openworld":
+            openworld_lines.append(
+                {
+                    "id": pid,
+                    "repo": row.get("repo", ""),
+                    "paused": row.get("paused", False),
+                    "local_path": row.get("local_path", ""),
+                    "local_path_resolved": row.get("local_path_resolved", False),
+                    "domain": reg.domain,
+                    "workbench_url": reg.workbench_url,
+                    "delivery_slug": reg.delivery_slug,
                     "blocked": int(row.get("blocked", 0)),
                     "running": int(row.get("running", 0)),
                     "agent_safe": int(row.get("agent_safe", 0)),
@@ -327,6 +357,27 @@ def company_overview(*, refresh_verify: bool = False) -> dict[str, Any]:
             }
         )
 
+    for reg in registry.values():
+        if reg.portfolio_group != "openworld" or reg.id in row_by_id:
+            continue
+        local_path = resolve_repo_path(reg.id, reg.repo)
+        openworld_lines.append(
+            {
+                "id": reg.id,
+                "repo": reg.repo,
+                "paused": reg.paused,
+                "local_path": local_path,
+                "local_path_resolved": bool(local_path),
+                "domain": reg.domain,
+                "workbench_url": reg.workbench_url,
+                "delivery_slug": reg.delivery_slug,
+                "blocked": 0,
+                "running": 0,
+                "agent_safe": 0,
+                "notes": reg.notes,
+            }
+        )
+
     payload: dict[str, Any] = {
         "hq": {
             "multica_root": str(MULTICA_ROOT),
@@ -346,6 +397,16 @@ def company_overview(*, refresh_verify: bool = False) -> dict[str, Any]:
                 "blocked": sum(int(line.get("blocked", 0)) for line in content_lines),
                 "running": sum(int(line.get("running", 0)) for line in content_lines),
                 "agent_safe": sum(int(line.get("agent_safe", 0)) for line in content_lines),
+            },
+        },
+        "openworld": {
+            "hermes_dashboard_url": OPENWORLD_HERMES_URL,
+            "metadata_viewer_site": OPENWORLD_METADATA_VIEWER_SITE,
+            "lines": sorted(openworld_lines, key=lambda item: item.get("id", "")),
+            "totals": {
+                "blocked": sum(int(line.get("blocked", 0)) for line in openworld_lines),
+                "running": sum(int(line.get("running", 0)) for line in openworld_lines),
+                "agent_safe": sum(int(line.get("agent_safe", 0)) for line in openworld_lines),
             },
         },
         "totals": {
@@ -379,7 +440,7 @@ def parse_registry() -> list[Project]:
                 projects.append(Project(**current))  # type: ignore[arg-type]
             current = {"id": line.split(":", 1)[1].strip()}
             continue
-        for key in ("repo", "tier", "notes", "domain", "cloudflare_project", "delivery_slug", "kind", "dispatch_mode", "content_workbench_url", "executor", "publish_policy"):
+        for key in ("repo", "tier", "notes", "domain", "cloudflare_project", "delivery_slug", "kind", "dispatch_mode", "content_workbench_url", "portfolio_group", "workbench_url", "executor", "publish_policy"):
             if line.startswith(f"{key}:"):
                 val = line.split(":", 1)[1].strip().strip('"')
                 current[key] = val

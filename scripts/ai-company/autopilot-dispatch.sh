@@ -177,6 +177,10 @@ if [ "$FORCE" -eq 0 ] && in_quiet_hours; then
   exit 0
 fi
 
+if [ "$DRY_RUN" -eq 0 ]; then
+  bash "$SCRIPT_DIR/ceo-reconcile-queue.sh" --registry "$REGISTRY" --org "$GITHUB_ORG" 2>/dev/null || true
+fi
+
 aggregate_queue
 LOCAL_PROCS="$(local_running_estimate)"
 echo "TOTAL BLOCKED=$TOTAL_BLOCKED RUNNING_LABELS=$TOTAL_RUNNING QUEUE=$TOTAL_QUEUE local_cli≈$LOCAL_PROCS"

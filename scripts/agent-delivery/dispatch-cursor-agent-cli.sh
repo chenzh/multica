@@ -87,7 +87,11 @@ trap 'rm -rf "$TMP"' EXIT
 export GH_REPO="$REPO"
 gh issue view "$ISSUE_NUMBER" --json title,body,url,number >"$TMP/issue.json"
 PROMPT="$TMP/prompt.txt"
-bash "$(dirname "$0")/build-prompt.sh" "$TMP/issue.json" >"$PROMPT"
+BUILD_PROMPT="$REPO_ROOT/scripts/agent-delivery/build-prompt.sh"
+if [ ! -f "$BUILD_PROMPT" ]; then
+  BUILD_PROMPT="$(dirname "$0")/build-prompt.sh"
+fi
+REPO_ROOT="$REPO_ROOT" bash "$BUILD_PROMPT" "$TMP/issue.json" >"$PROMPT"
 
 if [ "$DRY_RUN" -eq 1 ]; then
   echo "repo=$REPO root=$REPO_ROOT worktree=$WORKTREE_NAME base=$WORKTREE_BASE"
@@ -109,6 +113,18 @@ Verifier must pass acceptance commands before merge."
 gh issue comment "$ISSUE_NUMBER" --body "$COMMENT"
 
 echo "Dispatching issue #$ISSUE_NUMBER in $REPO_ROOT (log: $LOG_FILE)"
+
+LOCK_FILE="$LOG_DIR/.dispatch-issue-${ISSUE_NUMBER}.lock"
+if [ -f "$LOCK_FILE" ]; then
+  stale_pid="$(cat "$LOCK_FILE" 2>/dev/null || true)"
+  if [ -n "$stale_pid" ] && kill -0 "$stale_pid" 2>/dev/null; then
+    echo "error: issue #$ISSUE_NUMBER dispatch already running (pid $stale_pid)" >&2
+    exit 1
+  fi
+  rm -f "$LOCK_FILE"
+fi
+echo $$ >"$LOCK_FILE"
+trap 'rm -f "$LOCK_FILE"' EXIT
 
 # Resolve base ref: explicit WORKTREE_BASE, else origin/HEAD, else main/master.
 WORKTREE_BASE_REF="$WORKTREE_BASE"
@@ -147,19 +163,28 @@ set +e
   PROMPT_KEEP="$LOG_DIR/issue-${ISSUE_NUMBER}-${TS}.prompt.txt"
   cp "$PROMPT" "$PROMPT_KEEP"
   if [ "$USE_WORKTREE" = "1" ]; then
-    "$CURSOR_AGENT_BIN" -p --force --trust \
+    echo "agent: starting cursor-agent (worktree=$WORKTREE_NAME)" >>"$LOG_FILE"
+    if ! "$CURSOR_AGENT_BIN" -p --force --trust \
       --worktree "$WORKTREE_NAME" \
       --worktree-base "$WORKTREE_BASE_REF" \
       --output-format text \
       <"$PROMPT_KEEP" \
-      >"$LOG_FILE" 2>&1
+      >>"$LOG_FILE" 2>&1; then
+      echo "agent: exited $?" >>"$LOG_FILE"
+      exit 1
+    fi
   else
+    echo "agent: starting cursor-agent (branch=$WORKTREE_NAME)" >>"$LOG_FILE"
     git checkout -B "$WORKTREE_NAME" "$WORKTREE_BASE" 2>/dev/null || git checkout "$WORKTREE_NAME" 2>/dev/null
-    "$CURSOR_AGENT_BIN" -p --force --trust \
+    if ! "$CURSOR_AGENT_BIN" -p --force --trust \
       --output-format text \
       <"$PROMPT_KEEP" \
-      >"$LOG_FILE" 2>&1
+      >>"$LOG_FILE" 2>&1; then
+      echo "agent: exited $?" >>"$LOG_FILE"
+      exit 1
+    fi
   fi
+  echo "agent: exited 0" >>"$LOG_FILE"
 )
 exit_code=$?
 set -e

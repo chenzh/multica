@@ -73,7 +73,9 @@ bash scripts/ai-company/install-harness.sh --force /path/to/product-repo   # 覆
 
 **User Rules（Cursor 设置）** 只放个人偏好（语言、commit 习惯），**不要**重复 harness 正文——否则每条对话双倍扣 token。
 
-刷新 Tier 0：`sync-all-harness.sh`（Vault）· `install-harness.sh --force`（company-harness.mdc）· `rollout-harness-tier0.sh`（本机一键）· `verify-harness-tier0.sh`（验收）。
+刷新 Tier 0：`sync-all-harness.sh` · `install-harness.sh --force` · `rollout-harness-tier0.sh` · `verify-harness-tier0.sh`。
+
+**经验回流**（不写进 Rules）：[31-harness-learnings-routing.md](./31-harness-learnings-routing.md) · `record-harness-learning.sh` · `verify-harness-learnings.sh` · 队列 [system-evolution/harness-candidates.md](./system-evolution/harness-candidates.md)。
 
 批量：
 

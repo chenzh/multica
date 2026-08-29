@@ -201,6 +201,20 @@ bash scripts/ai-company/verify-harness-tier0.sh
 
 Expected Tier-0 rules: see `.ai-company/harness/README.md` § Cursor Tier-0.
 
+## record-harness-learning.sh / verify-harness-learnings.sh
+
+Harness **experience feedback** (candidates queue → CEO weekly promote). Does not auto-edit norm docs.
+
+```bash
+bash scripts/ai-company/record-harness-learning.sh \
+  --content "BLOCKED:INFRA cron PATH missing gh" \
+  --suggest docs/23-local-agent-environment.md
+
+bash scripts/ai-company/verify-harness-learnings.sh
+```
+
+Routing: `.ai-company/docs/31-harness-learnings-routing.md` · queue: `.ai-company/docs/system-evolution/harness-candidates.md`
+
 ## portfolio-commit-norms.sh
 
 Batch `git add` + commit (+ optional push) for `CLAUDE.md` and company-os across portfolio:

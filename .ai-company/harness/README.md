@@ -47,6 +47,8 @@ bash scripts/ai-company/verify-harness-tier0.sh
 
 见 `.ai-company/docs/27-norm-sync.md` § Cursor 省 token。
 
+**经验回流**：`docs/31-harness-learnings-routing.md` · `record-harness-learning.sh` · `verify-harness-learnings.sh`
+
 ---
 
 ## 安装（在 multica 仓库内）

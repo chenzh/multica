@@ -21,6 +21,7 @@ paths:
   - docs/28-norm-layers.md
   - docs/29-harness-layout.md
   - docs/30-silicon-valley-doc-standards.md
+  - docs/31-harness-learnings-routing.md
   - runbooks/blocked-triage.md
   - runbooks/employee-autopilot.md
   - runbooks/onboard-new-project.md

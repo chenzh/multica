@@ -153,11 +153,12 @@ else
 fi
 
 echo ""
-echo "4. verify"
+echo "4. verify Tier-0 + learnings loop"
 if [ "$DRY_RUN" -eq 1 ]; then
-  echo "[dry-run] verify-harness-tier0.sh"
+  echo "[dry-run] verify-harness-tier0.sh && verify-harness-learnings.sh"
 else
   bash "$SCRIPT_DIR/verify-harness-tier0.sh" || true
+  bash "$SCRIPT_DIR/verify-harness-learnings.sh" || true
 fi
 
 echo ""

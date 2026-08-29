@@ -165,7 +165,7 @@ Kickoff 模板（产品仓）：[templates/orchestrator-kickoff-product.md](../t
 | 改 Vault 编码习惯 | SecondBrain → `sync-all-harness.sh` |
 | 改 Agent prompt / workflow | `install-harness.sh --force` 各产品 |
 | 新项目上線 | onboard runbook + `examples/` 种子 + `CLAUDE.project.md` |
-| 每周 | 更新 `project-registry` priority/cap；OPC 杀线对照 `13-opc-bridge` |
+| 每周 | 更新 `project-registry` priority/cap；OPC 杀线对照 `13-opc-bridge`；升格 [harness-candidates](./system-evolution/harness-candidates.md)（见 [31-harness-learnings-routing](./31-harness-learnings-routing.md)） |
 | 每票投前 | triage `06-task-grading` 清单 |
 
 ---
@@ -186,6 +186,7 @@ Kickoff 模板（产品仓）：[templates/orchestrator-kickoff-product.md](../t
 - [27-norm-sync.md](./27-norm-sync.md) — 同步命令与 manifest  
 - [29-harness-layout.md](./29-harness-layout.md) — **按类型放哪、examples 与 harness**  
 - [30-silicon-valley-doc-standards.md](./30-silicon-valley-doc-standards.md) — 硅谷文档纪律（与 conventions 对齐）  
+- [31-harness-learnings-routing.md](./31-harness-learnings-routing.md) — **经验回流路由与候选队列**  
 - [08-multi-project-portfolio.md](./08-multi-project-portfolio.md) — registry 与 harness  
 - [runbooks/onboard-new-project.md](../runbooks/onboard-new-project.md) — 接入时创建层 2  
 - [templates/CLAUDE.project.md](../templates/CLAUDE.project.md) — 项目 CLAUDE 模板  

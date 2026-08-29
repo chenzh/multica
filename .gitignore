@@ -84,6 +84,7 @@ __pycache__/
 .ai-company/config/feishu-bot-notify.env
 .ai-company/config/feishu-approval.env
 .ai-company/config/repo-paths.local.yaml
+.ai-company/config/company-assets.local.yaml
 .ai-company/run-logs/
 .ai-company/config/*.env
 !.ai-company/config/*.env.example

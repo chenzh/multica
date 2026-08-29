@@ -45,3 +45,10 @@ JSON 格式化站点；TICKET-001～005 已在 GitHub 关闭。续票供夜间 s
 - **What:** 首页补充 openGraph / twitter meta 占位
 - **AC / DoD:** `pnpm typecheck` exit 0
 - **Source:** work-finder heuristic 2026-08-29
+
+### TICKET-014 [agent-safe] 静态约页性能：图片 alt
+
+- **Owner:** Implementer
+- **What:** 关键图片补有意义 alt；无图则跳过改文案区 landmark
+- **AC / DoD:** `pnpm typecheck` exit 0
+- **Source:** work-finder heuristic 2026-08-29

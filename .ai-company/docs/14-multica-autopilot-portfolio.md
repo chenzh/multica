@@ -44,6 +44,14 @@ bash scripts/ai-company/install-nightly-cron.sh --install
 # 21:00 → ceo-nightly.sh → portfolio-dispatch（本机 cursor-agent）
 ```
 
+### 3b. 白天自主迭代（macOS，推荐）
+
+```bash
+bash scripts/ai-company/autopilot-launchagent-service.sh install
+# GUI 会话内每 30min → autopilot-dispatch（reconcile + merge + 派单）
+# 完整方案：[33-autonomous-iteration.md](./33-autonomous-iteration.md)
+```
+
 `portfolio-agent-dispatch.yml`（GHA）**不用于派单**；若误触发会提示改在本机运行。
 
 可选：`PORTFOLIO_GH_TOKEN` 仅用于跨 repo 的 `gh` 操作（merge/reconcile），与 Cursor 无关。

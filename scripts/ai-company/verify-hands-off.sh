@@ -36,6 +36,21 @@ else
 fi
 
 echo ""
+echo "2b. 白天 LaunchAgent"
+if launchctl print "gui/$(id -u)/com.multica.ai-company-autopilot" &>/dev/null; then
+  pass "Autopilot LaunchAgent 在册"
+else
+  note "Autopilot LaunchAgent 未装 — bash scripts/ai-company/autopilot-launchagent-service.sh install"
+fi
+# shellcheck source=lib/budget-guard.sh
+source "$SCRIPT_DIR/lib/budget-guard.sh"
+if budget_guard_dispatch_allowed >/dev/null 2>&1; then
+  pass "budget-guard 允许派单（未超 pause_autopilot_on_exceed）"
+else
+  note "budget-guard 暂停派单 — 本月预算已满或 AUTOPILOT_MONTHLY_SPEND_USD 超限"
+fi
+
+echo ""
 echo "2. 夜间 cron"
 if crontab -l 2>/dev/null | grep -qE 'multica-ai-company-nightly|ceo-nightly\.sh'; then
   pass "21:00 ceo-nightly crontab 已安装"

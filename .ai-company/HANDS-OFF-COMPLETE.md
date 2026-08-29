@@ -7,6 +7,7 @@
 | 能力 | 命令 / 证据 |
 |------|-------------|
 | 夜间全流程 | `ceo-nightly.sh`：reconcile → merge → reconcile → **sync backlog** → 后台派单 → 飞书日报 |
+| **白天自主派单** | `autopilot-launchagent-service.sh install`（macOS GUI 会话，每 30min）→ 见 [docs/33-autonomous-iteration.md](./docs/33-autonomous-iteration.md) |
 | Cron | `install-nightly-cron.sh --install` → 21:00 |
 | 飞书日报 | `setup-feishu-bot-notify.sh` |
 | 队列修复 | `ceo-reconcile-queue.sh`（含 PR 冲突 → BLOCKED） |

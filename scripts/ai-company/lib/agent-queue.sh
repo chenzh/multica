@@ -162,9 +162,37 @@ reconcile_stale_running_labels() {
   done
 }
 
+_blocked_retryable() {
+  local body="${1:-}" log_path=""
+  if [[ "$body" == *"Authentication required"* ]] || [[ "$body" == *CURSOR_API_KEY* ]] || [[ "$body" == *"agent login"* ]]; then
+    return 0
+  fi
+  if [[ "$body" == *"假死清理"* ]] || [[ "$body" == *"dispatch pid 已死"* ]] || [[ "$body" == *"dispatch pid 已不存在"* ]]; then
+    return 0
+  fi
+  if [[ "$body" == *"Local cursor-agent failed"* ]] && [[ "$body" =~ \`([^\`]+\.log)\` ]]; then
+    log_path="${BASH_REMATCH[1]}"
+    if [ -f "$log_path" ]; then
+      if grep -qE 'Authentication required|Please run .agent login|CURSOR_API_KEY' "$log_path" 2>/dev/null; then
+        return 0
+      fi
+      if grep -q 'starting cursor-agent' "$log_path" 2>/dev/null && ! grep -qE 'completed|exit code|PR opened' "$log_path" 2>/dev/null; then
+        return 0
+      fi
+    fi
+  fi
+  if [[ "$body" =~ \`([^\`]+\.log)\` ]]; then
+    log_path="${BASH_REMATCH[1]}"
+    if [ -f "$log_path" ] && grep -qE 'Authentication required|Please run .agent login|CURSOR_API_KEY' "$log_path" 2>/dev/null; then
+      return 0
+    fi
+  fi
+  return 1
+}
+
 reconcile_auth_blocked_retries() {
   local repo="${1:?}" dry="${2:-0}"
-  local bin="${CURSOR_AGENT_BIN:-cursor-agent}" num body quiet=0
+  local bin="${CURSOR_AGENT_BIN:-cursor-agent}" num body quiet=0 reason=""
   [ "$dry" -eq 1 ] && quiet=1
   command -v "$bin" >/dev/null 2>&1 || return 0
   "$bin" status >/dev/null 2>&1 || return 0
@@ -172,22 +200,18 @@ reconcile_auth_blocked_retries() {
   for num in $numbers; do
     [ -z "$num" ] && continue
     body="$(gh issue view "$num" -R "$repo" --json comments -q '.comments[-1].body // ""' 2>/dev/null || true)"
-    auth_hit=0
-    if [[ "$body" == *"Authentication required"* ]] || [[ "$body" == *CURSOR_API_KEY* ]] || [[ "$body" == *"agent login"* ]]; then
-      auth_hit=1
-    elif [[ "$body" =~ \`([^\`]+\.log)\` ]]; then
-      log_path="${BASH_REMATCH[1]}"
-      if [ -f "$log_path" ] && grep -qE 'Authentication required|Please run .agent login|CURSOR_API_KEY' "$log_path" 2>/dev/null; then
-        auth_hit=1
-      fi
-    fi
-    if [ "$auth_hit" -eq 0 ]; then
+    if ! _blocked_retryable "$body"; then
       continue
     fi
-    if [ "$quiet" -eq 0 ]; then
-      echo "reconcile-auth: $repo#$num → agent-safe (auth retry)"
+    if [[ "$body" == *"假死清理"* ]] || [[ "$body" == *"dispatch pid"* ]]; then
+      reason="zombie retry"
     else
-      echo "would auth-retry: $repo#$num"
+      reason="auth retry"
+    fi
+    if [ "$quiet" -eq 0 ]; then
+      echo "reconcile-blocked: $repo#$num → agent-safe ($reason)"
+    else
+      echo "would blocked-retry ($reason): $repo#$num"
     fi
     [ "$dry" -eq 1 ] && continue
     gh issue edit "$num" -R "$repo" --remove-label "agent-blocked" --add-label "agent-safe" 2>/dev/null || true

@@ -31,6 +31,8 @@ nightly:
   timezone: Asia/Shanghai
 ```
 
+**运行时**：`scripts/ai-company/lib/budget-guard.sh` 在 `autopilot-dispatch.sh` 派单前读取上述配置；用量来自 `~/.multica/budget-state.json`（按 dispatch 估算）或环境变量 `AUTOPILOT_MONTHLY_SPEND_USD`（手填 Cursor 账单）。
+
 ---
 
 ## 单 ticket 成本优化

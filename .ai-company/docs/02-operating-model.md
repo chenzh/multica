@@ -60,9 +60,10 @@ GitHub Labels（与 `.delivery/README.md` 一致）：
 |------|------|------|
 | **A 手动** | `dispatch-cursor-agent-cli.sh` | 试跑、日 1～3 ticket |
 | **B 夜间** | `ceo-nightly.sh` + `portfolio-dispatch`（本机 CLI） | 多仓公平队列、睡觉模式 |
-| **C Multica** | Autopilot cron/webhook + daemon | 看板、多 runtime、历史 |
+| **C 白天** | `autopilot-launchagent-service.sh` + `autopilot-dispatch.sh` | macOS GUI 会话自主派单 + 白天 merge |
+| **D Multica** | Autopilot cron/webhook + daemon | 看板、多 runtime、历史 |
 
-推荐组合：**B + C** — 本机派单 + gate 门禁，Multica 管队列与 run 历史。
+推荐组合：**B + C** — 夜间 + 白天本机闭环；完整方案见 [33-autonomous-iteration.md](./33-autonomous-iteration.md)。Multica 管队列与 run 历史（可选）。
 
 ---
 

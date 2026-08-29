@@ -11,6 +11,8 @@ source "$SCRIPT_DIR/lib/source-local-env.sh"
 source "$SCRIPT_DIR/lib/notify.sh"
 # shellcheck source=lib/agent-queue.sh
 source "$SCRIPT_DIR/lib/agent-queue.sh"
+# shellcheck source=lib/budget-guard.sh
+source "$SCRIPT_DIR/lib/budget-guard.sh"
 
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 GITHUB_ORG="${GITHUB_ORG:-chenzh}"
@@ -226,6 +228,13 @@ log: $LOG_FILE"
   elif [ "$busy" -ge "$MAX_CONCURRENT" ]; then
     ACTION="busy"
     echo "decision: at capacity (busy=$busy >= $MAX_CONCURRENT) — no new dispatch"
+  elif ! budget_guard_dispatch_allowed; then
+    ACTION="budget-paused"
+    echo "decision: monthly budget exceeded — pause_autopilot_on_exceed (set AUTOPILOT_MONTHLY_SPEND_USD or edit budget-state.json)"
+    maybe_notify "🔴 Autopilot FinOps 暂停：本月 Cursor 预算已用尽（pause_autopilot_on_exceed）。
+覆盖：export AUTOPILOT_MONTHLY_SPEND_USD=… 或调 company-defaults.yaml
+状态：$(budget_guard_state_path)
+log: $LOG_FILE"
   else
     SLOTS=$((MAX_CONCURRENT - busy))
     if [ "$SLOTS" -gt "$MAX_TOTAL" ]; then
@@ -250,6 +259,7 @@ log: $LOG_FILE"
       bg_pid=$!
       echo "portfolio-dispatch started pid=$bg_pid log=$BG_LOG"
       DISPATCHED="$SLOTS"
+      budget_guard_record_dispatch "$DISPATCHED" || true
       # Brief wait so agent-running labels / CLI start show up in logs
       sleep 8 || true
       if [ -n "${bg_pid:-}" ] && ! kill -0 "$bg_pid" 2>/dev/null; then

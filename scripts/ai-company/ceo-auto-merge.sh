@@ -88,6 +88,17 @@ while IFS= read -r repo; do
   for num in $numbers; do
     [ "$merged" -ge "$MAX_MERGE" ] && break
     [ -z "$num" ] && continue
+    head="$(gh pr view "$num" -R "$repo" --json headRefName -q .headRefName 2>/dev/null || echo "")"
+    if [[ "$head" == cursor/* ]]; then
+      root="$(bash "$SCRIPT_DIR/resolve-repo-path.sh" --repo "$repo" --quiet 2>/dev/null || true)"
+      if [ -n "$root" ] && [ -f "$root/.delivery/config/merge-policy.json" ]; then
+        if ! GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
+          bash "$MULTICA_ROOT/scripts/agent-delivery/check-merge-eligible.sh" "$num" 2>/dev/null | grep -q '^merge_eligible=true'; then
+          echo "skip policy: $repo#$num (not merge_eligible)"
+          continue
+        fi
+      fi
+    fi
     if [ "$DRY_RUN" -eq 1 ]; then
       echo "would merge: $repo#$num"
     else

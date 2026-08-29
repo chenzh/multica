@@ -75,6 +75,7 @@ OPENWORLD_METADATA_VIEWER_SITE = os.environ.get(
 
 
 NORM_LINKS: list[tuple[str, str]] = [
+    ("Harness 设计总览", "docs/32-opc-harness-knowledge-design.md"),
     ("硅谷文档规范", "docs/30-silicon-valley-doc-standards.md"),
     ("Harness 布局", "docs/29-harness-layout.md"),
     ("规范分层", "docs/28-norm-layers.md"),
@@ -476,6 +477,14 @@ def cursor_agent_ready() -> bool:
     return result.returncode == 0 and "Logged in" in (result.stdout + result.stderr)
 
 
+def portfolio_dispatch_mode() -> str:
+    if not cursor_agent_ready():
+        return "gha"
+    if os.environ.get("PORTFOLIO_DISPATCH_ASYNC", "1") == "1":
+        return "local-cli-async"
+    return "local-cli-sync"
+
+
 def multica_runtime_status() -> dict[str, Any]:
     result = run_cmd(
         ["bash", str(SCRIPT_DIR / "multica-runtime-status.sh"), "--json"],
@@ -797,7 +806,7 @@ class Handler(BaseHTTPRequestHandler):
                         "org": GITHUB_ORG,
                         "registry": str(REGISTRY),
                         "cursor_agent_ready": cursor_agent_ready(),
-                        "dispatch_mode": "local-cli" if cursor_agent_ready() else "gha",
+                        "dispatch_mode": portfolio_dispatch_mode(),
                     },
                 )
                 return

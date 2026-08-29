@@ -180,7 +180,7 @@ dispatch_local_issues() {
       DISPATCH_LOG="$root/.delivery/.agent-runs/portfolio-dispatch-${issue}-$(date -u +%Y%m%dT%H%M%SZ).log"
       if [ "${PORTFOLIO_DISPATCH_ASYNC:-1}" = "1" ]; then
         echo "  async dispatch $repo#$issue log=$DISPATCH_LOG"
-        nohup env GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
+        nohup env GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" MULTICA_ROOT="$MULTICA_ROOT" \
           bash "$MULTICA_ROOT/scripts/agent-delivery/dispatch-cursor-agent-cli.sh" "$issue" \
           >>"$DISPATCH_LOG" 2>&1 &
       else
@@ -197,7 +197,16 @@ dispatch_local_issues() {
   done
 }
 
-echo "Portfolio dispatch (max_total=$MAX_TOTAL mode=local-cli)"
+DISPATCH_LABEL="local-cli-async"
+if [ "${PORTFOLIO_DISPATCH_ASYNC:-1}" != "1" ]; then
+  DISPATCH_LABEL="local-cli-sync"
+fi
+echo "Portfolio dispatch (max_total=$MAX_TOTAL mode=$DISPATCH_LABEL)"
+if [ "${PORTFOLIO_DISPATCH_ASYNC:-1}" = "1" ]; then
+  echo "  note: each slot starts dispatch in background (nohup); max_total=planned slots, not serial wait"
+else
+  echo "  note: PORTFOLIO_DISPATCH_ASYNC=0 — synchronous wait per issue"
+fi
 echo "Registry: $REGISTRY"
 echo ""
 

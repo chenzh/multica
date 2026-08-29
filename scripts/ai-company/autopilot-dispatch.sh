@@ -9,6 +9,8 @@ MULTICA_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/lib/source-local-env.sh"
 # shellcheck source=lib/notify.sh
 source "$SCRIPT_DIR/lib/notify.sh"
+# shellcheck source=lib/agent-queue.sh
+source "$SCRIPT_DIR/lib/agent-queue.sh"
 
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 GITHUB_ORG="${GITHUB_ORG:-chenzh}"
@@ -84,10 +86,7 @@ in_quiet_hours() {
 }
 
 local_running_estimate() {
-  # pgrep returns 1 when empty — must not trip set -o pipefail
-  local n
-  n="$( (pgrep -fl 'dispatch-cursor-agent-cli\.sh|cursor-agent -p' || true) 2>/dev/null | wc -l | tr -d ' ' )"
-  echo "${n:-0}"
+  local_dispatch_running_count
 }
 
 aggregate_queue() {
@@ -178,6 +177,8 @@ if [ "$FORCE" -eq 0 ] && in_quiet_hours; then
 fi
 
 if [ "$DRY_RUN" -eq 0 ]; then
+  cleaned="$(cleanup_stale_local_dispatches 0 || echo 0)"
+  echo "stale dispatch cleanup: removed/killed ${cleaned:-0}"
   bash "$SCRIPT_DIR/ceo-reconcile-queue.sh" --registry "$REGISTRY" --org "$GITHUB_ORG" 2>/dev/null || true
 fi
 

@@ -65,3 +65,17 @@
 
 - **What:** Go test 校验 mock `/v1/workspaces` 响应与 openapi.yaml 一致  
 - **AC:** `make check` exit 0  
+
+### TICKET-015 [agent-safe] 补齐验收：AC-1: `/` 含 Pricing section（三档价格 **展示**，按钮无真实支付）
+
+- **Owner:** Implementer
+- **What:** 实现或加固未勾选验收项：AC-1: `/` 含 Pricing section（三档价格 **展示**，按钮无真实支付）
+- **AC / DoD:** 对应 accept_cases 项可验证；`make check` 或项目默认 check exit 0
+- **Source:** work-finder heuristic 2026-08-29
+
+### TICKET-016 [agent-safe] Dashboard 空态文案
+
+- **Owner:** Implementer
+- **What:** dashboard 无数据时展示友好空态（无真实 API）
+- **AC / DoD:** `pnpm typecheck` exit 0
+- **Source:** work-finder heuristic 2026-08-29

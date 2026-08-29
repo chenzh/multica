@@ -187,6 +187,7 @@ Kickoff 模板（产品仓）：[templates/orchestrator-kickoff-product.md](../t
 - [29-harness-layout.md](./29-harness-layout.md) — **按类型放哪、examples 与 harness**  
 - [30-silicon-valley-doc-standards.md](./30-silicon-valley-doc-standards.md) — 硅谷文档纪律（与 conventions 对齐）  
 - [31-harness-learnings-routing.md](./31-harness-learnings-routing.md) — **经验回流路由与候选队列**  
+- [32-opc-harness-knowledge-design.md](./32-opc-harness-knowledge-design.md) — **设计方案总览（HQ）**  
 - [08-multi-project-portfolio.md](./08-multi-project-portfolio.md) — registry 与 harness  
 - [runbooks/onboard-new-project.md](../runbooks/onboard-new-project.md) — 接入时创建层 2  
 - [templates/CLAUDE.project.md](../templates/CLAUDE.project.md) — 项目 CLAUDE 模板  

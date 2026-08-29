@@ -4,6 +4,12 @@ set -euo pipefail
 
 REPO="${GITHUB_REPOSITORY:-}"
 REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+MULTICA_ROOT="${MULTICA_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+# When dispatch runs from multica HQ against a product checkout, source HQ local.env (CURSOR_API_KEY, PATH).
+if [ -f "$MULTICA_ROOT/.ai-company/config/local.env" ] && [ "$MULTICA_ROOT/.ai-company/config/local.env" != "$REPO_ROOT/.ai-company/config/local.env" ]; then
+  # shellcheck disable=SC1090
+  source "$MULTICA_ROOT/.ai-company/config/local.env"
+fi
 CURSOR_AGENT_BIN="${CURSOR_AGENT_BIN:-cursor-agent}"
 WORKTREE_BASE="${WORKTREE_BASE:-main}"
 LOG_DIR="${LOG_DIR:-$REPO_ROOT/.delivery/.agent-runs}"
@@ -187,6 +193,10 @@ set +e
   echo "agent: exited 0" >>"$LOG_FILE"
 )
 exit_code=$?
+if [ "$exit_code" -eq 0 ] && grep -qE 'Authentication required|Please run .agent login|CURSOR_API_KEY' "$LOG_FILE" 2>/dev/null; then
+  echo "agent: auth failure detected in log — treating as failure" >>"$LOG_FILE"
+  exit_code=1
+fi
 set -e
 
 if [ "$exit_code" -eq 0 ]; then

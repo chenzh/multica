@@ -81,6 +81,7 @@
 | 14 | multica-autopilot-portfolio | Autopilot |
 | 15 | feishu-site-factory | 建站工厂 |
 | 16 | disaster-recovery | 灾备摘要 |
+| 32 | opc-harness-knowledge-design | **设计方案总览**（战略/arch，不下发） |
 
 ---
 

@@ -46,12 +46,23 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Read merge policy
+        if: steps.scope.outputs.skip == 'false'
+        id: policy
+        run: |
+          REGEX='^(frontend|backend|mobile-verify|check)$'
+          if [ -f .delivery/config/merge-policy.json ]; then
+            REGEX="$(jq -r '.requiredChecksRegexp // "^(frontend|backend|mobile-verify|check)$"' .delivery/config/merge-policy.json)"
+          fi
+          echo "regexp=$REGEX" >> "$GITHUB_OUTPUT"
+          echo "requiredChecksRegexp=$REGEX"
+
       - name: Wait for required checks
         if: github.event_name == 'pull_request' && steps.scope.outputs.skip == 'false'
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          check-regexp: "^(frontend|backend|mobile-verify)"
+          check-regexp: ${{ steps.policy.outputs.regexp }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 30
           allowed-conclusions: success,skipped

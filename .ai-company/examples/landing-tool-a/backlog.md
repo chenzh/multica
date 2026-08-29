@@ -76,3 +76,31 @@
 - **What:** footer 链到 Privacy/Terms
 - **AC / DoD:** `pnpm typecheck` exit 0
 - **Source:** work-finder heuristic 2026-08-29
+
+### TICKET-015 [agent-safe] OG tags 补齐
+
+- **Owner:** Implementer
+- **What:** layout metadata 增加 openGraph 字段
+- **AC / DoD:** `pnpm typecheck` exit 0
+- **Source:** work-finder heuristic 2026-08-29
+
+### TICKET-016 [agent-safe] 页脚合规链接
+
+- **Owner:** Implementer
+- **What:** footer 链到 Privacy/Terms
+- **AC / DoD:** `pnpm typecheck` exit 0
+- **Source:** work-finder heuristic 2026-08-29
+
+### TICKET-017 [agent-safe] OG tags 补齐
+
+- **Owner:** Implementer
+- **What:** layout metadata 增加 openGraph 字段
+- **AC / DoD:** `pnpm typecheck` exit 0
+- **Source:** work-finder heuristic 2026-08-29
+
+### TICKET-018 [agent-safe] 页脚合规链接
+
+- **Owner:** Implementer
+- **What:** footer 链到 Privacy/Terms
+- **AC / DoD:** `pnpm typecheck` exit 0
+- **Source:** work-finder heuristic 2026-08-29

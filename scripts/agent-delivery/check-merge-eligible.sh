@@ -4,8 +4,8 @@ set -euo pipefail
 
 PR_NUMBER="${1:?usage: check-merge-eligible.sh <pr_number>}"
 REPO="${GITHUB_REPOSITORY:-multica-ai/multica}"
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-POLICY="$ROOT/.delivery/config/merge-policy.json"
+ROOT="${REPO_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+POLICY="${MERGE_POLICY_PATH:-$ROOT/.delivery/config/merge-policy.json}"
 
 if [ ! -f "$POLICY" ]; then
   echo "merge_eligible=false reason=policy_missing"

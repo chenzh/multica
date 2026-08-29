@@ -2,7 +2,7 @@
 
 > **层级**：通用（Company OS）  
 > **问题**：对话能读到 harness，但经验默认只进 INBOX，不会自动回到正确规范层。  
-> 配套：[28-norm-layers.md](./28-norm-layers.md) · [27-norm-sync.md](./27-norm-sync.md) · [system-evolution/harness-candidates.md](./system-evolution/harness-candidates.md)
+> 配套：[28-norm-layers.md](./28-norm-layers.md) · [27-norm-sync.md](./27-norm-sync.md) · [32-opc-harness-knowledge-design.md](./32-opc-harness-knowledge-design.md) · [system-evolution/harness-candidates.md](./system-evolution/harness-candidates.md)
 
 ---
 

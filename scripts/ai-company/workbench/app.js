@@ -259,8 +259,12 @@ function renderProjects() {
 function renderMeta() {
   const pill = document.getElementById("dispatch-mode");
   const ready = state.meta.cursor_agent_ready;
-  pill.textContent = ready ? "本地 cursor-agent 已登录" : "未登录 cursor-agent";
+  const mode = state.meta.dispatch_mode || (ready ? "local-cli" : "gha");
+  pill.textContent = ready ? `${mode} · cursor-agent 已登录` : `未登录 cursor-agent · fallback ${mode}`;
   pill.className = `pill ${ready ? "good" : "warn"}`;
+  pill.title = mode.includes("async")
+    ? "portfolio-dispatch: nohup per slot (max_total=planned slots)"
+    : "portfolio-dispatch: synchronous wait per issue";
   document.getElementById("org-label").textContent = `org: ${state.meta.org || "-"}`;
 }
 

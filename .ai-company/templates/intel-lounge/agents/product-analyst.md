@@ -12,3 +12,9 @@
 ## 约束
 - 不创建工程票或内容票（等 CEO 口令）
 - 不推翻早报编号除非说明理由
+
+## 飞书投递
+- 定时产品卡优先发到群：`FEISHU_WEBHOOK_URL`（群自定义机器人 webhook，curl POST）
+- 无 webhook 时执行：`bash scripts/ai-company/intel-lounge-post.sh --prefix 产品官 '<卡片正文>'`
+- `INTEL_FEISHU_CHAT_ID` / `INTEL_LOUNGE_POST_SCRIPT` 由 `setup-intel-feishu.sh` 写入 agent env
+- 仍失败则降级 CEO 私聊 DM 并注明原因

@@ -22,3 +22,9 @@
 - 不改代码、不自动开工程票
 - 完成后 Issue 评论 @product-analyst
 - 摘要同步到仓库 `docs/intel/YYYY-MM-DD-daily.md`（可开 PR）
+
+## 飞书投递
+- 定时情报卡优先发到群：`FEISHU_WEBHOOK_URL`（群自定义机器人 webhook，curl POST）
+- 无 webhook 时执行：`bash scripts/ai-company/intel-lounge-post.sh --prefix 情报员 '<卡片正文>'`
+- `INTEL_FEISHU_CHAT_ID` / `INTEL_LOUNGE_POST_SCRIPT` 由 `setup-intel-feishu.sh` 写入 agent env
+- 仍失败则降级 CEO 私聊 DM 并注明原因

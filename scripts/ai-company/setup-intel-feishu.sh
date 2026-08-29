@@ -5,13 +5,16 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MULTICA_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 STATE_FILE="${INTEL_FEISHU_STATE:-$HOME/.multica/intel-lounge-feishu.json}"
+WEBHOOK_FILE="${INTEL_FEISHU_WEBHOOK_FILE:-$HOME/.multica/intel-lounge-feishu-webhook.url}"
 IDS_FILE="${INTEL_LOUNGE_IDS:-$HOME/.multica/intel-lounge.json}"
 API="${MULTICA_API_URL:-http://localhost:8081}"
 WSID="${MULTICA_WORKSPACE_ID:-98f1c3f7-fc74-4ef5-8ea2-f4a5c7f395ab}"
 GROUP_NAME="${INTEL_FEISHU_GROUP_NAME:-产品情报站}"
+WEBHOOK_URL="${INTEL_FEISHU_WEBHOOK_URL:-}"
 DRY_RUN=0
 OPEN_QR=0
 SKIP_GROUP=0
+SKIP_WEBHOOK=0
 
 usage() {
   cat <<'EOF'
@@ -24,11 +27,14 @@ Steps:
   2. Create Feishu group (or reuse from state file)
   3. Post pinned group rules
   4. Print Multica Lark bind QR URLs for intel-scout / product-analyst / intel-moderator
+  5. Optional: wire group webhook into agent env (proactive 09:00/14:00 cards)
 
 Options:
-  --dry-run      Print actions only
-  --open-qr      macOS: open each bind URL in browser
-  --skip-group   Only print Multica bind URLs
+  --dry-run         Print actions only
+  --open-qr         macOS: open each bind URL in browser
+  --skip-group      Only print Multica bind URLs
+  --webhook-url U   Group custom-bot webhook (or save to $WEBHOOK_FILE)
+  --skip-webhook    Do not set agent env even if webhook file exists
   -h, --help
 EOF
 }
@@ -38,6 +44,14 @@ while [ $# -gt 0 ]; do
     --dry-run) DRY_RUN=1 ;;
     --open-qr) OPEN_QR=1 ;;
     --skip-group) SKIP_GROUP=1 ;;
+    --skip-webhook) SKIP_WEBHOOK=1 ;;
+    --webhook-url)
+      shift
+      WEBHOOK_URL="${1:-}"
+      [ -n "$WEBHOOK_URL" ] || { echo "error: --webhook-url requires a URL" >&2; exit 1; }
+      shift
+      continue
+      ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown: $1" >&2; usage; exit 1 ;;
   esac
@@ -155,6 +169,93 @@ for role in ("intel-scout", "product-analyst", "intel-moderator"):
 PY
 }
 
+resolve_webhook_url() {
+  if [ -n "$WEBHOOK_URL" ]; then
+    echo "$WEBHOOK_URL"
+    return
+  fi
+  if [ -f "$WEBHOOK_FILE" ]; then
+    sed -n '1p' "$WEBHOOK_FILE" | tr -d '[:space:]'
+  fi
+}
+
+save_webhook_url() {
+  local url="$1"
+  if [ "$DRY_RUN" -eq 1 ]; then
+    log "[dry-run] save webhook to $WEBHOOK_FILE"
+    return
+  fi
+  mkdir -p "$(dirname "$WEBHOOK_FILE")"
+  printf '%s\n' "$url" >"$WEBHOOK_FILE"
+  chmod 600 "$WEBHOOK_FILE"
+  log "saved webhook to $WEBHOOK_FILE"
+}
+
+wire_agent_group_env() {
+  [ -f "$IDS_FILE" ] || { log "skip agent env: $IDS_FILE missing (run setup-product-intel-lounge.sh)"; return; }
+
+  local webhook chat_id post_script
+  webhook=""
+  if [ "$SKIP_WEBHOOK" -eq 0 ]; then
+    webhook="$(resolve_webhook_url)"
+  fi
+  chat_id=""
+  if [ -f "$STATE_FILE" ]; then
+    chat_id="$(python3 -c "import json; print(json.load(open('$STATE_FILE')).get('chat_id',''))" 2>/dev/null || true)"
+  fi
+  post_script="$MULTICA_ROOT/scripts/ai-company/intel-lounge-post.sh"
+
+  if [ -n "$webhook" ]; then
+    if [[ "$webhook" != https://open.feishu.cn/* ]] && [[ "$webhook" != https://open.larksuite.com/* ]]; then
+      echo "error: webhook must be a Feishu open-apis hook URL" >&2
+      exit 1
+    fi
+    if [ -n "$WEBHOOK_URL" ]; then
+      save_webhook_url "$webhook"
+    fi
+  else
+    log "no group webhook — agents will use intel-lounge-post.sh (CEO notify bot → group)"
+    log "optional: add custom bot webhook → rerun with --webhook-url"
+  fi
+
+  local env_json
+  env_json="$(python3 - "$webhook" "$chat_id" "$post_script" <<'PY'
+import json, sys
+webhook, chat_id, post_script = sys.argv[1], sys.argv[2], sys.argv[3]
+env = {"INTEL_LOUNGE_POST_SCRIPT": post_script}
+if chat_id:
+    env["INTEL_FEISHU_CHAT_ID"] = chat_id
+if webhook:
+    env["FEISHU_WEBHOOK_URL"] = webhook
+print(json.dumps(env, ensure_ascii=False))
+PY
+)"
+  while IFS=$'\t' read -r role aid; do
+    [ -n "$aid" ] || continue
+    if [ "$DRY_RUN" -eq 1 ]; then
+      log "[dry-run] multica agent env set $role ($aid)"
+      continue
+    fi
+    multica agent env set "$aid" --custom-env "$env_json" >/dev/null
+    log "agent env wired: $role ($aid)"
+  done < <(agent_ids)
+}
+
+sync_agent_instructions() {
+  local tpl="$MULTICA_ROOT/.ai-company/templates/intel-lounge/agents"
+  while IFS=$'\t' read -r role aid; do
+    [ -n "$aid" ] || continue
+    local file="$tpl/$role.md"
+    [ -f "$file" ] || continue
+    if [ "$DRY_RUN" -eq 1 ]; then
+      log "[dry-run] multica agent update instructions $role"
+      continue
+    fi
+    multica agent update "$aid" --instructions "$(cat "$file")" >/dev/null
+    log "agent instructions synced: $role"
+  done < <(agent_ids)
+}
+
 print_bind_qrs() {
   require_cmd curl
   local pat token
@@ -196,6 +297,8 @@ main() {
   ensure_group
   post_group_rules
   print_bind_qrs
+  wire_agent_group_env
+  sync_agent_instructions
   if [ -f "$STATE_FILE" ]; then
     log "group state: $STATE_FILE"
     python3 -m json.tool "$STATE_FILE" >&2
@@ -205,7 +308,10 @@ main() {
 下一步（CEO）：
 1. 用手机飞书扫上面 3 个链接，分别绑定 intel-scout / product-analyst / intel-moderator
 2. 在开放平台把 3 个新 Bot 拉进「产品情报站」群
-3. 群里回「忽略」测主持 Bot（绑定完成后）
+3. （推荐）群设置 → 群机器人 → 自定义机器人 → 复制 webhook：
+   bash scripts/ai-company/setup-intel-feishu.sh --skip-group --webhook-url 'https://open.feishu.cn/open-apis/bot/v2/hook/...'
+   未配 webhook 时，Agent 会用 intel-lounge-post.sh 经 CEO Bot 发到群
+4. 群里 @intel-moderator 忽略 — 测主持 Bot（绑定完成后）
 
 EOF
 }

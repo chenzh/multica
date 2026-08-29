@@ -47,6 +47,9 @@ bash scripts/ai-company/setup-intel-feishu.sh --open-qr
 手动补充：
 - 手机飞书扫 3 个链接完成 Bot 绑定
 - 把 3 个新 Bot 拉进群（当前群已含 CEO 日报 Bot）
+- **群投递（二选一）**：
+  - 推荐：群自定义机器人 webhook → `setup-intel-feishu.sh --webhook-url`
+  - 免 webhook：`intel-lounge-post.sh`（CEO notify bot → 群，消息带 `[情报员]`/`[产品官]` 前缀）
 
 ### 3. Multica
 
@@ -65,7 +68,9 @@ bash scripts/ai-company/setup-intel-feishu.sh --open-qr
 |----|------|
 | D1 | 09:00 有 `intel/YYYY-MM-DD-daily` Issue + 情报卡 |
 | D2 | 14:00 产品卡；试回 `忽略` 有回执 |
-| D3 | 试回 `做 1` → agent-safe 票 + 主持回执 |
+| D3 | 试回 `@intel-moderator 做 1` → agent-safe 票 + 主持回执（勿在已「忽略」当日测） |
+
+> 同日手动重复 trigger 每日扫描会再开一张 `intel/YYYY-MM-DD-daily`（试跑用）；生产只靠 09:00 cron。
 
 ### 5. 内容线（可选，晚于 D3）
 
@@ -91,6 +96,7 @@ bash scripts/ai-company/setup-intel-feishu.sh --open-qr
 | 卡片格式乱 | 改 Runbook，强调 35 号文四块模板 |
 | 一周从没回过口令 | 卡片太长或不准 → 缩「必看」为 2 条 |
 | 口令无回执 | 查主持 Bot 绑定与群会话 |
+| 09:00/14:00 卡片只在私聊 | 跑 `setup-intel-feishu.sh --skip-group` 写 agent env；或配群 webhook |
 | 热点淹没工程 | 确认情报 `priority: 10` |
 | Token 偏高 | 按 35 号文降级顺序关 C → B |
 

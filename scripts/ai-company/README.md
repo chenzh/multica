@@ -108,7 +108,7 @@ Enabled via `.github/workflows/portfolio-agent-dispatch.yml` (cron + manual).
 
 **Content line** (`kind: content` in registry): triggers `content-delivery-dispatch.yml` on remote Hermes repo — no local path. See `.ai-company/docs/24-content-operations.md`.
 
-**Product intel lounge** (好用版): `bash scripts/ai-company/setup-product-intel-lounge.sh` — agents, labels, autopilots. Feishu: `bash scripts/ai-company/setup-intel-feishu.sh` (needs `lark-cli`). See `.ai-company/docs/35-product-intel-lounge.md`.
+**Product intel lounge** (好用版): `bash scripts/ai-company/setup-product-intel-lounge.sh` — agents, labels, autopilots. Feishu: `bash scripts/ai-company/setup-intel-feishu.sh` (needs `lark-cli`). Group broadcast fallback: `intel-lounge-post.sh`. Smoke: `verify-intel-lounge.sh`. See `.ai-company/docs/35-product-intel-lounge.md`.
 
 ## install-content-harness.sh
 

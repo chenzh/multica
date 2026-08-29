@@ -193,6 +193,13 @@ else
 fi
 
 echo ""
+if bash "$SCRIPT_DIR/verify-intel-lounge.sh" 2>/dev/null; then
+  pass "产品情报站 smoke 通过"
+else
+  note "产品情报站未就绪 — bash scripts/ai-company/setup-product-intel-lounge.sh && setup-intel-feishu.sh --skip-group"
+fi
+
+echo ""
 if bash "$SCRIPT_DIR/ceo-daily-brief.sh" --no-notify --quiet >>/tmp/verify-hands-off-nightly.log 2>&1; then
   pass "ceo-daily-brief --no-notify 成功（见 /tmp/verify-hands-off-nightly.log）"
   grep -E '^brief:' /tmp/verify-hands-off-nightly.log 2>/dev/null | tail -1 | sed 's/^/     /' || true

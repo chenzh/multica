@@ -100,7 +100,7 @@ bash scripts/ai-company/portfolio-dispatch.sh --dry-run
 bash scripts/ai-company/portfolio-dispatch.sh --max-total 5
 ```
 
-**`dispatch_mode: multica`** (pilot: `meigen-replica`): assigns via `multica issue create` + daemon — tickets visible on `:3000/local/issues`. No CLI fallback (single queue). See `.ai-company/docs/34-multica-single-queue.md`.
+**`dispatch_mode: multica`** (pilot: `meigen-replica`): assigns via `multica issue create` + daemon — tickets visible on `:3000/local/issues`. Requires per-project `multica_agent_id` in registry. No CLI fallback (single queue). See `.ai-company/docs/34-multica-single-queue.md`.
 
 **Legacy `dispatch_mode: local`** (default): `dispatch-cursor-agent-cli.sh` on CEO machine.
 

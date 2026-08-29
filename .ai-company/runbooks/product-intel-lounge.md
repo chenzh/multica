@@ -34,10 +34,19 @@ bash scripts/ai-company/setup-product-intel-lounge.sh
 
 ### 2. 飞书
 
-- 建群 `产品情报站`
-- 置顶群规：`cat .ai-company/templates/intel-lounge/feishu-group-pin.txt`
-- 拉 CEO + 可选 1 真人 + 3 Bot（intel-scout / product-analyst / intel-moderator）
-- ID 快照：`~/.multica/intel-lounge.json`（`setup-product-intel-lounge.sh` 写入）
+```bash
+# 需先：npm 全局安装 lark-cli（或 npx @larksuite/cli@latest install）
+# 需先：setup-feishu-bot-notify.sh（CEO Bot 私聊凭证）
+bash scripts/ai-company/setup-intel-feishu.sh --open-qr
+```
+
+脚本会：
+- 用 `lark-cli` 建群「产品情报站」并发群规（状态：`~/.multica/intel-lounge-feishu.json`）
+- 打印 3 个 Multica 飞书绑定链接（intel-scout / product-analyst / intel-moderator）
+
+手动补充：
+- 手机飞书扫 3 个链接完成 Bot 绑定
+- 把 3 个新 Bot 拉进群（当前群已含 CEO 日报 Bot）
 
 ### 3. Multica
 

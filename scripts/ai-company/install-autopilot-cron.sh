@@ -18,9 +18,11 @@ Before install:
   1. cp .ai-company/config/local.env.example .ai-company/config/local.env
   2. Ensure cursor-agent logged in (\`cursor-agent status\`)
 
+Cron lines use \`bash -lc\` + source-local-env (PATH + CURSOR_API_KEY + macOS login keychain when available).
+
 Cron lines (copy/paste or --install):
-  15 6-22 * * 1-5 cd ${MULTICA_ROOT} && bash scripts/ai-company/autopilot-dispatch.sh >> ${LOG} 2>&1
-  */30 * * * 0,6 cd ${MULTICA_ROOT} && bash scripts/ai-company/autopilot-dispatch.sh >> ${LOG} 2>&1
+  ${WEEKDAY_LINE}
+  ${WEEKEND_LINE}
 
 Manual test:
   bash scripts/ai-company/autopilot-dispatch.sh --dry-run --force
@@ -36,8 +38,9 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-WEEKDAY_LINE="15 6-22 * * 1-5 cd ${MULTICA_ROOT} && bash scripts/ai-company/autopilot-dispatch.sh >> ${LOG} 2>&1"
-WEEKEND_LINE="*/30 * * * 0,6 cd ${MULTICA_ROOT} && bash scripts/ai-company/autopilot-dispatch.sh >> ${LOG} 2>&1"
+RUN_CMD="cd ${MULTICA_ROOT} && /bin/bash -lc 'source scripts/ai-company/lib/source-local-env.sh 2>/dev/null; exec bash scripts/ai-company/autopilot-dispatch.sh' >> ${LOG} 2>&1"
+WEEKDAY_LINE="15 6-22 * * 1-5 ${RUN_CMD}"
+WEEKEND_LINE="*/30 * * * 0,6 ${RUN_CMD}"
 MARKER="# multica-ai-company-autopilot"
 
 echo "Suggested crontab entries:"
@@ -53,8 +56,8 @@ fi
 mkdir -p "$(dirname "$LOG")"
 existing="$(crontab -l 2>/dev/null || true)"
 if echo "$existing" | grep -q "$MARKER"; then
-  echo "crontab: autopilot entry already present (skip)" >&2
-  exit 0
+  echo "crontab: updating autopilot lines (bash -lc + source-local-env)" >&2
+  existing="$(echo "$existing" | grep -v "$MARKER" | grep -v 'autopilot-dispatch.sh' || true)"
 fi
 
 {

@@ -2,6 +2,51 @@
 # Shared agent issue label + local dispatch helpers for hands-off scripts.
 # shellcheck shell=bash
 
+DISPATCH_LEASE_SECONDS="${DISPATCH_LEASE_SECONDS:-7200}"
+
+_dispatch_lock_path() {
+  local repo_root="${1:?}" num="${2:?}"
+  echo "$repo_root/.delivery/.agent-runs/.dispatch-issue-${num}.lock"
+}
+
+_dispatch_lock_expired() {
+  local lock_file="${1:?}"
+  [ ! -f "$lock_file" ] && return 0
+  local pid started expiry now
+  pid="$(sed -n '1p' "$lock_file" 2>/dev/null || true)"
+  started="$(sed -n '2p' "$lock_file" 2>/dev/null || true)"
+  expiry="$(sed -n '3p' "$lock_file" 2>/dev/null || true)"
+  now="$(date +%s)"
+  if [ -n "$expiry" ] && [ "$expiry" -lt "$now" ]; then
+    return 0
+  fi
+  if [ -n "$started" ] && [ -z "$expiry" ]; then
+    if [ $((now - started)) -gt "$DISPATCH_LEASE_SECONDS" ]; then
+      return 0
+    fi
+  fi
+  if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then
+    return 0
+  fi
+  return 1
+}
+
+write_dispatch_lock() {
+  local repo_root="${1:?}" num="${2:?}" pid="${3:?}"
+  local lock_file
+  lock_file="$(_dispatch_lock_path "$repo_root" "$num")"
+  mkdir -p "$(dirname "$lock_file")"
+  local now expiry
+  now="$(date +%s)"
+  expiry=$((now + DISPATCH_LEASE_SECONDS))
+  printf '%s\n%s\n%s\n' "$pid" "$now" "$expiry" >"$lock_file"
+}
+
+clear_dispatch_lock() {
+  local repo_root="${1:?}" num="${2:?}"
+  rm -f "$(_dispatch_lock_path "$repo_root" "$num")"
+}
+
 local_dispatch_running_count() {
   local n=0
   while IFS= read -r line; do
@@ -55,7 +100,7 @@ cleanup_stale_local_dispatches() {
     if ! pgrep -P "$pid" >/dev/null 2>&1 && ! pgrep -fl "cursor-agent -p.*cursor-issue-${issue}" >/dev/null 2>&1; then
       lock="${repo_root}/.delivery/.agent-runs/.dispatch-issue-${issue}.lock"
       if [ -f "$lock" ]; then
-        lock_pid="$(cat "$lock" 2>/dev/null || true)"
+        lock_pid="$(sed -n '1p' "$lock" 2>/dev/null || true)"
         if [ "$lock_pid" = "$pid" ] && ! pgrep -fl "cursor-agent -p" >/dev/null 2>&1; then
           if [ "$quiet" -eq 0 ]; then
             echo "cleanup: kill stuck dispatch pid=$pid ($repo#$issue no agent child)"
@@ -81,13 +126,12 @@ cleanup_stale_local_dispatches() {
     fi
   done < <(pgrep -fl '/bin/zsh.*dispatch-cursor-agent-cli\.sh' 2>/dev/null || true)
 
-  # Stale lock files (dead pid).
+  # Stale lock files (dead pid or expired lease).
   while IFS= read -r lock; do
     [ -f "$lock" ] || continue
-    lock_pid="$(cat "$lock" 2>/dev/null || true)"
-    if [ -z "$lock_pid" ] || ! kill -0 "$lock_pid" 2>/dev/null; then
+    if _dispatch_lock_expired "$lock"; then
       if [ "$quiet" -eq 0 ]; then
-        echo "cleanup: remove stale lock $lock"
+        echo "cleanup: remove expired lock $lock"
       fi
       rm -f "$lock"
     fi
@@ -96,20 +140,78 @@ cleanup_stale_local_dispatches() {
   echo "$killed"
 }
 
+reconcile_stale_running_labels() {
+  local repo="${1:?}" repo_root="${2:-}" dry="${3:-0}"
+  local num labels quiet=0
+  [ "$dry" -eq 1 ] && quiet=1
+  numbers="$(gh issue list -R "$repo" -s open -l agent-running --json number -q '.[].number' 2>/dev/null || true)"
+  for num in $numbers; do
+    [ -z "$num" ] && continue
+    if issue_dispatch_active "$num" "$repo_root"; then
+      continue
+    fi
+    if [ "$quiet" -eq 0 ]; then
+      echo "reconcile-running: $repo#$num → agent-safe (no live dispatch)"
+    else
+      echo "would re-queue running: $repo#$num"
+    fi
+    [ "$dry" -eq 1 ] && continue
+    gh issue edit "$num" -R "$repo" --remove-label "agent-running" 2>/dev/null || true
+    gh issue edit "$num" -R "$repo" --add-label "agent-safe" 2>/dev/null || true
+    [ -n "$repo_root" ] && clear_dispatch_lock "$repo_root" "$num" 2>/dev/null || true
+  done
+}
+
+reconcile_auth_blocked_retries() {
+  local repo="${1:?}" dry="${2:-0}"
+  local bin="${CURSOR_AGENT_BIN:-cursor-agent}" num body quiet=0
+  [ "$dry" -eq 1 ] && quiet=1
+  command -v "$bin" >/dev/null 2>&1 || return 0
+  "$bin" status >/dev/null 2>&1 || return 0
+  numbers="$(gh issue list -R "$repo" -s open -l agent-blocked --json number -q '.[].number' 2>/dev/null || true)"
+  for num in $numbers; do
+    [ -z "$num" ] && continue
+    body="$(gh issue view "$num" -R "$repo" --json comments -q '.comments[-1].body // ""' 2>/dev/null || true)"
+    auth_hit=0
+    if [[ "$body" == *"Authentication required"* ]] || [[ "$body" == *CURSOR_API_KEY* ]] || [[ "$body" == *"agent login"* ]]; then
+      auth_hit=1
+    elif [[ "$body" =~ \`([^\`]+\.log)\` ]]; then
+      log_path="${BASH_REMATCH[1]}"
+      if [ -f "$log_path" ] && grep -qE 'Authentication required|Please run .agent login|CURSOR_API_KEY' "$log_path" 2>/dev/null; then
+        auth_hit=1
+      fi
+    fi
+    if [ "$auth_hit" -eq 0 ]; then
+      continue
+    fi
+    if [ "$quiet" -eq 0 ]; then
+      echo "reconcile-auth: $repo#$num → agent-safe (auth retry)"
+    else
+      echo "would auth-retry: $repo#$num"
+    fi
+    [ "$dry" -eq 1 ] && continue
+    gh issue edit "$num" -R "$repo" --remove-label "agent-blocked" --add-label "agent-safe" 2>/dev/null || true
+  done
+}
+
 issue_dispatch_active() {
   local num="${1:?}"
   local repo_root="${2:-}"
+  local lock_file=""
+  if [ -n "$repo_root" ]; then
+    lock_file="$(_dispatch_lock_path "$repo_root" "$num")"
+    if [ -f "$lock_file" ]; then
+      if _dispatch_lock_expired "$lock_file"; then
+        rm -f "$lock_file"
+      else
+        return 0
+      fi
+    fi
+  fi
   if pgrep -fl "dispatch-cursor-agent-cli.sh ${num}( |$)" >/dev/null 2>&1; then
     return 0
   fi
-  if [ -n "$repo_root" ] && [ -f "$repo_root/.delivery/.agent-runs/.dispatch-issue-${num}.lock" ]; then
-    local pid
-    pid="$(cat "$repo_root/.delivery/.agent-runs/.dispatch-issue-${num}.lock" 2>/dev/null || true)"
-    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-      return 0
-    fi
-  fi
-  if pgrep -fl "cursor-issue-${num}" >/dev/null 2>&1; then
+  if pgrep -fl "cursor-agent -p.*cursor-issue-${num}" >/dev/null 2>&1; then
     return 0
   fi
   return 1

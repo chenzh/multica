@@ -82,6 +82,9 @@ while IFS= read -r repo; do
   [ -n "$repo" ] || continue
   root="$(bash "$SCRIPT_DIR/resolve-repo-path.sh" --repo "$repo" --quiet 2>/dev/null || true)"
 
+  reconcile_stale_running_labels "$repo" "$root" "$DRY_RUN"
+  reconcile_auth_blocked_retries "$repo" "$DRY_RUN"
+
   open_prs="$(
     gh pr list -R "$repo" -s open \
       --json number,closingIssuesReferences \

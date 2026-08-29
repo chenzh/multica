@@ -16,6 +16,7 @@ REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}
 GITHUB_ORG="${GITHUB_ORG:-chenzh}"
 MAX_TOTAL="${AUTOPILOT_MAX_TOTAL:-2}"
 MAX_CONCURRENT="${AUTOPILOT_MAX_CONCURRENT:-2}"
+MAX_BLOCKED="${AUTOPILOT_MAX_BLOCKED:-5}"
 STATE_DIR="${AUTOPILOT_STATE_DIR:-$HOME/.multica}"
 STATE_FILE="${AUTOPILOT_STATE_FILE:-$STATE_DIR/autopilot-state.json}"
 LOG_DIR="${AUTOPILOT_LOG_DIR:-$HOME/.multica/autopilot-logs}"
@@ -206,12 +207,17 @@ $BLOCKED_LINES
     maybe_notify "$msg"
   fi
 else
-  # Capacity: prefer label running + local CLI estimate
   busy="$TOTAL_RUNNING"
   if [ "$LOCAL_PROCS" -gt "$busy" ]; then
     busy="$LOCAL_PROCS"
   fi
-  if [ "$busy" -ge "$MAX_CONCURRENT" ]; then
+  if [ "$TOTAL_BLOCKED" -ge "$MAX_BLOCKED" ]; then
+    ACTION="blocked-backpressure"
+    echo "decision: blocked backpressure (blocked=$TOTAL_BLOCKED >= $MAX_BLOCKED) — skip dispatch; run reconcile first"
+    maybe_notify "🔴 Autopilot 背压：BLOCKED=$TOTAL_BLOCKED（≥$MAX_BLOCKED）。先清 blocked / 假 running 再派单。
+bash scripts/ai-company/ceo-reconcile-queue.sh
+log: $LOG_FILE"
+  elif [ "$busy" -ge "$MAX_CONCURRENT" ]; then
     ACTION="busy"
     echo "decision: at capacity (busy=$busy >= $MAX_CONCURRENT) — no new dispatch"
   else
@@ -242,7 +248,7 @@ else
       sleep 8 || true
       if [ -n "${bg_pid:-}" ] && ! kill -0 "$bg_pid" 2>/dev/null; then
         wait "$bg_pid" 2>/dev/null || true
-        DISPATCHED="$(rg -o 'Planned/dispatched task slots: [0-9]+' "$BG_LOG" 2>/dev/null | tail -1 | rg -o '[0-9]+$' || echo "$SLOTS")"
+        DISPATCHED="$(grep -o 'Planned/dispatched task slots: [0-9][0-9]*' "$BG_LOG" 2>/dev/null | tail -1 | grep -o '[0-9][0-9]*$' || echo "$SLOTS")"
         echo "portfolio-dispatch finished early dispatched≈$DISPATCHED"
       fi
     fi

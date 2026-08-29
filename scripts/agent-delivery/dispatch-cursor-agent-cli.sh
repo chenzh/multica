@@ -5,10 +5,17 @@ set -euo pipefail
 REPO="${GITHUB_REPOSITORY:-}"
 REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 MULTICA_ROOT="${MULTICA_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
-# When dispatch runs from multica HQ against a product checkout, source HQ local.env (CURSOR_API_KEY, PATH).
-if [ -f "$MULTICA_ROOT/.ai-company/config/local.env" ] && [ "$MULTICA_ROOT/.ai-company/config/local.env" != "$REPO_ROOT/.ai-company/config/local.env" ]; then
+# PATH + local.env for cron/nohup (machine credential + ~/.local/bin).
+if [ -f "$MULTICA_ROOT/scripts/ai-company/lib/source-local-env.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$MULTICA_ROOT/scripts/ai-company/lib/source-local-env.sh"
+elif [ -f "$MULTICA_ROOT/.ai-company/config/local.env" ]; then
   # shellcheck disable=SC1090
   source "$MULTICA_ROOT/.ai-company/config/local.env"
+fi
+if [ -f "$MULTICA_ROOT/scripts/ai-company/lib/agent-queue.sh" ]; then
+  # shellcheck disable=SC1090
+  source "$MULTICA_ROOT/scripts/ai-company/lib/agent-queue.sh"
 fi
 CURSOR_AGENT_BIN="${CURSOR_AGENT_BIN:-cursor-agent}"
 WORKTREE_BASE="${WORKTREE_BASE:-main}"
@@ -121,15 +128,13 @@ gh issue comment "$ISSUE_NUMBER" --body "$COMMENT"
 echo "Dispatching issue #$ISSUE_NUMBER in $REPO_ROOT (log: $LOG_FILE)"
 
 LOCK_FILE="$LOG_DIR/.dispatch-issue-${ISSUE_NUMBER}.lock"
-if [ -f "$LOCK_FILE" ]; then
-  stale_pid="$(cat "$LOCK_FILE" 2>/dev/null || true)"
-  if [ -n "$stale_pid" ] && kill -0 "$stale_pid" 2>/dev/null; then
-    echo "error: issue #$ISSUE_NUMBER dispatch already running (pid $stale_pid)" >&2
-    exit 1
-  fi
-  rm -f "$LOCK_FILE"
+if [ -f "$LOCK_FILE" ] && ! _dispatch_lock_expired "$LOCK_FILE" 2>/dev/null; then
+  stale_pid="$(sed -n '1p' "$LOCK_FILE" 2>/dev/null || true)"
+  echo "error: issue #$ISSUE_NUMBER dispatch already running (pid ${stale_pid:-unknown})" >&2
+  exit 1
 fi
-echo $$ >"$LOCK_FILE"
+rm -f "$LOCK_FILE"
+write_dispatch_lock "$REPO_ROOT" "$ISSUE_NUMBER" "$$"
 trap 'rm -f "$LOCK_FILE"' EXIT
 
 # Resolve base ref: explicit WORKTREE_BASE, else origin/HEAD, else main/master.
@@ -220,9 +225,13 @@ Or set \`AUTO_FINALIZE_MAIN=1\` on dispatch to run this automatically.${FINALIZE
 EOF
 )"
 else
+  blocked_note=""
+  if grep -qE 'Authentication required|Please run .agent login|CURSOR_API_KEY' "$LOG_FILE" 2>/dev/null; then
+    blocked_note=" Auth failure — run \`cursor-agent login\` or set CURSOR_API_KEY for cron."
+  fi
   gh issue edit "$ISSUE_NUMBER" --remove-label "agent-running" --add-label "agent-blocked" 2>/dev/null || true
   gh issue comment "$ISSUE_NUMBER" --body "$(cat <<EOF
-❌ Local cursor-agent failed (exit $exit_code). See log: \`${LOG_FILE}\`
+❌ Local cursor-agent failed (exit $exit_code). See log: \`${LOG_FILE}\`${blocked_note}
 EOF
 )"
   exit "$exit_code"

@@ -295,11 +295,16 @@ docs/intel/
 ### CEO 本机
 
 ```bash
-bash scripts/ai-company/verify-hands-off.sh
+bash scripts/ai-company/setup-product-intel-lounge.sh   # Multica agents + autopilots
+bash scripts/ai-company/setup-intel-feishu.sh --open-qr   # 飞书群 + Bot 绑定 + agent env
+bash scripts/ai-company/verify-intel-lounge.sh            # 情报站 smoke
+bash scripts/ai-company/verify-hands-off.sh               # 工程闭环（含情报站）
 bash scripts/ai-company/autopilot-launchagent-service.sh install
 bash scripts/ai-company/install-nightly-cron.sh --install
 bash scripts/ai-company/setup-feishu-bot-notify.sh
 ```
+
+**群投递**：优先群自定义机器人 `FEISHU_WEBHOOK_URL`（`setup-intel-feishu.sh --webhook-url`）；未配时用 `intel-lounge-post.sh`（CEO notify bot → 群，带 `[情报员]`/`[产品官]` 前缀）。
 
 ### 指挥舱 P1.5（好用增量）
 

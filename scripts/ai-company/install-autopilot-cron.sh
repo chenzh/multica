@@ -18,6 +18,9 @@ Before install:
   1. cp .ai-company/config/local.env.example .ai-company/config/local.env
   2. Ensure cursor-agent logged in (\`cursor-agent status\`)
 
+macOS (recommended): bash scripts/ai-company/autopilot-launchagent-service.sh install
+  — runs in GUI session so cursor-agent auth reaches nohup dispatch; removes cron duplicates.
+
 Cron lines use \`bash -lc\` + source-local-env (PATH + CURSOR_API_KEY + macOS login keychain when available).
 
 Cron lines (copy/paste or --install):

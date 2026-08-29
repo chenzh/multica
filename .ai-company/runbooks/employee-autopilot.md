@@ -14,7 +14,8 @@
 | 组合派单 | `scripts/ai-company/portfolio-dispatch.sh --local` |
 | 状态 | `~/.multica/autopilot-state.json` |
 | 日志 | `~/.multica/autopilot-logs/` |
-| 工作区 cron | `install-autopilot-cron.sh --install`：工作日 06–22 每小时 :15；周末每 30 分钟 |
+| 工作区 cron | `install-autopilot-cron.sh --install`（Linux / 备用） |
+| **macOS 推荐** | `autopilot-launchagent-service.sh install` — GUI 会话内自主派单，避免 cron 丢登录态 |
 | 心跳 | `.cursor/HEARTBEAT.md` 白天可补一刀 |
 
 ## 行为规则

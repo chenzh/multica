@@ -6,7 +6,7 @@ See [.delivery/README.md](../../.delivery/README.md) for the full setup guide.
 
 - `gh` CLI authenticated
 - `jq`, `curl`
-- `CURSOR_API_KEY` from [Cursor Dashboard](https://cursor.com/dashboard/api)
+- `cursor-agent` logged in on the CEO machine (`cursor-agent login`)
 
 ## Examples
 
@@ -15,15 +15,21 @@ See [.delivery/README.md](../../.delivery/README.md) for the full setup guide.
 gh issue view 123 --json title,body,url,number > /tmp/issue.json
 bash scripts/agent-delivery/build-prompt.sh /tmp/issue.json
 
-# Dispatch Cloud Agent
-export CURSOR_API_KEY=crsr_...
-bash scripts/agent-delivery/dispatch-cursor-agent.sh 123
+# Dispatch via local cursor-agent CLI (CEO machine)
+bash scripts/agent-delivery/dispatch-cursor-agent-cli.sh 123
 
-# Poll until done (optional; dispatch workflow does not wait by default)
-bash scripts/agent-delivery/poll-agent-run.sh <agent_id> <run_id>
+# Merge to main and return primary checkout to main (local CLI / worktree)
+bash scripts/agent-delivery/finalize-to-main.sh --issue 123
+bash scripts/agent-delivery/finalize-to-main.sh --branch cursor-issue-123 --via-pr pr
 
 # Check auto-merge eligibility for PR
 bash scripts/agent-delivery/check-merge-eligible.sh 456
+```
+
+Portfolio dispatch (all repos in registry):
+
+```bash
+bash scripts/ai-company/portfolio-dispatch.sh --max-total 3
 ```
 
 Make scripts executable locally:

@@ -7,14 +7,12 @@
 
 ## 适用范围
 
-- `portfolio-dispatch.sh --local`
+- `portfolio-dispatch.sh`
 - `autopilot-dispatch.sh`
 - `ceo-nightly.sh` 后台派单
 - `verify-hands-off.sh`
 
-不适用于 Cursor Cloud API 路径（各仓 `CURSOR_API_KEY` 在 GHA Secrets）。
-
----
+工程产品派单 **仅** 本机 `cursor-agent` session；不使用 Cursor Cloud API。
 
 ## 前置条件清单
 

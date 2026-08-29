@@ -32,7 +32,7 @@
 | 规则 | 说明 |
 |------|------|
 | Agent 无生产密钥 | runtime 仅 dev/staging |
-| `CURSOR_API_KEY` 在 GHA Secrets | 不写入 repo |
+| API / 第三方密钥在 GHA Secrets | 不写入 repo |
 | Multica per-agent MCP | 优先 workspace 全局 MCP；per-agent 配置已知有坑 |
 | `.env` 永不 commit | deny merge-policy |
 

@@ -4,19 +4,19 @@
 
 | 层 | 机制 | 管什么 |
 |----|------|--------|
-| **Portfolio（公司总部）** | multica 仓 `portfolio-agent-dispatch.yml` | 按 `project-registry.yaml` 对每个 **产品 repo** 触发 `agent-delivery-dispatch` |
-| **产品 repo** | 各仓 `agent-delivery-dispatch.yml` | 拉本仓 `agent-safe` Issue → Cursor Cloud Agent |
+| **Portfolio（公司总部）** | CEO 本机 `ceo-nightly.sh` / `portfolio-dispatch.sh` | 按 `project-registry.yaml` 对各 **产品 repo** 本机派单 |
+| **产品 repo** | `dispatch-cursor-agent-cli.sh` + gate workflow | 拉本仓 `agent-safe` Issue → 本机 cursor-agent |
 | **Multica Autopilot（可选）** | `multica autopilot` cron/webhook | 在 Multica 看板创建 Issue/任务、留 run 历史 |
 
 ```text
 CEO 维护 project-registry.yaml
         ↓
-portfolio-agent-dispatch (multica 仓 GHA, cron)
+ceo-nightly (本机 21:00) → portfolio-dispatch --local
         ↓
-gh workflow run agent-delivery-dispatch -R org/music-game-sea
-gh workflow run agent-delivery-dispatch -R org/landing-tool-a
+dispatch-cursor-agent-cli.sh @ org/music-game-sea
+dispatch-cursor-agent-cli.sh @ org/landing-tool-a
         ↓
-各产品仓 Cursor Agent 执行
+各产品仓 PR → agent-delivery-gate（GHA）
 ```
 
 ---
@@ -37,20 +37,23 @@ bash scripts/ai-company/portfolio-dispatch.sh --dry-run
 bash scripts/ai-company/portfolio-dispatch.sh --max-total 3
 ```
 
-### 3. 启用 multica 仓 workflow
+### 3. 启用 CEO 本机夜间 cron
 
-文件：`.github/workflows/portfolio-agent-dispatch.yml`（已含 cron）
+```bash
+bash scripts/ai-company/install-nightly-cron.sh --install
+# 21:00 → ceo-nightly.sh → portfolio-dispatch（本机 cursor-agent）
+```
 
-**Token 权限：** 若产品 repo 与 multica 同 org，默认 `GITHUB_TOKEN` 可能不够跨 repo 调 workflow。建议：
+`portfolio-agent-dispatch.yml`（GHA）**不用于派单**；若误触发会提示改在本机运行。
 
-- 建 PAT 或 GitHub App，secret 名 `PORTFOLIO_GH_TOKEN`，scope：`repo` + `workflow`
+可选：`PORTFOLIO_GH_TOKEN` 仅用于跨 repo 的 `gh` 操作（merge/reconcile），与 Cursor 无关。
 
 ### 4. 各产品仓必备
 
 每个产品 repo 仍需：
 
-- `CURSOR_API_KEY` Secret  
-- labels + `agent-delivery-dispatch.yml`（harness 已带）
+- CEO 本机 `cursor-agent login` + `AI_REPO_PATH_*`（或 `resolve-repo-path.sh`）
+- labels + `agent-delivery-gate.yml`（harness 已带）
 
 ---
 
@@ -82,9 +85,9 @@ multica autopilot trigger-add <AUTOPILOT_ID> \
 2. GitHub repo webhook → POST JSON（如 `issue.labeled` 含 `agent-safe`）  
 3. 配置 **Event filters** 避免每个 push 都跑  
 
-与 Portfolio GHA **分工**：
+与 Portfolio 本机派单 **分工**：
 
-- **GHA Portfolio**：硬触发、公平配额、不依赖 LLM  
+- **本机 portfolio-dispatch**：硬触发、公平配额、不依赖 LLM  
 - **Multica Autopilot**：可视化、人工 `@agent`、run 审计  
 
 ### 生成命令脚本
@@ -101,11 +104,11 @@ bash scripts/ai-company/print-multica-autopilot-commands.sh
 
 | 时段 | 发生什么 |
 |------|----------|
-| 02:00 | `portfolio-agent-dispatch` 按 registry 分配 5 个 slot |
-| 夜间 | 各仓 Cursor Agent 跑子流水线 + CI |
-| 早上 | CEO `ceo-daily.md`：两个 repo 的 BLOCKED + merge 勾选 |
+| 21:00 | `ceo-nightly` → `portfolio-dispatch` 按 registry 分配 slot（本机） |
+| 夜间 | 各仓 cursor-agent 跑子流水线 + CI |
+| 早上 | CEO `ceo-daily.md`：BLOCKED + merge 勾选 |
 
-**不必** 先上 LangGraph；队列 <10 ticket/天 Portfolio + 产品仓 GHA 足够。
+**不必** 先上 LangGraph；队列 <10 ticket/天，本机 portfolio + gate 足够。
 
 ---
 
@@ -113,10 +116,10 @@ bash scripts/ai-company/print-multica-autopilot-commands.sh
 
 | 现象 | 处理 |
 |------|------|
-| portfolio workflow 403 | 配置 `PORTFOLIO_GH_TOKEN` |
+| portfolio workflow 误触发 | GHA 上不会派单；在本机跑 `portfolio-dispatch.sh` |
 | 某 repo 从不 dispatch | `paused: true`？repo 路径错？无 agent-safe issue？ |
 | 重复 dispatch | 产品仓 `agent-running` label 是否正常打上 |
-| Multica 与 GHA 双跑 | 关 Autopilot schedule 或只保留 Portfolio |
+| Multica 与本机双跑 | 关 Autopilot schedule 或只保留 ceo-nightly |
 
 ---
 

@@ -51,13 +51,14 @@ cp /path/to/multica/.ai-company/templates/accept_cases.md .delivery/<project-slu
 
 ---
 
-## Phase 2 — 密钥与标签（30 min）
+## Phase 2 — 标签与通知（30 min）
 
-**GitHub Secrets：**
+**CEO 本机：** `cursor-agent login`
+
+**GitHub（可选 Secrets）：**
 
 | Secret | 必需 |
 |--------|------|
-| `CURSOR_API_KEY` | ✅ |
 | `SLACK_WEBHOOK_URL` | 推荐 |
 
 **Labels：** `agent-safe`, `agent-running`, `agent-blocked`, `agent-done`
@@ -84,7 +85,7 @@ multica autopilot create \
 ## Phase 4 — 试跑（2～4 h）
 
 1. 创建 **trivial agent-safe** Issue（如：补 README 测试）
-2. 手动：`gh workflow run agent-delivery-dispatch.yml -f max_tasks=1`
+2. CEO 本机：`bash scripts/agent-delivery/dispatch-cursor-agent-cli.sh <N>`
 3. 验证：PR 开 → CI 绿 → gate 行为符合 policy
 4. CEO 勾 AC → merge
 
@@ -92,9 +93,9 @@ multica autopilot create \
 
 ## Phase 5 — 纳入夜间队列
 
-- [ ] 取消 dispatch workflow 的 schedule 注释（如用 cron）
+- [ ] `install-nightly-cron.sh --install`（CEO 本机 21:00）
 - [ ] 或启用 Multica Autopilot schedule
-- [ ] Slack 测试消息收到
+- [ ] 飞书/Slack 测试消息收到
 
 ---
 
@@ -111,7 +112,7 @@ multica autopilot create \
 
 | 现象 | 查 |
 |------|-----|
-| dispatch 失败 | `CURSOR_API_KEY`、Cursor GitHub 连接 |
+| dispatch 失败 | `cursor-agent login`、本机 `AI_REPO_PATH_*`、`resolve-repo-path.sh` |
 | CI 不触发 | workflow path、default branch |
 | auto-merge 未执行 | `merge-policy.json`、branch 前缀 `cursor/` |
 | Agent 跳过测试 | Verifier prompt、required checks |

@@ -123,7 +123,7 @@ copy_tree "$SCRIPT_DIR/scaffold/.cursor/rules/company-harness.mdc" \
   "$TARGET/.cursor/rules/company-harness.mdc"
 copy_tree "$SOURCE_ROOT/scripts/agent-delivery" "$TARGET/scripts/agent-delivery"
 
-for wf in agent-delivery-dispatch.yml agent-delivery-gate.yml; do
+for wf in agent-delivery-gate.yml; do
   copy_tree "$SOURCE_ROOT/.github/workflows/$wf" "$TARGET/.github/workflows/$wf"
 done
 
@@ -183,13 +183,14 @@ fi
 cat <<'EOF'
 
 Next steps:
-  1. GitHub Secrets: CURSOR_API_KEY, (optional) SLACK_WEBHOOK_URL
-  2. Create labels: agent-safe, agent-running, agent-blocked, agent-done
+  1. Labels: agent-safe, agent-running, agent-blocked, agent-done
+  2. (Optional) GitHub Secret: SLACK_WEBHOOK_URL for workflow alerts
   3. cp -r <company-os>/.ai-company/examples/music-game-sea .delivery/<your-slug>
      — or copy from .delivery/_template and fill brief.md
   4. Edit CLAUDE.md (from templates/CLAUDE.project.md if install created it)
   5. bash /path/to/multica/scripts/ai-company/sync-company-norms.sh --id <project-id>
-  6. gh workflow run agent-delivery-dispatch.yml -f max_tasks=1
+  6. CEO machine: cursor-agent login, then trial dispatch:
+     bash /path/to/multica/scripts/agent-delivery/dispatch-cursor-agent-cli.sh <issue#>
 
 See .ai-company/harness/README.md (in multica repo) for details.
 EOF

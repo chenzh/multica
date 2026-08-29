@@ -29,6 +29,56 @@ function statusClass(project) {
   return "good";
 }
 
+function renderContentCockpit() {
+  const content = state.overview?.content;
+  if (!content) return;
+
+  const hqLink = document.getElementById("content-hq-link");
+  const agentLink = document.getElementById("content-agent-link");
+  if (hqLink) hqLink.href = content.workbench_url || "https://hq.revoices.app/#content/review";
+  if (agentLink) agentLink.href = content.agent_url || "https://agent.revoices.app/";
+
+  const hint = document.getElementById("content-remote-hint");
+  if (hint) {
+    hint.innerHTML = `执行在 <code>ssh ${content.remote_ssh || "lighthouse"}</code>；队列真相源 GitHub Issues；审稿在 hq.revoices.app（Kanban 仅历史，不作主队列）。`;
+  }
+
+  const totals = content.totals || {};
+  const metrics = document.getElementById("content-metrics");
+  if (metrics) {
+    metrics.innerHTML = `
+      <div class="card"><div class="metric-label">内容 BLOCKED</div><div class="metric-value">${totals.blocked ?? 0}</div></div>
+      <div class="card"><div class="metric-label">内容 RUNNING</div><div class="metric-value">${totals.running ?? 0}</div></div>
+      <div class="card"><div class="metric-label">内容 QUEUE</div><div class="metric-value">${totals.agent_safe ?? 0}</div></div>
+    `;
+  }
+
+  const lines = content.lines || [];
+  const tbody = document.getElementById("content-body");
+  if (!tbody) return;
+  if (!lines.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="cell-muted">registry 无 kind:content 项目 — 见 project-registry.yaml</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lines
+    .map((line) => {
+      const wb = line.workbench_url || content.workbench_url;
+      const mode = line.dispatch_mode || "remote-pull";
+      const channels = (line.channels || []).join(", ") || "—";
+      return `<tr>
+        <td>
+          <div class="project-name">${line.id}${line.paused ? " ⏸" : ""}</div>
+          <div class="project-repo">${line.repo}</div>
+          <div class="cell-muted">${line.notes || ""}</div>
+        </td>
+        <td>${mode}<div class="cell-muted">${line.executor || "remote-hermes"} · ${channels}</div></td>
+        <td>B${line.blocked} R${line.running} Q${line.agent_safe}</td>
+        <td><a href="${wb}" target="_blank" rel="noreferrer">审稿 HQ →</a></td>
+      </tr>`;
+    })
+    .join("");
+}
+
 function renderOverview() {
   const ov = state.overview;
   if (!ov) return;
@@ -105,6 +155,8 @@ function renderOverview() {
       </tr>`;
     })
     .join("");
+
+  renderContentCockpit();
 }
 
 function formatTotals() {
@@ -345,9 +397,18 @@ async function launchSiteFactory() {
     return;
   }
   const createRepo = document.getElementById("site-factory-create-repo").checked;
+  const activateAutopilot = createRepo
+    ? document.getElementById("site-factory-activate-autopilot").checked
+    : false;
   const job = await api("/api/site-factory", {
     method: "POST",
-    body: JSON.stringify({ intake, create_repo: createRepo, notify: true, max_dispatch: 2 }),
+    body: JSON.stringify({
+      intake,
+      create_repo: createRepo,
+      activate_autopilot: activateAutopilot,
+      notify: true,
+      max_dispatch: 2,
+    }),
   });
   await refreshAll();
   document.getElementById("log-box").textContent = `Site factory job ${job.id}\n${job.log_path || ""}`;
@@ -399,6 +460,13 @@ function bindEvents() {
   document.getElementById("site-factory-submit").addEventListener("click", async () => {
     await launchSiteFactory();
   });
+  const createRepoEl = document.getElementById("site-factory-create-repo");
+  const autopilotWrap = document.getElementById("site-factory-autopilot-wrap");
+  const syncAutopilotVisibility = () => {
+    autopilotWrap.style.display = createRepoEl.checked ? "inline-flex" : "none";
+  };
+  createRepoEl.addEventListener("change", syncAutopilotVisibility);
+  syncAutopilotVisibility();
   document.getElementById("dispatch-one").addEventListener("click", async () => {
     const data = await api(`/api/queue?repo=${encodeURIComponent(state.selectedRepo)}`);
     if (!data.queue?.length) {

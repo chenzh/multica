@@ -18,7 +18,7 @@ projects:
       provider: ""            # e.g. cloudflare-pages | vercel | self
       project: ""
     github_secrets:           # names only
-      - CURSOR_API_KEY
+      - SLACK_WEBHOOK_URL
     human_only:
       - MLX inference / gateway
       - apps/gateway/**
@@ -33,7 +33,7 @@ projects:
       provider: ""
       project: ""
     github_secrets:
-      - CURSOR_API_KEY
+      - SLACK_WEBHOOK_URL
 
   saas-stripe-mvp:
     repo: chenzh/saas-stripe-mvp
@@ -41,7 +41,7 @@ projects:
     domains:
       production: ""
     github_secrets:
-      - CURSOR_API_KEY
+      - SLACK_WEBHOOK_URL
     human_only:
       - Stripe Checkout / Webhook
       - "**/payment/**"
@@ -55,5 +55,5 @@ projects:
       provider: cloudflare-pages
       project: json-site
     github_secrets:
-      - CURSOR_API_KEY
+      - SLACK_WEBHOOK_URL
       - CLOUDFLARE_API_TOKEN

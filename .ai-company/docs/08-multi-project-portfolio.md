@@ -98,7 +98,7 @@ SecondBrain 层（`sync-all-harness.sh`）与 harness 层（`install-harness.sh`
     → 达总上限停止
 ```
 
-实现：扩展 `agent-delivery-dispatch.yml` 多 repo matrix，或 LangGraph 节点读 registry。
+实现：CEO 本机 `portfolio-dispatch.sh` 读 registry，或 LangGraph 节点读 registry。
 
 ---
 

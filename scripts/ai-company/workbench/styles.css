@@ -363,6 +363,24 @@ th {
   color: #c9d4e8;
 }
 
+a.link-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.content-cockpit .content-metrics.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 12px 0 16px;
+}
+
+.content-cockpit code {
+  font-size: 12px;
+  color: var(--accent);
+}
+
 @media (max-width: 960px) {
   .grid,
   .layout {

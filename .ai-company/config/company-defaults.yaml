@@ -20,7 +20,7 @@ nightly:
   max_total_tickets: 5
   dispatch_before_brief: true       # ceo-nightly.sh
   brief_script: scripts/ai-company/ceo-daily-brief.sh
-  github_dispatch_workflow: agent-delivery-dispatch.yml
+  # Product dispatch: CEO machine portfolio-dispatch.sh (local cursor-agent only)
 
 notifications:
   slack_webhook_secret: SLACK_WEBHOOK_URL   # GitHub Secret 名
@@ -49,8 +49,10 @@ compliance:
   script_gates_before_agent_review: true
 
 portfolio:
-  # Company HQ repo (this multica checkout) runs portfolio-agent-dispatch.yml
   registry_path: .ai-company/templates/project-registry.yaml
-  github_workflow: portfolio-agent-dispatch.yml
-  # PAT secret on HQ repo for cross-repo workflow dispatch (optional if same-org token works)
-  github_token_secret: PORTFOLIO_GH_TOKEN
+  # Product dispatch: CEO machine ceo-nightly.sh → portfolio-dispatch.sh (local cursor-agent)
+
+content:
+  workbench_url: https://hq.revoices.app/#content/review   # 内容审稿 HQ（lighthouse）
+  agent_url: https://agent.revoices.app/                   # Worker / tunnel
+  remote_ssh: lighthouse                                   # ssh 别名

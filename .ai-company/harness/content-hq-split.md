@@ -7,8 +7,8 @@
 
 | Machine | Role |
 |---------|------|
-| **CEO 本机（multica HQ）** | 司令部：定队列、开关业务线、工程交付、飞书拍板 |
-| **远程 Hermes 机（lighthouse）** | 内容工位：只执行内容仓 Issue，写稿/PR，不指挥全公司 |
+| **CEO 本机（multica HQ）** | 司令部 + **工程拉界面** `:9477` |
+| **远程 Hermes 机（lighthouse）** | 内容工位 + **内容拉界面** `hq.revoices.app` |
 
 **按仓分：** `kind: product` → 本机 cursor · `kind: content` → 远程 Hermes  
 **按真相源分：** GitHub Issue 标签为准；Kanban / 飞书 / Multica Inbox 不得并行派单。
@@ -24,7 +24,7 @@
 | 夜间 | `ceo-nightly`（21:00）：工程 reconcile / merge / **local cursor 派单** / 飞书日报 |
 | 内容派单 | **登记 + 统计 + 触发**（`remote-pull` 或 `gha`）；**不跑 Hermes** |
 | 工程线 | 各 `kind: product` 仓 — `portfolio-dispatch --local` |
-| 可见性 | `:9477` 指挥舱、`verify-hands-off`、规范 `sync-company-norms.sh` |
+| 可见性 | `:9477` 指挥舱（工程 + **链到内容 HQ**）、飞书 | `https://hq.revoices.app/#content/review` 审稿 pack |
 | 飞书 | 日报、BLOCKED 审批；**发布前人工**（发帖、投流、绑号） |
 | Git | multica 只 push `fork`；产品/内容仓 push `origin` |
 
@@ -44,7 +44,7 @@
 | 产出 | `drafts/`、`calendar/`、branch `content/issue-<N>`、**PR** |
 | 环境 | profile `zimeiti`（建议）；`gh auth` **必须** |
 | 定时 | cron 22:00 `pull-dispatch --max-tasks 1`（晚于 HQ 21:00） |
-| 重活 | 7×24 频道监听、多媒体流水线（占远程，不占 CEO 本机内存） |
+| 重活 | 7×24 频道监听、多媒体流水线 | **内容审稿 UI**（hq.revoices.app，非 multica 指挥舱副本） |
 | 遗留 | `/root/SOP_AI_COMPANY`、Kanban DB — **只读/退役**，不作主队列 |
 
 ### 远程刻意不做

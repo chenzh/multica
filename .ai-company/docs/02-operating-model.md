@@ -58,11 +58,11 @@ GitHub Labels（与 `.delivery/README.md` 一致）：
 
 | 路径 | 组件 | 适用 |
 |------|------|------|
-| **A 手动** | Cursor Cloud + orchestrator prompt | 试跑、日 1～3 ticket |
-| **B GHA** | `agent-delivery-dispatch.yml` + Cursor API | 夜间批量、硬调度 |
+| **A 手动** | `dispatch-cursor-agent-cli.sh` | 试跑、日 1～3 ticket |
+| **B 夜间** | `ceo-nightly.sh` + `portfolio-dispatch`（本机 CLI） | 多仓公平队列、睡觉模式 |
 | **C Multica** | Autopilot cron/webhook + daemon | 看板、多 runtime、历史 |
 
-推荐组合：**B + C** — GitHub 管 merge 门禁，Multica 管队列与 run 历史。
+推荐组合：**B + C** — 本机派单 + gate 门禁，Multica 管队列与 run 历史。
 
 ---
 

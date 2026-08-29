@@ -18,7 +18,7 @@
 | CEO 指挥舱路线图 | 📋 | [docs/17-ceo-cockpit.md](./docs/17-ceo-cockpit.md)（P1.5：资产 / 规范 / 流程一屏） |
 | 每晚 21:00 派单 + 日报 | ✅ | `ceo-nightly.sh` + `install-nightly-cron.sh --install` |
 | 本机路径解析 | ✅ | `resolve-repo-path.sh` + `local.env`（registry 不写路径） |
-| 派单方式 | ✅ 本地 CLI | `cursor-agent` 已登录，**无需 `CURSOR_API_KEY`** |
+| 派单方式 | ✅ 本地 CLI | `cursor-agent` 已登录（session auth） |
 | `saas-stripe-mvp` 仓库 | ✅ | `chenzh/saas-stripe-mvp`，issues #1–#4 |
 | `local.env` | ✅ | `.ai-company/config/local.env` |
 
@@ -31,9 +31,6 @@ bash ~/Projects/multica/scripts/ai-company/ceo-workbench.sh
 # 终端仪表盘
 bash ~/Projects/multica/scripts/ai-company/ceo-dashboard.sh --dispatch
 ```
-
-> GHA 云端派单（`agent-delivery-dispatch.yml`）需各仓 `CURSOR_API_KEY`；当前不走此路径。
-
 ## 日常 CEO 命令
 
 ```bash

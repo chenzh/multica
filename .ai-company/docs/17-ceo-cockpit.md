@@ -43,7 +43,8 @@
 | 入口 | 角色 | 何时打开 |
 |------|------|----------|
 | **飞书 Bot** | 推：日报 + BLOCKED + 可选审批卡 | 每天必看（无告警可 0 回复） |
-| **http://127.0.0.1:9477** | 拉：公司指挥舱（队列 + 资产 + 流程灯 + 规范入口） | 想「一眼看全公司」时 |
+| **http://127.0.0.1:9477** | 拉：**唯一 CEO 入口**（工程队列 + 资产 + 流程灯 + **内容线深链**） | 想「一眼看全公司」时 |
+| **https://hq.revoices.app/** | 拉：**内容 pack 审稿**（lighthouse；从 `:9477` 一键打开） | 审自媒体稿、过 pack 时 |
 | **http://localhost:3000** Multica | 单 workspace 运行时（Agent / Autopilot / daemon） | 调试并发、看单次 run |
 | **GitHub** | 交付真相源（Issues / PR / labels / CI） | 深入某票、审 merge |
 | **SecondBrain OPC map** | 经营真相源（主线 / 杀线 / 值得做） | 周度战略，见 [13-opc-bridge.md](./13-opc-bridge.md) |

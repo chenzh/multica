@@ -11,26 +11,28 @@ source "$(dirname "$0")/lib/agent-queue.sh"
 REGISTRY="${REGISTRY:-$MULTICA_ROOT/.ai-company/templates/project-registry.yaml}"
 MAX_TOTAL="${MAX_TOTAL:-5}"
 DRY_RUN=0
-LOCAL=0
-WORKFLOW="${WORKFLOW:-agent-delivery-dispatch.yml}"
+LOCAL=1
+CONTENT_WORKFLOW="${CONTENT_WORKFLOW:-content-delivery-dispatch.yml}"
 GITHUB_ORG="${GITHUB_ORG:-chenzh}"
 
 usage() {
   cat <<'EOF'
 Usage: portfolio-dispatch.sh [options]
 
-Reads .ai-company/templates/project-registry.yaml and triggers
-agent-delivery-dispatch on each repo (fair share per max_nightly_tickets).
+Reads project-registry.yaml and dispatches agent-safe issues per repo.
+
+Product repos (kind=product): **local cursor-agent CLI only** on the CEO machine.
+Content repos: GHA workflow (dispatch_mode=gha) or skip (remote-pull).
 
 Options:
   --registry PATH   project-registry.yaml
   --max-total N     Cap total dispatches this run (default: 5)
-  --workflow NAME   Workflow file name (default: agent-delivery-dispatch.yml)
-  --local           Dispatch via local cursor-agent CLI (no GHA / no CURSOR_API_KEY)
+  --workflow NAME   Content-line workflow file (default: content-delivery-dispatch.yml)
+  --local           Default; kept for scripts that pass it explicitly
   --dry-run         Print commands only
   -h, --help
 
-Requires: gh CLI, authenticated for all repos in registry.
+Requires: gh CLI; cursor-agent logged in for product dispatch.
 
 Example:
   bash scripts/ai-company/portfolio-dispatch.sh --dry-run
@@ -42,7 +44,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --registry) REGISTRY="${2:?}"; shift 2 ;;
     --max-total) MAX_TOTAL="${2:?}"; shift 2 ;;
-    --workflow) WORKFLOW="${2:?}"; shift 2 ;;
+    --workflow) CONTENT_WORKFLOW="${2:?}"; shift 2 ;;
     --local) LOCAL=1; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -159,7 +161,35 @@ pick_next_issue() {
     | head -n 1
 }
 
-echo "Portfolio dispatch (max_total=$MAX_TOTAL mode=$([ "$LOCAL" -eq 1 ] && echo local-cli || echo gha))"
+dispatch_local_issues() {
+  local repo="$1" root="$2" cap="$3"
+  local n issue
+  for ((n=0; n<cap; n++)); do
+    issue="$(pick_next_issue "$repo")"
+    if [ -z "$issue" ]; then
+      echo "  no eligible agent-safe issues in $repo"
+      break
+    fi
+    if issue_dispatch_active "$issue"; then
+      echo "  skip $repo#$issue (dispatch already in progress)"
+      break
+    fi
+    if [ "$DRY_RUN" -eq 1 ]; then
+      echo "  GITHUB_REPOSITORY=$repo REPO_ROOT=$root dispatch-cursor-agent-cli.sh $issue"
+    else
+      GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
+        bash "$MULTICA_ROOT/scripts/agent-delivery/dispatch-cursor-agent-cli.sh" "$issue" || {
+        echo "  warning: local dispatch failed for $repo#$issue" >&2
+        continue
+      }
+    fi
+    total_dispatched=$((total_dispatched + 1))
+    remaining=$((remaining - 1))
+    [ "$remaining" -le 0 ] && break
+  done
+}
+
+echo "Portfolio dispatch (max_total=$MAX_TOTAL mode=local-cli)"
 echo "Registry: $REGISTRY"
 echo ""
 
@@ -180,18 +210,12 @@ for idx in "${ORDER[@]}"; do
   if [ -z "$dispatch_mode" ]; then
     if [ "$kind" = "content" ]; then
       dispatch_mode="gha"
-    elif [ "$LOCAL" -eq 1 ]; then
-      dispatch_mode="local"
     else
-      dispatch_mode="gha"
+      dispatch_mode="local"
     fi
   fi
-  if [ -z "$project_workflow" ]; then
-    if [ "$kind" = "content" ]; then
-      project_workflow="content-delivery-dispatch.yml"
-    else
-      project_workflow="$WORKFLOW"
-    fi
+  if [ -z "$project_workflow" ] && [ "$kind" = "content" ]; then
+    project_workflow="$CONTENT_WORKFLOW"
   fi
 
   echo "→ ${IDS[$idx]} ($repo) kind=$kind dispatch=$dispatch_mode max_tasks=$cap priority=${PRIORITIES[$idx]}"
@@ -201,95 +225,44 @@ for idx in "${ORDER[@]}"; do
     continue
   fi
 
-  if [ "$LOCAL" -eq 1 ] && [ "$kind" = "content" ]; then
-    echo "  skip local dispatch for content line — use GHA or remote-pull" >&2
-    continue
-  fi
-
-  if [ "$LOCAL" -eq 1 ]; then
+  if [ "$dispatch_mode" = "local" ] || { [ "$kind" != "content" ] && [ "$dispatch_mode" != "gha" ]; }; then
     root="$(bash "$MULTICA_ROOT/scripts/ai-company/resolve-repo-path.sh" --id "${IDS[$idx]}" --repo "$repo" --quiet 2>/dev/null || true)"
     if [ -z "$root" ] || [ ! -d "$root" ]; then
       echo "  warning: no local checkout for ${IDS[$idx]} ($repo) — set AI_REPO_PATH_${IDS[$idx]} in local.env" >&2
       continue
     fi
-    for ((n=0; n<cap; n++)); do
-      issue="$(pick_next_issue "$repo")"
-      if [ -z "$issue" ]; then
-        echo "  no eligible agent-safe issues in $repo"
-        break
-      fi
-      if issue_dispatch_active "$issue"; then
-        echo "  skip $repo#$issue (dispatch already in progress)"
-        break
-      fi
-      if [ "$DRY_RUN" -eq 1 ]; then
-        echo "  GITHUB_REPOSITORY=$repo REPO_ROOT=$root dispatch-cursor-agent-cli.sh $issue"
-      else
-        GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
-          bash "$MULTICA_ROOT/scripts/agent-delivery/dispatch-cursor-agent-cli.sh" "$issue" || {
-          echo "  warning: local dispatch failed for $repo#$issue" >&2
-          continue
-        }
-      fi
-      total_dispatched=$((total_dispatched + 1))
-      remaining=$((remaining - 1))
-      [ "$remaining" -le 0 ] && break
-    done
+    dispatch_local_issues "$repo" "$root" "$cap"
     continue
   fi
 
-  if [ "$DRY_RUN" -eq 1 ]; then
-    echo "  gh workflow run $project_workflow -R $repo -f max_tasks=$cap"
-  else
-    if ! gh repo view "$repo" &>/dev/null; then
-      echo "  warning: cannot access repo $repo — skip" >&2
-      continue
-    fi
-    default_branch="$(gh repo view "$repo" --json defaultBranchRef -q '.defaultBranchRef.name' 2>/dev/null || echo main)"
-    workflow_id="$(
-      gh api "repos/$repo/actions/workflows" \
-        --jq ".workflows[] | select(.path == \".github/workflows/$project_workflow\") | .id" 2>/dev/null || true
-    )"
-    if [ -n "$workflow_id" ]; then
+  if [ "$kind" = "content" ] && [ "$dispatch_mode" = "gha" ]; then
+    if [ "$DRY_RUN" -eq 1 ]; then
+      echo "  gh workflow run $project_workflow -R $repo -f max_tasks=$cap"
+    else
+      if ! gh repo view "$repo" &>/dev/null; then
+        echo "  warning: cannot access repo $repo — skip" >&2
+        continue
+      fi
+      default_branch="$(gh repo view "$repo" --json defaultBranchRef -q '.defaultBranchRef.name' 2>/dev/null || echo main)"
+      workflow_id="$(
+        gh api "repos/$repo/actions/workflows" \
+          --jq ".workflows[] | select(.path == \".github/workflows/$project_workflow\") | .id" 2>/dev/null || true
+      )"
+      if [ -z "$workflow_id" ]; then
+        echo "  workflow $project_workflow not registered on $repo — install content harness" >&2
+        continue
+      fi
       if gh workflow run "$workflow_id" -R "$repo" --ref "$default_branch" -f "max_tasks=$cap"; then
         total_dispatched=$((total_dispatched + cap))
         remaining=$((remaining - cap))
-        continue
+      else
+        echo "  warning: content workflow dispatch failed for $repo" >&2
       fi
-      echo "  warning: workflow dispatch failed for $repo — trying local CLI" >&2
-    else
-      echo "  workflow $project_workflow not registered on $repo" >&2
-      if [ "$kind" = "content" ]; then
-        echo "  content projects need install-content-harness.sh on remote repo — skip local fallback" >&2
-        continue
-      fi
-      echo "  falling back to local CLI" >&2
     fi
-    root="$(bash "$MULTICA_ROOT/scripts/ai-company/resolve-repo-path.sh" --id "${IDS[$idx]}" --repo "$repo" --quiet 2>/dev/null || true)"
-    if [ -z "$root" ] || [ ! -d "$root" ]; then
-      echo "  warning: no local checkout for ${IDS[$idx]} — set AI_REPO_PATH_* in local.env" >&2
-      continue
-    fi
-    for ((n=0; n<cap; n++)); do
-      issue="$(pick_next_issue "$repo")"
-      if [ -z "$issue" ]; then
-        echo "  no eligible agent-safe issues in $repo"
-        break
-      fi
-      if issue_dispatch_active "$issue"; then
-        echo "  skip $repo#$issue (dispatch already in progress)"
-        break
-      fi
-      GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
-        bash "$MULTICA_ROOT/scripts/agent-delivery/dispatch-cursor-agent-cli.sh" "$issue" || {
-        echo "  warning: local dispatch failed for $repo#$issue" >&2
-        continue
-      }
-      total_dispatched=$((total_dispatched + 1))
-      remaining=$((remaining - 1))
-      [ "$remaining" -le 0 ] && break
-    done
+    continue
   fi
+
+  echo "  skip: unknown dispatch_mode=$dispatch_mode for $kind" >&2
 done
 
 echo ""

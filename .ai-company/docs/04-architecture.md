@@ -45,7 +45,7 @@
 
 ```text
 1. CEO 创建 Issue（agent-safe 模板）或 Autopilot 从 webhook 创建
-2. 调度层选中 ticket → dispatch-cursor-agent.sh 或 Multica assign
+2. 调度层选中 ticket → `dispatch-cursor-agent-cli.sh` 或 Multica assign
 3. Cloud Agent / daemon 读：
       CLAUDE.md + .delivery/* + .ai-company/templates 约定 + Issue 正文
 4. 子流水线：Planner → Implementer → Verifier → Reviewer

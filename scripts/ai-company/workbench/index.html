@@ -11,7 +11,7 @@
       <header>
         <div>
           <h1>AI 公司工作台</h1>
-          <p class="subtitle">看全组合队列、挑 issue、一键本地派单</p>
+          <p class="subtitle">工程 portfolio + 内容审稿 · 唯一指挥入口（内容深链 hq.revoices.app）</p>
         </div>
         <div class="header-actions">
           <span class="pill" id="org-label">org: -</span>
@@ -54,6 +54,29 @@
         </table>
       </section>
 
+      <section class="card content-cockpit" style="margin-bottom: 16px">
+        <div class="panel-title">
+          <h2>内容线（远程 lighthouse）</h2>
+          <div class="header-actions">
+            <a class="primary link-btn" id="content-hq-link" href="https://hq.revoices.app/#content/review" target="_blank" rel="noreferrer">打开内容审稿 HQ</a>
+            <a class="pill link-btn" id="content-agent-link" href="https://agent.revoices.app/" target="_blank" rel="noreferrer">agent.revoices.app</a>
+          </div>
+        </div>
+        <p class="subtitle" id="content-remote-hint">执行在 <code>ssh lighthouse</code>；队列真相源 GitHub Issues；审稿在 hq.revoices.app（非 Kanban 派单）。</p>
+        <div class="content-metrics grid" id="content-metrics"></div>
+        <table class="assets-table">
+          <thead>
+            <tr>
+              <th>内容项目</th>
+              <th>派单模式</th>
+              <th>队列</th>
+              <th>审稿</th>
+            </tr>
+          </thead>
+          <tbody id="content-body"></tbody>
+        </table>
+      </section>
+
       <section class="grid">
         <div class="card">
           <div class="metric-label">BLOCKED</div>
@@ -89,6 +112,13 @@
         <label style="display: inline-flex; align-items: center; gap: 8px; margin-top: 8px">
           <input type="checkbox" id="site-factory-create-repo" />
           创建 GitHub 仓库并 push
+        </label>
+        <label
+          id="site-factory-autopilot-wrap"
+          style="display: none; align-items: center; gap: 8px; margin-top: 8px; margin-left: 1.5rem"
+        >
+          <input type="checkbox" id="site-factory-activate-autopilot" checked />
+          接入自迭代（registry + 本机路径 + 首票派单）
         </label>
       </section>
 

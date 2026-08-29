@@ -47,6 +47,20 @@ class Project:
     domain: str = ""
     cloudflare_project: str = ""
     delivery_slug: str = ""
+    kind: str = "product"
+    dispatch_mode: str = ""
+    content_workbench_url: str = ""
+    executor: str = ""
+    publish_policy: str = ""
+    channels: list[str] = field(default_factory=list)
+
+
+CONTENT_WORKBENCH_URL = os.environ.get(
+    "CONTENT_WORKBENCH_URL",
+    "https://hq.revoices.app/#content/review",
+)
+CONTENT_AGENT_URL = os.environ.get("CONTENT_AGENT_URL", "https://agent.revoices.app/")
+CONTENT_REMOTE_SSH = os.environ.get("CONTENT_REMOTE_SSH", "lighthouse")
 
 
 NORM_LINKS: list[tuple[str, str]] = [
@@ -249,9 +263,30 @@ def company_overview(*, refresh_verify: bool = False) -> dict[str, Any]:
     rows = dashboard_rows()
     registry = {p.id: p for p in parse_registry()}
     projects_out: list[dict[str, Any]] = []
+    content_lines: list[dict[str, Any]] = []
+    row_by_id = {row.get("id", ""): row for row in rows}
     for row in rows:
         pid = row.get("id", "")
         reg = registry.get(pid)
+        kind = reg.kind if reg else "product"
+        if kind == "content":
+            content_lines.append(
+                {
+                    "id": pid,
+                    "repo": row.get("repo", ""),
+                    "paused": row.get("paused", False),
+                    "dispatch_mode": reg.dispatch_mode if reg else "",
+                    "executor": reg.executor if reg else "",
+                    "publish_policy": reg.publish_policy if reg else "",
+                    "channels": reg.channels if reg else [],
+                    "workbench_url": (reg.content_workbench_url if reg and reg.content_workbench_url else CONTENT_WORKBENCH_URL),
+                    "blocked": int(row.get("blocked", 0)),
+                    "running": int(row.get("running", 0)),
+                    "agent_safe": int(row.get("agent_safe", 0)),
+                    "notes": reg.notes if reg else row.get("notes", ""),
+                }
+            )
+            continue
         asset = assets.get(pid, {})
         local_path = row.get("local_path", "")
         domains = asset.get("domains", {}) if isinstance(asset.get("domains"), dict) else {}
@@ -263,11 +298,32 @@ def company_overview(*, refresh_verify: bool = False) -> dict[str, Any]:
         projects_out.append(
             {
                 **row,
+                "kind": kind,
                 "domain": domain,
                 "cloudflare_project": cf_project,
                 "delivery_slug": reg.delivery_slug if reg else "",
                 "company_os": read_company_os_meta(local_path),
                 "asset_notes": asset.get("notes", ""),
+            }
+        )
+
+    for reg in registry.values():
+        if reg.kind != "content" or reg.id in row_by_id:
+            continue
+        content_lines.append(
+            {
+                "id": reg.id,
+                "repo": reg.repo,
+                "paused": reg.paused,
+                "dispatch_mode": reg.dispatch_mode or "remote-pull",
+                "executor": reg.executor,
+                "publish_policy": reg.publish_policy,
+                "channels": reg.channels,
+                "workbench_url": reg.content_workbench_url or CONTENT_WORKBENCH_URL,
+                "blocked": 0,
+                "running": 0,
+                "agent_safe": 0,
+                "notes": reg.notes,
             }
         )
 
@@ -281,6 +337,17 @@ def company_overview(*, refresh_verify: bool = False) -> dict[str, Any]:
         "verify": verify,
         "norms": [{"title": title, "path": rel} for title, rel in NORM_LINKS],
         "projects": projects_out,
+        "content": {
+            "workbench_url": CONTENT_WORKBENCH_URL,
+            "agent_url": CONTENT_AGENT_URL,
+            "remote_ssh": CONTENT_REMOTE_SSH,
+            "lines": sorted(content_lines, key=lambda item: item.get("id", "")),
+            "totals": {
+                "blocked": sum(int(line.get("blocked", 0)) for line in content_lines),
+                "running": sum(int(line.get("running", 0)) for line in content_lines),
+                "agent_safe": sum(int(line.get("agent_safe", 0)) for line in content_lines),
+            },
+        },
         "totals": {
             "blocked": sum(int(p.get("blocked", 0)) for p in projects_out),
             "running": sum(int(p.get("running", 0)) for p in projects_out),
@@ -305,13 +372,22 @@ def parse_registry() -> list[Project]:
             continue
         if line.startswith("- id:"):
             if current.get("id"):
+                if "kind" not in current:
+                    current["kind"] = "product"
+                if "channels" not in current:
+                    current["channels"] = []
                 projects.append(Project(**current))  # type: ignore[arg-type]
             current = {"id": line.split(":", 1)[1].strip()}
             continue
-        for key in ("repo", "tier", "notes", "domain", "cloudflare_project", "delivery_slug"):
+        for key in ("repo", "tier", "notes", "domain", "cloudflare_project", "delivery_slug", "kind", "dispatch_mode", "content_workbench_url", "executor", "publish_policy"):
             if line.startswith(f"{key}:"):
                 val = line.split(":", 1)[1].strip().strip('"')
                 current[key] = val
+        if line.startswith("channels:"):
+            raw_channels = line.split(":", 1)[1].strip()
+            if raw_channels.startswith("[") and raw_channels.endswith("]"):
+                inner = raw_channels[1:-1].strip()
+                current["channels"] = [c.strip().strip('"') for c in inner.split(",") if c.strip()]
         if line.startswith("paused:"):
             current["paused"] = line.split(":", 1)[1].strip() == "true"
         if line.startswith("priority:"):
@@ -319,6 +395,10 @@ def parse_registry() -> list[Project]:
         if line.startswith("max_nightly_tickets:"):
             current["max_nightly_tickets"] = int(line.split(":", 1)[1].strip())
     if current.get("id"):
+        if "kind" not in current:
+            current["kind"] = "product"
+        if "channels" not in current:
+            current["channels"] = []
         projects.append(Project(**current))  # type: ignore[arg-type]
 
     for project in projects:
@@ -390,6 +470,7 @@ def dashboard_rows() -> list[dict[str, Any]]:
             row["max_nightly_tickets"] = project.max_nightly_tickets
             row["tier"] = project.tier
             row["notes"] = project.notes
+            row["kind"] = project.kind
         rows.append(row)
     rows.sort(key=lambda item: item.get("priority", 0), reverse=True)
     return rows
@@ -543,6 +624,7 @@ def start_site_factory_job(
     *,
     intake: str,
     create_repo: bool = False,
+    activate_autopilot: bool | None = None,
     notify: bool = True,
     max_dispatch: int = 2,
     dry_run: bool = False,
@@ -567,6 +649,10 @@ def start_site_factory_job(
         cmd.append("--dry-run")
     if create_repo:
         cmd.extend(["--create-repo", "--push"])
+        if activate_autopilot is True:
+            cmd.append("--activate-autopilot")
+        elif activate_autopilot is False:
+            cmd.append("--no-autopilot")
     if notify:
         cmd.append("--notify")
 
@@ -583,6 +669,7 @@ def start_site_factory_job(
         "mode": "site-factory",
         "intake": intake,
         "create_repo": create_repo,
+        "activate_autopilot": activate_autopilot,
         "max_dispatch": max_dispatch,
         "dry_run": dry_run,
         "status": "running",
@@ -700,7 +787,7 @@ class Handler(BaseHTTPRequestHandler):
                     {
                         "ok": True,
                         "method": "POST",
-                        "fields": ["intake", "create_repo", "notify", "max_dispatch"],
+                        "fields": ["intake", "create_repo", "activate_autopilot", "notify", "max_dispatch"],
                     },
                 )
                 return
@@ -753,9 +840,17 @@ class Handler(BaseHTTPRequestHandler):
                 if not intake:
                     self._send_json(HTTPStatus.BAD_REQUEST, {"error": "intake is required"})
                     return
+                create_repo = bool(body.get("create_repo", False))
+                activate_raw = body.get("activate_autopilot")
+                activate_autopilot: bool | None
+                if activate_raw is None:
+                    activate_autopilot = True if create_repo else None
+                else:
+                    activate_autopilot = bool(activate_raw)
                 job = start_site_factory_job(
                     intake=intake,
-                    create_repo=bool(body.get("create_repo", False)),
+                    create_repo=create_repo,
+                    activate_autopilot=activate_autopilot,
                     notify=body.get("notify", True) is not False,
                     max_dispatch=int(body.get("max_dispatch", 2)),
                     dry_run=bool(body.get("dry_run", False)),

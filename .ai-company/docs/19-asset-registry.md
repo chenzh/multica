@@ -41,6 +41,9 @@
 | `domain` | 生产域名 | `json.example.com` |
 | `cloudflare_project` | Pages 项目名 | `json-site` |
 | `sla_hours` | BLOCKED CEO 响应 | production `4` |
+| `kind` | `product`（默认）或 `content` | `content` |
+| `dispatch_mode` | 内容线：`remote-pull` / `gha` | `remote-pull` |
+| `content_workbench_url` | 内容审稿 HQ（默认 `hq.revoices.app/#content/review`） | 见 `company-defaults.yaml` → `content.workbench_url` |
 
 示例（注释写在项目块旁，不必所有仓都有）：
 
@@ -83,7 +86,7 @@ cp .ai-company/config/company-assets.local.yaml.example .ai-company/config/compa
 **登记内容：**
 
 - 生产 / staging 域名、DNS 托管（Cloudflare 等）
-- GitHub Secrets **名称**（如 `CURSOR_API_KEY`，不写值）
+- GitHub Secrets **名称**（如 `SLACK_WEBHOOK_URL`，不写值）
 - 本机 only：Stripe dashboard 项目名、飞书群名
 - 灾备：上次密钥轮换日期、负责人
 

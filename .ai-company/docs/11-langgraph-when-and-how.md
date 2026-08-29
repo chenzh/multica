@@ -37,7 +37,7 @@ from langgraph.graph import StateGraph
 
 def node_dispatch(state):
     # multica CLI 或 POST autopilot webhook
-    subprocess.run(["bash", "scripts/agent-delivery/dispatch-cursor-agent.sh", issue], check=True)
+    subprocess.run(["bash", "scripts/agent-delivery/dispatch-cursor-agent-cli.sh", issue], check=True)
     return state
 
 def node_wait_ci(state):

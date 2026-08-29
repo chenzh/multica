@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Dispatch one issue via local cursor-agent CLI (session auth — no CURSOR_API_KEY).
+# Dispatch one issue via local cursor-agent CLI (session auth).
 set -euo pipefail
 
 REPO="${GITHUB_REPOSITORY:-}"
@@ -166,8 +166,22 @@ set -e
 
 if [ "$exit_code" -eq 0 ]; then
   gh issue edit "$ISSUE_NUMBER" --remove-label "agent-running" --add-label "agent-done" 2>/dev/null || true
+  FINALIZE_NOTE=""
+  if [ "${AUTO_FINALIZE_MAIN:-0}" = "1" ]; then
+    if bash "$(dirname "$0")/finalize-to-main.sh" --issue "$ISSUE_NUMBER"; then
+      FINALIZE_NOTE=$'\n\nMerged to `main` and primary checkout is on `main`.'
+    else
+      FINALIZE_NOTE=$'\n\n⚠️ finalize-to-main failed — merge manually, then `git checkout main`.'
+    fi
+  fi
   gh issue comment "$ISSUE_NUMBER" --body "$(cat <<EOF
 ✅ Local cursor-agent finished (exit 0). Check worktree \`${WORKTREE_NAME}\` and open PR if not auto-created.
+
+Next: merge into \`main\`, then return to \`main\`:
+\`\`\`bash
+bash scripts/agent-delivery/finalize-to-main.sh --issue ${ISSUE_NUMBER}
+\`\`\`
+Or set \`AUTO_FINALIZE_MAIN=1\` on dispatch to run this automatically.${FINALIZE_NOTE}
 EOF
 )"
 else

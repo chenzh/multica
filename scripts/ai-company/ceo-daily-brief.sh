@@ -101,6 +101,9 @@ since = os.environ["BRIEF_SINCE"]
 runtime = json.loads(os.environ.get("BRIEF_RUNTIME_JSON", "{}"))
 overview = json.loads(os.environ.get("BRIEF_OVERVIEW_JSON", "{}"))
 workbench_url = os.environ.get("BRIEF_WORKBENCH_URL", "http://127.0.0.1:9477")
+content_wb = overview.get("content", {}).get("workbench_url") or os.environ.get(
+    "CONTENT_WORKBENCH_URL", "https://hq.revoices.app/#content/review"
+)
 rows = [
     json.loads(line)
     for line in os.environ["BRIEF_JSON_LINES"].splitlines()
@@ -271,6 +274,7 @@ elif overview.get("projects"):
     overview_lines.append("- ✅ 各产品 company-os 与 HQ 同 sha（或已 sync）")
 
 overview_lines.append(f"- **指挥舱**: {workbench_url}")
+overview_lines.append(f"- **内容审稿 HQ**: {content_wb}")
 
 ts = datetime.now().strftime("%Y-%m-%d %H:%M %Z")
 body = f"""# AI 公司日报 — {ts}
@@ -315,6 +319,7 @@ body = f"""# AI 公司日报 — {ts}
 
 ---
 指挥舱: {workbench_url}
+内容 HQ: {content_wb}
 本地: `bash scripts/ai-company/ceo-workbench.sh`
 """
 Path(brief_file).write_text(body, encoding="utf-8")

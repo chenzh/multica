@@ -25,10 +25,10 @@
 - 多 runtime 并行，活动日志，自托管可审计。
 - **缺口**：无编程式细粒度 DAG → 由 L2 补。
 
-### GitHub Actions — P1 编排
+### CEO 本机 cron — P1 编排
 
-- `agent-delivery-dispatch.yml`：定时拉 `agent-safe` issue。
-- `agent-delivery-gate.yml`：`check-merge-eligible.sh` 路径白名单。
+- `ceo-nightly.sh` → `portfolio-dispatch.sh`（本机 `cursor-agent`）。
+- `agent-delivery-gate.yml`：`check-merge-eligible.sh` 路径白名单（GHA，仅 merge 门禁）。
 - **只信 exit code**；与 Multica 路径 C 可并存。
 
 ### LangGraph — P2 编排（队列变大后）
@@ -39,8 +39,8 @@
 
 ### Cursor — 主力 Worker
 
-- Cloud Agent API + 本地 `cursor-agent` daemon。
-- Business 版支持无人值守批量（需 API Key + 预算护栏）。
+- 本机 `cursor-agent` CLI（`cursor-agent login`，session auth）。
+- Business 版支持无人值守批量（CEO 机器 21:00 cron + 预算护栏）。
 
 ### 契约工具链
 
@@ -58,7 +58,7 @@ oasdiff breaking origin/main:api/openapi.yaml HEAD:api/openapi.yaml --fail-on WA
 
 | 产品 | 用途 | 备注 |
 |------|------|------|
-| Cursor Business | Cloud Agent + API | `CURSOR_API_KEY` |
+| Cursor Business | 本机 `cursor-agent` CLI（session） | `cursor-agent login` |
 | GitHub Team/Enterprise | Actions, branch protection | required checks |
 | Multica 自托管 | 任务看板 | Docker / Helm |
 | Slack | 告警 | `SLACK_WEBHOOK_URL` |

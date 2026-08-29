@@ -51,7 +51,7 @@ bash scripts/ai-company/ceo-dashboard.sh --dispatch --max-total 3
 
 ## ceo-workbench.sh
 
-Local browser workbench — queue view, per-issue dispatch, portfolio dispatch:
+Local browser workbench — **唯一 CEO 入口**（工程队列 + 公司概览 + **内容线深链 hq.revoices.app**）:
 
 ```bash
 bash scripts/ai-company/ceo-workbench.sh

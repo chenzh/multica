@@ -15,14 +15,14 @@
 └───────────────────────────┬─────────────────────────────────────┘
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  调度层（硬逻辑，不靠 Prompt 自觉）                               │
-│  · GitHub Actions: agent-delivery-dispatch（定时 / 手动）         │
-│  · 或 Cursor Automations（Linear / cron / webhook）              │
-│  · 或 Multica Autopilot（dogfood，见下文「路径 C」）            │
+│  调度层（CEO 本机 — 硬逻辑，不靠 Prompt 自觉）                    │
+│  · ceo-nightly.sh（21:00 cron）→ portfolio-dispatch（local CLI） │
+│  · 或手动：dispatch-cursor-agent-cli.sh / 工作台「智能派单」        │
+│  · 或 Multica Autopilot（dogfood，见下文「路径 C」）              │
 └───────────────────────────┬─────────────────────────────────────┘
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  执行层：Cursor Cloud Agent（一 ticket 一 VM 一 branch）          │
+│  执行层：本机 cursor-agent（一 ticket 一 worktree 一 branch）     │
 │  读 CLAUDE.md + .delivery/* + Issue 正文                         │
 │  子角色：.cursor/agents/{planner,implementer,verifier,reviewer}  │
 └───────────────────────────┬─────────────────────────────────────┘
@@ -47,30 +47,29 @@
 
 | 路径 | 适合 | 你需要做什么 |
 |------|------|--------------|
-| **A. 纯 Cursor（手动队列）** | 先试跑、每天 1～3 个 ticket | 复制 Orchestrator prompt，手动开 Cloud Agent |
-| **B. GitHub Actions + Cloud API（推荐睡觉模式）** | 夜间批量、硬门禁 | 配 Secrets，开 workflow |
+| **A. 手动 CLI** | 试跑、单票 | `dispatch-cursor-agent-cli.sh <issue#>` |
+| **B. 夜间 portfolio（推荐睡觉模式）** | 多仓公平队列 | `ceo-nightly.sh` + `cursor-agent login` |
 | **C. Multica Autopilot（dogfood）** | 用自家产品管队列 | `multica autopilot create` + cron |
 
-可以 **B + C 并存**：GitHub 管 merge 门禁，Multica 管 issue 队列与 run 历史。
+路径 B 在 **CEO 本机** 跑；GitHub Actions 只做 **CI / gate**，不调用 Cursor Cloud API。
 
 ---
 
 ## 第 0 步：前置条件
 
-### Cursor 账号
+### Cursor（CEO 本机）
 
-- Cursor **Pro / Business**（Cloud Agent + API）
-- [Dashboard → API Keys](https://cursor.com/dashboard/api) 生成 API Key
-- Cloud Agent 已连接 GitHub 仓库 `multica-ai/multica`
+- Cursor **Pro / Business**
+- 本机已登录：`cursor-agent login`（`cursor-agent status` 显示 Logged in）
+- **不支持** `CURSOR_API_KEY` / Cloud Agents API 派单路径
 
 ### GitHub 仓库
 
-1. **Settings → Secrets → Actions** 添加：
+1. **Settings → Secrets → Actions**（可选）：
 
    | Secret | 用途 |
    |--------|------|
-   | `CURSOR_API_KEY` | 调用 Cloud Agents API |
-   | `SLACK_WEBHOOK_URL` | （可选）BLOCKED / 失败告警 |
+   | `SLACK_WEBHOOK_URL` | BLOCKED / gate 失败告警 |
 
 2. **Labels**（Settings → Labels）创建：
 
@@ -141,51 +140,52 @@ cp -r .delivery/_template .delivery/my-feature
 | `verifier.md` | **只跑测试**，输出 PASSED/BLOCKED |
 | `reviewer.md` | 对照 CLAUDE.md 审查 |
 
-Cloud Agent clone 仓库后会自动读取项目 subagent 定义。
+Cloud Agent clone 仓库后会自动读取项目 subagent 定义（手动会话时）。
 
 ---
 
 ## 第 4 步：路径 A — 手动试跑（今天就能用）
 
-1. 新建 **Agent 会话**（Cloud Agent 模式），仓库选 `multica-ai/multica`。
-2. 粘贴 `.delivery/prompts/orchestrator-kickoff.md` 全文。
-3. 附上 Issue 链接或 `@.delivery/my-feature/`。
-4. 等 PR；**不要逐行读代码**，对照 Issue 验收标准 + CI 绿。
+```bash
+# 单票（在 CEO 本机、已 checkout 的产品仓或设 REPO_ROOT）
+bash scripts/agent-delivery/dispatch-cursor-agent-cli.sh <issue_number>
+```
+
+或粘贴 `.delivery/prompts/orchestrator-kickoff.md` 到 Cursor Agent 会话（手动模式）。
 
 ---
 
-## 第 5 步：路径 B — 夜间自动调度
-
-### 启用手动 dispatch
+## 第 5 步：路径 B — 夜间自动调度（CEO 本机）
 
 ```bash
-# GitHub UI: Actions → Agent delivery dispatch → Run workflow
-# 或 CLI:
-gh workflow run agent-delivery-dispatch.yml -f max_tasks=2
+# 21:00 cron（推荐）
+bash scripts/ai-company/install-nightly-cron.sh --install
+
+# 或手动
+bash scripts/ai-company/portfolio-dispatch.sh --max-total 3
+bash scripts/ai-company/ceo-nightly.sh
 ```
 
-Workflow 会：
+脚本会：
 
-1. 拉取 open issues：`label:agent-safe -label:agent-running -label:agent-blocked`
-2. 对每个 issue 调 `scripts/agent-delivery/dispatch-cursor-agent.sh`
-3. 打 label `agent-running`，在 issue 评论里贴 Cloud Agent 链接
-4. 失败 → `agent-blocked` + Slack（若配置）
+1. 按 `project-registry.yaml` 公平扫描各仓 `agent-safe` 队列
+2. 对每个 issue 调 `dispatch-cursor-agent-cli.sh`
+3. 打 label `agent-running`；失败 → `agent-blocked` + 飞书/Slack（若配置）
 
-### 开启 cron（默认关闭）
+**不在 GitHub-hosted runner 上派单** — 机器须 21:00 常开且 `cursor-agent` 已登录。
 
-编辑 `.github/workflows/agent-delivery-dispatch.yml`，取消 `schedule` 注释：
+PR **base 必须是 `main`**，head 来自 `cursor/**` 分支且 CI 全绿时，`agent-delivery-gate.yml` 读取 `config/merge-policy.json`：
 
-```yaml
-schedule:
-  - cron: "0 18 * * 1-5"  # UTC 18:00 = 北京时间次日 02:00
-```
-
-### Auto-merge 门禁
-
-PR 来自 `cursor/**` 分支且 CI 全绿时，`agent-delivery-gate.yml` 读取 `config/merge-policy.json`：
-
-- **allow**：docs、纯测试、小范围 fix → 可 auto-merge
+- **allow**：docs、纯测试、小范围 fix → squash merge 进 `main`，删 feature 分支
 - **deny**：`server/migrations/**`、`packages/core/api/**` 等 → 只开 PR，人早上 merge
+
+合并完成后，本地主仓库应 **`git checkout main && git pull`**（Cloud 路径由 GitHub 完成；本地 CLI 路径用 `finalize-to-main.sh`）。
+
+```bash
+# 本地 cursor-agent / worktree 跑完后：
+bash scripts/agent-delivery/finalize-to-main.sh --issue <N>
+# 或自动：AUTO_FINALIZE_MAIN=1 bash scripts/agent-delivery/dispatch-cursor-agent-cli.sh <N>
+```
 
 ---
 
@@ -240,9 +240,9 @@ Autopilot 创建 issue → 你的 runtime Agent 执行 → 结果写在 issue co
 
 - [ ] `.cursor/agents/*.md` 已提交
 - [ ] GitHub label 四个已创建
-- [ ] `CURSOR_API_KEY` 已写入 Secrets
-- [ ] 手动 `gh workflow run agent-delivery-dispatch.yml -f max_tasks=1` 成功起 Agent
-- [ ] 用一个 trivial ticket（如补测试）跑通：Issue → PR → CI 绿
+- [ ] CEO 本机 `cursor-agent login` 成功
+- [ ] 手动 `dispatch-cursor-agent-cli.sh` 或 `portfolio-dispatch` 跑通 trivial ticket
+- [ ] Issue → PR → CI 绿
 - [ ] `agent-delivery-gate` 对 docs-only PR 行为符合 `merge-policy.json`
 - [ ] Slack 测试消息收到（若启用）
 
@@ -274,9 +274,8 @@ A: 单会话 = 上下文漂移 + 你逐行改。本方案 = 文件真相源 + �
   prompts/                  ← 粘贴即用 prompt
 .cursor/agents/             ← Subagent 定义
 .github/workflows/
-  agent-delivery-dispatch.yml
   agent-delivery-gate.yml
 .github/ISSUE_TEMPLATE/
   agent_safe_task.yml
-scripts/agent-delivery/     ← dispatch / poll 脚本
+scripts/agent-delivery/     ← dispatch-cli / finalize / merge check
 ```

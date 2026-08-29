@@ -63,6 +63,20 @@ Hermes **只做 Worker**，不顶层调度。流程决策在 `portfolio-dispatch
 
 ---
 
+## 双工作台（一入口、两权威 UI）
+
+CEO **只书签一个入口**：本机 `http://127.0.0.1:9477`。工程状态在指挥舱内看；内容 pack 审稿 **新标签打开** `hq.revoices.app`（`:9477` 内已固定按钮，不 iframe）。
+
+| 拉界面 | URL | 机器 |
+|--------|-----|------|
+| 工程 + 公司总览 | `http://127.0.0.1:9477` | CEO 本机 |
+| 内容审稿 / pack | `https://hq.revoices.app/#content/review` | lighthouse（公网） |
+| Worker（可选） | `https://agent.revoices.app/` | lighthouse tunnel |
+
+registry 可选字段：`content_workbench_url`（每内容线覆盖默认 HQ URL）。
+
+---
+
 ## 远程 Hermes 机（生产环境）
 
 当前自媒体执行机：**腾讯云 Lighthouse**（OpenCloudOS）。
@@ -321,7 +335,7 @@ Issue 模板：`content_agent_safe_task.yml`（harness 安装）。
 
 ## 与网站线共存
 
-- **工程** `kind: product` → `portfolio-dispatch --local` 或 `agent-delivery-dispatch.yml`
+- **工程** `kind: product` → `portfolio-dispatch`（本机 CLI）+ `agent-delivery-gate.yml`
 - **内容** `kind: content` → `content-delivery-dispatch.yml` 或 **`remote-pull`**
 - OPC 每周只开一条全力主线，用 `paused` + `priority` 控带宽
 

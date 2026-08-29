@@ -13,10 +13,9 @@
   .cursor/rules/
     company-harness.mdc   # Tier-0 pointer (alwaysApply; ~20 lines — not full company-os)
   .github/workflows/
-    agent-delivery-dispatch.yml
     agent-delivery-gate.yml
     api-contract-gate.yml   # 有 OpenAPI 时启用
-  scripts/agent-delivery/   # dispatch · build-prompt · check-merge-eligible · poll
+  scripts/agent-delivery/   # dispatch-cli · build-prompt · check-merge-eligible
 ```
 
 公司级文档仍放在 **Multica 仓** `.ai-company/`（或你 fork 的 `company-os` 仓），不随 harness 全文复制。
@@ -73,12 +72,12 @@ bash scripts/ai-company/install-harness.sh ../my-landing-page
 
 ## 安装后必做（CEO，约 30 分钟）
 
-1. GitHub Secrets：`CURSOR_API_KEY`、（可选）`SLACK_WEBHOOK_URL`
-2. Labels：`agent-safe` `agent-running` `agent-blocked` `agent-done`
-3. `main` branch protection：required checks 与 workflow job 名一致
-4. 复制示例或模板到 `.delivery/<slug>/`：
-   - 音乐游戏站示例：[../examples/music-game-sea/](../examples/music-game-sea/)
-5. 按 [../runbooks/onboard-new-project.md](../runbooks/onboard-new-project.md) 试跑 trivial ticket
+1. Labels：`agent-safe` `agent-running` `agent-blocked` `agent-done`
+2. CEO 本机：`cursor-agent login`（派单只用 session，无 API key）
+3. （可选）GitHub Secret：`SLACK_WEBHOOK_URL`
+4. `main` branch protection：required checks 与 workflow job 名一致
+5. 复制示例或模板到 `.delivery/<slug>/`（如 [../examples/music-game-sea/](../examples/music-game-sea/)）
+6. 按 [../runbooks/onboard-new-project.md](../runbooks/onboard-new-project.md) 试跑 trivial ticket
 
 ---
 

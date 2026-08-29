@@ -168,15 +168,13 @@ fi
 cat <<EOF
 
 == Manual steps ==
-  1. GitHub → Settings → Secrets → Actions:
-       CURSOR_API_KEY (required)
-       SLACK_WEBHOOK_URL (optional)
-  2. Branch protection on main: require CI checks
-  3. Cursor dashboard: connect GitHub repo for Cloud Agents
+  1. CEO machine: cursor-agent login
+  2. (Optional) GitHub Secret: SLACK_WEBHOOK_URL
+  3. Branch protection on main: require CI checks
   4. Local verify:
        cd $PROJECT_DIR && pnpm install && make check
   5. Dispatch trial:
-       gh workflow run agent-delivery-dispatch.yml -R $REPO -f max_tasks=1
+       bash $MULTICA_ROOT/scripts/agent-delivery/dispatch-cursor-agent-cli.sh <issue#>
 
 Company OS docs: $MULTICA_ROOT/.ai-company/README.md
 EOF

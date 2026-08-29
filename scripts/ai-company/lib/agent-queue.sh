@@ -3,6 +3,7 @@
 # shellcheck shell=bash
 
 DISPATCH_LEASE_SECONDS="${DISPATCH_LEASE_SECONDS:-7200}"
+DISPATCH_CLEANUP_MIN_AGE_SEC="${DISPATCH_CLEANUP_MIN_AGE_SEC:-120}"
 
 _dispatch_lock_path() {
   local repo_root="${1:?}" num="${2:?}"
@@ -12,6 +13,9 @@ _dispatch_lock_path() {
 _dispatch_lock_expired() {
   local lock_file="${1:?}"
   [ ! -f "$lock_file" ] && return 0
+  if _dispatch_lock_alive "$lock_file"; then
+    return 1
+  fi
   local pid started expiry now
   pid="$(sed -n '1p' "$lock_file" 2>/dev/null || true)"
   started="$(sed -n '2p' "$lock_file" 2>/dev/null || true)"
@@ -47,18 +51,71 @@ clear_dispatch_lock() {
   rm -f "$(_dispatch_lock_path "$repo_root" "$num")"
 }
 
+# cursor-agent CLI often appears as: cursor-agent --use-system-ca .../index.js -p --worktree cursor-issue-N
+# (not "cursor-agent -p", so naive pgrep patterns false-negative and cleanup kills live dispatches).
+_pgrep_portfolio_agent_for_issue() {
+  local issue="${1:?}"
+  pgrep -fl "dispatch-cursor-agent-cli\\.sh[[:space:]]+${issue}( |$)" >/dev/null 2>&1 && return 0
+  pgrep -fl "cursor-issue-${issue}" >/dev/null 2>&1 && return 0
+  pgrep -fl "[[:space:]]-p[[:space:]].*cursor-issue-${issue}" >/dev/null 2>&1 && return 0
+  return 1
+}
+
+_pgrep_any_portfolio_agent() {
+  pgrep -fl 'dispatch-cursor-agent-cli\.sh' >/dev/null 2>&1 && return 0
+  pgrep -fl 'cursor-issue-[0-9]+' >/dev/null 2>&1 && return 0
+  pgrep -fl '[[:space:]]-p[[:space:]].*--worktree cursor-issue-' >/dev/null 2>&1 && return 0
+  return 1
+}
+
+_dispatch_lock_issue() {
+  local lock_file="${1:?}"
+  local base
+  base="$(basename "$lock_file")"
+  if [[ "$base" =~ ^\.dispatch-issue-([0-9]+)\.lock$ ]]; then
+    echo "${BASH_REMATCH[1]}"
+    return 0
+  fi
+  return 1
+}
+
+_dispatch_lock_alive() {
+  local lock_file="${1:?}"
+  [ -f "$lock_file" ] || return 1
+  local pid issue
+  pid="$(sed -n '1p' "$lock_file" 2>/dev/null || true)"
+  issue="$(_dispatch_lock_issue "$lock_file" 2>/dev/null || true)"
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    return 0
+  fi
+  if [ -n "$issue" ] && _pgrep_portfolio_agent_for_issue "$issue"; then
+    return 0
+  fi
+  return 1
+}
+
 local_dispatch_running_count() {
   local n=0
+  local line issue seen=""
   while IFS= read -r line; do
     [ -z "$line" ] && continue
-    # Ignore shell wrappers that embed the dispatch script in -c (double-count).
     if [[ "$line" == *"/bin/zsh"* ]] || [[ "$line" == *" zsh -c"* ]]; then
       continue
     fi
-    if [[ "$line" == *"dispatch-cursor-agent-cli.sh"* ]] || [[ "$line" == *"cursor-agent -p"* ]]; then
+    if [[ "$line" =~ dispatch-cursor-agent-cli\.sh[[:space:]]+([0-9]+) ]]; then
+      issue="${BASH_REMATCH[1]}"
+      case "$seen" in *" $issue "*) continue ;; esac
+      seen="$seen $issue "
+      n=$((n + 1))
+      continue
+    fi
+    if [[ "$line" =~ cursor-issue-([0-9]+) ]]; then
+      issue="${BASH_REMATCH[1]}"
+      case "$seen" in *" $issue "*) continue ;; esac
+      seen="$seen $issue "
       n=$((n + 1))
     fi
-  done < <(pgrep -fl 'dispatch-cursor-agent-cli\.sh|cursor-agent -p' 2>/dev/null || true)
+  done < <(pgrep -fl 'dispatch-cursor-agent-cli\.sh|cursor-issue-[0-9]+' 2>/dev/null || true)
   echo "${n:-0}"
 }
 
@@ -97,11 +154,16 @@ cleanup_stale_local_dispatches() {
       killed=$((killed + 1))
       continue
     fi
-    if ! pgrep -P "$pid" >/dev/null 2>&1 && ! pgrep -fl "cursor-agent -p.*cursor-issue-${issue}" >/dev/null 2>&1; then
+    if ! pgrep -P "$pid" >/dev/null 2>&1 && ! _pgrep_portfolio_agent_for_issue "$issue"; then
       lock="${repo_root}/.delivery/.agent-runs/.dispatch-issue-${issue}.lock"
       if [ -f "$lock" ]; then
         lock_pid="$(sed -n '1p' "$lock" 2>/dev/null || true)"
-        if [ "$lock_pid" = "$pid" ] && ! pgrep -fl "cursor-agent -p" >/dev/null 2>&1; then
+        lock_started="$(sed -n '2p' "$lock" 2>/dev/null || true)"
+        lock_age=999999
+        if [ -n "$lock_started" ]; then
+          lock_age=$(( $(date +%s) - lock_started ))
+        fi
+        if [ "$lock_pid" = "$pid" ] && [ "$lock_age" -ge "$DISPATCH_CLEANUP_MIN_AGE_SEC" ] && ! _pgrep_any_portfolio_agent; then
           if [ "$quiet" -eq 0 ]; then
             echo "cleanup: kill stuck dispatch pid=$pid ($repo#$issue no agent child)"
           fi
@@ -129,6 +191,9 @@ cleanup_stale_local_dispatches() {
   # Stale lock files (dead pid or expired lease).
   while IFS= read -r lock; do
     [ -f "$lock" ] || continue
+    if _dispatch_lock_alive "$lock"; then
+      continue
+    fi
     if _dispatch_lock_expired "$lock"; then
       if [ "$quiet" -eq 0 ]; then
         echo "cleanup: remove expired lock $lock"
@@ -235,7 +300,7 @@ issue_dispatch_active() {
   if pgrep -fl "dispatch-cursor-agent-cli.sh ${num}( |$)" >/dev/null 2>&1; then
     return 0
   fi
-  if pgrep -fl "cursor-agent -p.*cursor-issue-${num}" >/dev/null 2>&1; then
+  if _pgrep_portfolio_agent_for_issue "$num"; then
     return 0
   fi
   return 1

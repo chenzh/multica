@@ -308,7 +308,7 @@ and circuit breakers — humans own scope and kill switches, not every PR.
 | 症状 | 根因 | 自愈动作 |
 |------|------|----------|
 | QUEUE 有票不派 | `agent-blocked` 双标签 | reconcile / auth-retry |
-| 假满员 | 僵尸 dispatch | cleanup + reconcile running |
+| 假满员 | 僵尸 dispatch / **cleanup 误杀**（`cursor-agent -p` 匹配不到 `index.js -p --worktree`） | 修 `agent-queue.sh` pgrep；reconcile running |
 | `Authentication required` in log | cron 无 session | **LaunchAgent** 或 `CURSOR_API_KEY` |
 | `gh` EOF | 死代理 7897 | 关 `proxy.env` 或开 Clash |
 | CI 绿不合 | glob / 无 linked issue | 修 `check-merge-eligible`；PR 关 issue |

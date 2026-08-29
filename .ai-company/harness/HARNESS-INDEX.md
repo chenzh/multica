@@ -1,6 +1,7 @@
 # Harness index
 
 > **完整布局（按类型）→ [docs/29-harness-layout.md](../docs/29-harness-layout.md)**  
+> **硅谷文档纪律 → [docs/30-silicon-valley-doc-standards.md](../docs/30-silicon-valley-doc-standards.md)**
 > 分层规则 → [docs/28-norm-layers.md](../docs/28-norm-layers.md) · 同步 → [docs/27-norm-sync.md](../docs/27-norm-sync.md)
 
 ## 安装入口

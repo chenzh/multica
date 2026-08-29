@@ -43,6 +43,8 @@ cp /path/to/multica/.ai-company/templates/accept_cases.md .delivery/<project-slu
 ```
 
 - [ ] 编写项目 `CLAUDE.md`（复制 [templates/CLAUDE.project.md](../templates/CLAUDE.project.md)，填 stack / 命令 / forbidden paths）
+- [ ] 确认 `.cursor/rules/company-harness.mdc` 已安装（`install-harness.sh` 默认复制；勿把 company-os 全文写进规则）
+- [ ] 若有 `.secondbrain`：`sync-all-harness.sh` → `vault-harness.mdc` + `zbrain-session.mdc`
 - [ ] `bash …/sync-company-norms.sh --id <project-id>` → `.delivery/company-os/`
 - [ ] 调整 `merge-policy.json` deny/allow
 - [ ] 若有 API：放 `api/openapi.yaml`，加 contract workflow

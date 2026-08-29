@@ -249,7 +249,7 @@ while IFS= read -r pid; do
     harness_args=()
     [ "$FORCE_HARNESS" -eq 1 ] && harness_args+=(--force)
     [ "$DRY_RUN" -eq 1 ] && harness_args+=(--dry-run)
-    if ! run_cmd bash "$MULTICA_ROOT/.ai-company/harness/install.sh" "${harness_args[@]}" "$path"; then
+    if ! run_cmd bash "$MULTICA_ROOT/.ai-company/harness/install.sh" ${harness_args+"${harness_args[@]}"} "$path"; then
       echo "   warn: harness install failed" >&2
     fi
   elif [ ! -d "$path/.delivery" ]; then

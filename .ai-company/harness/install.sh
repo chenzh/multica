@@ -117,6 +117,10 @@ if [ ! -f "$TARGET/.delivery/config/merge-policy.json" ] || [ "$FORCE" -eq 1 ]; 
 fi
 
 copy_tree "$SOURCE_ROOT/.cursor/agents" "$TARGET/.cursor/agents"
+
+# Thin Cursor rule: Company OS harness pointer (token-efficient; no full doc copy)
+copy_tree "$SCRIPT_DIR/scaffold/.cursor/rules/company-harness.mdc" \
+  "$TARGET/.cursor/rules/company-harness.mdc"
 copy_tree "$SOURCE_ROOT/scripts/agent-delivery" "$TARGET/scripts/agent-delivery"
 
 for wf in agent-delivery-dispatch.yml agent-delivery-gate.yml; do

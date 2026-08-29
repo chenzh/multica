@@ -10,6 +10,8 @@
 <target-repo>/
   .delivery/              # 交付真相源 + merge-policy + orchestrator prompt
   .cursor/agents/         # planner · implementer · verifier · reviewer · orchestrator
+  .cursor/rules/
+    company-harness.mdc   # Tier-0 pointer (alwaysApply; ~20 lines — not full company-os)
   .github/workflows/
     agent-delivery-dispatch.yml
     agent-delivery-gate.yml
@@ -26,6 +28,25 @@ bash scripts/ai-company/sync-company-norms.sh
 ```
 
 见 [../docs/27-norm-sync.md](../docs/27-norm-sync.md)。
+
+---
+
+## Cursor Tier-0（省 token，全对话遵循）
+
+薄指针规则在 `.cursor/rules/`（`alwaysApply: true`），**禁止**把 company-os / Vault 全文写进规则或 User Rules。
+
+| 仓类型 | 规则 |
+|--------|------|
+| multica HQ | `vault-harness` · `zbrain-session` · `company-harness` · `code-index` |
+| 产品仓（有 `.delivery`） | `vault-harness` · `zbrain-session` · `company-harness` |
+
+```bash
+# 本机一键 rollout + 验收
+bash scripts/ai-company/rollout-harness-tier0.sh
+bash scripts/ai-company/verify-harness-tier0.sh
+```
+
+见 `.ai-company/docs/27-norm-sync.md` § Cursor 省 token。
 
 ---
 

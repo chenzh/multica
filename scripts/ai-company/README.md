@@ -187,6 +187,20 @@ Playbook: `.ai-company/docs/27-norm-sync.md`.
 
 After sync, commit in each product repo: `.delivery/company-os/` + `.delivery/COMPANY-OS.md`.
 
+## rollout-harness-tier0.sh / verify-harness-tier0.sh
+
+Token-efficient **alwaysApply** cursor rules (pointers only — never full harness docs).
+
+```bash
+# One-shot: Vault sync + zbrain-session + company-harness + company-os
+bash scripts/ai-company/rollout-harness-tier0.sh
+
+# Verify all local HQ + portfolio + registry checkouts
+bash scripts/ai-company/verify-harness-tier0.sh
+```
+
+Expected Tier-0 rules: see `.ai-company/harness/README.md` § Cursor Tier-0.
+
 ## portfolio-commit-norms.sh
 
 Batch `git add` + commit (+ optional push) for `CLAUDE.md` and company-os across portfolio:

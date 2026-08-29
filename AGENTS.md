@@ -15,8 +15,8 @@ This repo is joined to SecondBrain. **Before coding:**
 
 1. Read `CLAUDE.md`, then `docs/KNOWLEDGE-BASE.md` and `docs/CODE-INDEX.md`
 2. Continue via `SESSION.md` (project) or `sessions/<chat-id>.md` (per-chat)
-3. Snapshot: `docs/VAULT-HARNESS.md` · trigger: `.cursor/rules/vault-harness.mdc`
-4. Do not duplicate Vault rules here — resync with `同步项目规范到全部外接仓库`
+3. Snapshot: `docs/VAULT-HARNESS.md` · triggers: `.cursor/rules/vault-harness.mdc` · `.cursor/rules/company-harness.mdc`
+4. Do not duplicate Vault or Company OS rules here — resync with `同步项目规范到全部外接仓库` / `rollout-harness-tier0.sh`
 
 Gateway on a machine with the Vault cloned: `zb status` / `zb advance`
 <!-- zbrain-harness:end -->

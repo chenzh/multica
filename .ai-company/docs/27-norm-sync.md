@@ -56,9 +56,24 @@ bash scripts/ai-company/install-harness.sh /path/to/product-repo
 bash scripts/ai-company/install-harness.sh --force /path/to/product-repo   # 覆盖已有
 ```
 
-**复制：** `.delivery/` 骨架、` .cursor/agents/`、GHA workflows、`scripts/agent-delivery/`、Issue 模板。
+**复制：** `.delivery/` 骨架、`.cursor/agents/`、`.cursor/rules/company-harness.mdc`、GHA workflows、`scripts/agent-delivery/`、Issue 模板。
 
 **不复制：** `.ai-company/docs/` 全文（仅生成 `COMPANY-OS.md` 指针）。
+
+### Cursor 省 token（全对话仍遵循 harness）
+
+| Tier | 注入方式 | 放什么 | 大约体量 |
+|------|----------|--------|----------|
+| **0 触发器** | `.cursor/rules/*.mdc` + `alwaysApply: true` | 阅读顺序指针；**禁止**贴宪法全文 | 每条 ≤25 行 |
+| **1 按需** | Agent 开干前 `Read` | `docs/VAULT-HARNESS.md`、`.delivery/company-os/`、`CLAUDE.md` | 全文在文件里 |
+| **2 任务** | Issue / kickoff | AC、out of scope | 单票范围 |
+
+**multica HQ 固定 Tier 0（4 条）：** `vault-harness` · `zbrain-session` · `company-harness` · `code-index`  
+**产品仓固定 Tier 0（有 `.secondbrain` 时 3 条）：** `vault-harness` · `zbrain-session` · `company-harness`（`install-harness.sh` 安装）
+
+**User Rules（Cursor 设置）** 只放个人偏好（语言、commit 习惯），**不要**重复 harness 正文——否则每条对话双倍扣 token。
+
+刷新 Tier 0：`sync-all-harness.sh`（Vault）· `install-harness.sh --force`（company-harness.mdc）· `rollout-harness-tier0.sh`（本机一键）· `verify-harness-tier0.sh`（验收）。
 
 批量：
 

@@ -27,18 +27,35 @@ _ai_company_bootstrap_path
 LOCAL_ENV="$MULTICA_ROOT/.ai-company/config/local.env"
 PROXY_ENV="$MULTICA_ROOT/.ai-company/config/proxy.env"
 
+_ai_company_proxy_dead() {
+  local proxy_url="${1:-}"
+  local proxy_host_port proxy_host proxy_port
+  [ -z "$proxy_url" ] && return 0
+  proxy_host_port="${proxy_url#*://}"
+  proxy_host="${proxy_host_port%%:*}"
+  proxy_port="${proxy_host_port##*:}"
+  if ! curl -fsS --connect-timeout 1 "http://${proxy_host}:${proxy_port}/" >/dev/null 2>&1; then
+    return 0
+  fi
+  return 1
+}
+
+_ai_company_sanitize_proxy() {
+  local key val
+  for key in HTTPS_PROXY HTTP_PROXY ALL_PROXY https_proxy http_proxy all_proxy; do
+    val="${!key:-}"
+    [ -z "$val" ] && continue
+    if _ai_company_proxy_dead "$val"; then
+      unset "$key"
+    fi
+  done
+}
+
 if [ -f "$PROXY_ENV" ]; then
   # shellcheck disable=SC1090
   source "$PROXY_ENV"
-  if [ -n "${https_proxy:-}" ]; then
-    proxy_host_port="${https_proxy#*://}"
-    proxy_host="${proxy_host_port%%:*}"
-    proxy_port="${proxy_host_port##*:}"
-    if ! curl -fsS --connect-timeout 1 "http://${proxy_host}:${proxy_port}/" >/dev/null 2>&1; then
-      unset https_proxy http_proxy all_proxy
-    fi
-  fi
 fi
+_ai_company_sanitize_proxy
 
 if [ -f "$LOCAL_ENV" ]; then
   # shellcheck disable=SC1090

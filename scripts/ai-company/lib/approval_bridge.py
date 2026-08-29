@@ -23,6 +23,7 @@ DEFAULT_CONFIG = Path.home() / ".multica" / "config.json"
 APPROVAL_META_REPO = "ceo_approval.github_repo"
 APPROVAL_META_NUMBER = "ceo_approval.github_number"
 APPROVAL_META_KIND = "ceo_approval.kind"
+FEISHU_NO_PROXY = "open.feishu.cn,feishu.cn,larksuite.com,larkoffice.com"
 
 
 @dataclass
@@ -507,35 +508,64 @@ def apply_rejection(
     return {"repo": repo, "number": number, "decision": "reject", "kind": kind}
 
 
+def feishu_http(
+    method: str,
+    url: str,
+    *,
+    headers: dict[str, str] | None = None,
+    body: bytes | None = None,
+    timeout: int = 30,
+) -> dict[str, Any]:
+    """Call Feishu Open API via curl --noproxy (matches lib/notify.sh; avoids proxy MITM TLS)."""
+    cmd = [
+        "curl",
+        "-sS",
+        "--fail",
+        "--noproxy",
+        FEISHU_NO_PROXY,
+        "--max-time",
+        str(timeout),
+        "-X",
+        method,
+        url,
+    ]
+    for key, value in (headers or {}).items():
+        cmd.extend(["-H", f"{key}: {value}"])
+    if body is not None:
+        cmd.extend(["--data-binary", "@-"])
+    proc = subprocess.run(cmd, input=body, capture_output=True, check=False)
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout).decode("utf-8", errors="replace").strip()
+        raise SystemExit(f"feishu curl failed ({proc.returncode}): {detail or url}")
+    raw = proc.stdout.decode("utf-8", errors="replace").strip()
+    if not raw:
+        return {}
+    out = json.loads(raw)
+    if out.get("code") not in (0, None):
+        raise SystemExit(f"feishu api error: {out.get('msg')} — {out}")
+    return out
+
+
 def feishu_token(app_id: str, app_secret: str) -> str:
-    req = urllib.request.Request(
+    out = feishu_http(
+        "POST",
         "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal",
-        data=json.dumps({"app_id": app_id, "app_secret": app_secret}).encode(),
         headers={"Content-Type": "application/json"},
-        method="POST",
+        body=json.dumps({"app_id": app_id, "app_secret": app_secret}).encode(),
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        out = json.loads(resp.read().decode())
-    if out.get("code") != 0:
-        raise SystemExit(f"feishu token error: {out.get('msg')}")
     return str(out["tenant_access_token"])
 
 
 def feishu_curl_post(url: str, token: str, payload: dict[str, Any]) -> dict[str, Any]:
-    req = urllib.request.Request(
+    return feishu_http(
+        "POST",
         url,
-        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
         headers={
             "Content-Type": "application/json; charset=utf-8",
             "Authorization": f"Bearer {token}",
         },
-        method="POST",
+        body=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        out = json.loads(resp.read().decode())
-    if out.get("code") != 0:
-        raise SystemExit(f"feishu api error: {out.get('msg')} — {out}")
-    return out
 
 
 def build_approval_card(item: PendingApproval, frontend_url: str) -> str:

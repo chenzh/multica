@@ -28,21 +28,23 @@ else
   fail=1
 fi
 
+# After pilot close: GitHub #10 mirror is done → no longer "active".
 if issue_multica_mirror_active "chenzh/meigen-replica" "10"; then
-  echo "OK: meigen github#10 has active Multica mirror"
+  echo "FAIL: meigen #10 Multica mirror should be inactive after done" >&2
+  fail=1
 else
-  echo "FAIL: meigen mirror inactive" >&2
+  echo "OK: meigen github#10 Multica mirror inactive (done)"
+fi
+
+# find_mirror skips done/cancelled — empty is correct after LOCA-43 done.
+if mid="$(multica_dispatch_find_mirror_issue_id "chenzh/meigen-replica" "10")"; [ -z "$mid" ]; then
+  echo "OK: find_mirror skips done mirror for #10"
+else
+  echo "FAIL: find_mirror should skip done (got=$mid)" >&2
   fail=1
 fi
 
 assert_eq "$(registry_multica_agent_id_for_project "$SCRIPT_DIR/../../.ai-company/templates/project-registry.yaml" meigen-replica)" "675dcb2c-8198-4ce0-bed5-032793368a2a" "registry multica_agent_id"
-
-if multica_dispatch_find_mirror_issue_id "chenzh/meigen-replica" "10" | grep -q .; then
-  echo "OK: find mirror issue id"
-else
-  echo "FAIL: mirror issue id not found" >&2
-  fail=1
-fi
 
 if [ "$fail" -ne 0 ]; then
   exit 1

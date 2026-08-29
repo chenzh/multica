@@ -49,6 +49,15 @@
 
 **multica 模式无 CLI 回退** — 失败记 log + BLOCKED 路径，避免双队列。
 
+### 收口（避免 `agent-running` 占坑）
+
+| 规则 | 行为 |
+|------|------|
+| Multica task **live**（running/queued） | reconcile **不清** `agent-running` |
+| Multica **idle**（如 `in_review`）+ 有 open PR | → GitHub `agent-done`，释放并发 |
+| merge-policy `branchNamePrefix` | meigen 用 `cursor`（兼容 `cursor/` 与 `cursor-issue*`） |
+| Agent 开分支 | 优先 `cursor-issue-<github#>`；`cursor/loca-*` 亦可合 |
+
 ---
 
 ## Pilot 验收（meigen-replica）

@@ -25,6 +25,7 @@ Fixes common label drift:
   - agent-done on open issues with no open/merged PR → back to agent-safe
   - agent-running on open issues with no open PR → back to agent-safe
   - merged PR linked to issue → strip agent-* labels
+  - Multica L1: idle mirror (in_review) + open PR → agent-done (unblock concurrency)
 
 Runs automatically in ceo-nightly.sh before auto-merge.
 
@@ -90,6 +91,31 @@ while IFS= read -r repo; do
   reconcile_stale_running_labels "$repo" "$root" "$DRY_RUN" "$dispatch_mode"
   reconcile_auth_blocked_retries "$repo" "$DRY_RUN"
 
+  # Multica L1: GitHub CLOSED but mirror still open → close Multica + strip labels.
+  if [ "$dispatch_mode" = "multica" ]; then
+    closed_nums="$(
+      {
+        gh issue list -R "$repo" -s closed -l agent-safe --limit 30 --json number -q '.[].number' 2>/dev/null || true
+        gh issue list -R "$repo" -s closed -l agent-running --limit 30 --json number -q '.[].number' 2>/dev/null || true
+      } | sort -u
+    )"
+    for num in $closed_nums; do
+      [ -z "$num" ] && continue
+      if multica_dispatch_close_mirror_if_github_closed "$repo" "$num" "$DRY_RUN"; then
+        fixed=$((fixed + 1))
+      fi
+      if [ "$DRY_RUN" -eq 1 ]; then
+        echo "would agent-done: $repo#$num (CLOSED, clear agent-safe/running)"
+      else
+        gh issue edit "$num" -R "$repo" \
+          --remove-label "agent-safe" --remove-label "agent-running" \
+          --add-label "agent-done" 2>/dev/null || true
+        echo "reconcile: $repo#$num → agent-done (CLOSED Multica L1)"
+      fi
+      fixed=$((fixed + 1))
+    done
+  fi
+
   open_prs="$(
     gh pr list -R "$repo" -s open \
       --json number,closingIssuesReferences \
@@ -101,8 +127,9 @@ while IFS= read -r repo; do
     if issue_dispatch_active "$issue_num" "$root"; then
       continue
     fi
-    if [ "$dispatch_mode" = "multica" ] && issue_multica_mirror_active "$repo" "$issue_num"; then
-      echo "reconcile: skip $repo#$issue_num (Multica mirror active)"
+    # Only block while a Multica task is actually running/queued.
+    if [ "$dispatch_mode" = "multica" ] && multica_dispatch_mirror_has_live_run "$repo" "$issue_num"; then
+      echo "reconcile: skip $repo#$issue_num (Multica task live)"
       continue
     fi
     mergeable="$(
@@ -152,8 +179,8 @@ while IFS= read -r repo; do
       echo "reconcile: skip $repo#$num (dispatch in progress)"
       continue
     fi
-    if [ "$dispatch_mode" = "multica" ] && issue_multica_mirror_active "$repo" "$num"; then
-      echo "reconcile: skip $repo#$num (Multica mirror active)"
+    if [ "$dispatch_mode" = "multica" ] && multica_dispatch_mirror_has_live_run "$repo" "$num"; then
+      echo "reconcile: skip $repo#$num (Multica task live)"
       continue
     fi
     merged_refs="$(
@@ -174,6 +201,13 @@ while IFS= read -r repo; do
     open_pr="$(
       gh pr list -R "$repo" -s open --search "issue $num" --json number -q 'length' 2>/dev/null || echo 0
     )"
+    if [ "${open_pr:-0}" = "0" ]; then
+      # closingIssuesReferences path may have already set agent-done; count linked open PRs.
+      open_pr="$(
+        gh pr list -R "$repo" -s open --json number,closingIssuesReferences \
+          -q "[.[] | select([.closingIssuesReferences[].number] | index($num))] | length" 2>/dev/null || echo 0
+      )"
+    fi
     if [ "${open_pr:-0}" -gt 0 ]; then
       labels="$(
         gh issue view "$num" -R "$repo" --json labels -q '[.labels[].name] | join(",")' 2>/dev/null || true

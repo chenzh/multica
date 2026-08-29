@@ -159,6 +159,48 @@ issue_multica_mirror_active() {
   multica_dispatch_issue_id_active "$mid"
 }
 
+# True only while a Multica task is actually running/queued for this GitHub issue.
+# in_review after a completed run must NOT block agent-done / new portfolio slots.
+multica_dispatch_mirror_has_live_run() {
+  local repo="${1:?}" num="${2:?}"
+  local mid
+  mid="$(multica_dispatch_find_mirror_issue_id "$repo" "$num")"
+  [ -n "$mid" ] || return 1
+  multica issue runs "$mid" --output json 2>/dev/null | python3 -c "
+import json, sys
+raw = sys.stdin.read().strip()
+if not raw:
+    raise SystemExit(1)
+runs = json.loads(raw)
+if not isinstance(runs, list):
+    runs = runs.get('runs') or runs.get('items') or []
+for r in runs:
+    if (r.get('status') or '').lower() in ('running', 'queued', 'pending', 'dispatched', 'preparing'):
+        raise SystemExit(0)
+raise SystemExit(1)
+" 2>/dev/null
+}
+
+# When GitHub issue is CLOSED (merged/done) but Multica mirror still open
+# (in_review/todo), mark Multica done so reconcile can strip agent labels.
+multica_dispatch_close_mirror_if_github_closed() {
+  local repo="${1:?}" num="${2:?}" dry="${3:-0}"
+  local mid gh_state
+  gh_state="$(gh issue view "$num" -R "$repo" --json state -q .state 2>/dev/null || true)"
+  [ "$gh_state" = "CLOSED" ] || return 1
+  mid="$(multica_dispatch_find_mirror_issue_id "$repo" "$num")"
+  [ -n "$mid" ] || return 1
+  if [ "$dry" = "1" ]; then
+    echo "would Multica done: mirror $mid for $repo#$num (GitHub CLOSED)"
+    return 0
+  fi
+  if multica issue status "$mid" done >>/dev/null 2>&1; then
+    echo "multica reconcile: $mid → done (GitHub $repo#$num CLOSED)"
+    return 0
+  fi
+  return 1
+}
+
 multica_dispatch_busy_count() {
   local script_dir
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -190,7 +232,8 @@ pick_next_agent_safe_issue_for_multica() {
       --label "agent-safe" \
       --state open \
       --json number,labels \
-      --jq '.[] | select([.labels[].name] | (index("agent-running") | not) and (index("agent-blocked") | not) and (index("agent-done") | not)) | .number'
+      --jq '.[] | select([.labels[].name] | (index("agent-running") | not) and (index("agent-blocked") | not) and (index("agent-done") | not)) | .number' \
+      | sort -n
   )
   return 0
 }

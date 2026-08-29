@@ -262,6 +262,10 @@ reconcile_stale_running_labels() {
   for num in $numbers; do
     [ -z "$num" ] && continue
     if [ "$dispatch_mode" = "multica" ]; then
+      if multica_dispatch_mirror_has_live_run "$repo" "$num"; then
+        continue
+      fi
+      # Idle Multica mirror: leave labels for the open-PR / agent-done path below.
       if issue_multica_mirror_active "$repo" "$num"; then
         continue
       fi

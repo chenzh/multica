@@ -281,9 +281,9 @@ if [ "$ACTION" = "dispatch" ] && [ "${DISPATCHED:-0}" -gt 0 ]; then
 fi
 
 if [ "${CONSEC:-0}" -ge 2 ]; then
-  msg="⚠️ Autopilot 空转告警：连续 ${CONSEC} 次派单后 QUEUE 未下降（现 QUEUE=$TOTAL_QUEUE，上次=${PREV_QUEUE}）。
+  msg="⚠️ Autopilot 空转告警：连续 ${CONSEC} 次派单后 QUEUE 未下降（现 QUEUE=${TOTAL_QUEUE}，上次=${PREV_QUEUE}）。
 请检查：并发撞车、worktree 失败、缺 DoD、或票永远 BLOCKED。
-日志：$LOG_FILE
+日志：${LOG_FILE}
 仪表盘：bash scripts/ai-company/ceo-dashboard.sh"
   maybe_notify "$msg"
   ESCALATE_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"

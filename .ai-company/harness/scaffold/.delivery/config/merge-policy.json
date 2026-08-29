@@ -2,7 +2,7 @@
   "$schema": "Generic agent delivery auto-merge policy. Deny wins over allow.",
   "autoMergeEnabled": true,
   "requireLabels": ["agent-safe"],
-  "branchNamePrefix": "cursor/",
+  "branchNamePrefix": "cursor-issue",
   "allow": [
     "docs/**",
     "**/*.md",

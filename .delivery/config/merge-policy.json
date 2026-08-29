@@ -2,7 +2,7 @@
   "$schema": "Agent delivery auto-merge policy. Deny wins over allow.",
   "autoMergeEnabled": true,
   "requireLabels": ["agent-safe"],
-  "branchNamePrefix": "cursor/",
+  "branchNamePrefix": "cursor-issue",
   "requiredChecksRegexp": "^(frontend|backend|mobile-verify|check)$",
   "allow": [
     "docs/**",

@@ -2,7 +2,7 @@
   "$schema": "Visual replica stack auto-merge policy. Deny wins over allow.",
   "autoMergeEnabled": true,
   "requireLabels": ["agent-safe"],
-  "branchNamePrefix": "cursor/",
+  "branchNamePrefix": "cursor-issue",
   "requiredChecksRegexp": "^(check|frontend|backend|mobile-verify)$",
   "allow": [
     "docs/**",

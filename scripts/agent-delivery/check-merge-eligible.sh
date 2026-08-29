@@ -20,7 +20,7 @@ fi
 
 BASE="$(gh pr view "$PR_NUMBER" --json baseRefName -q .baseRefName)"
 HEAD="$(gh pr view "$PR_NUMBER" --json headRefName -q .headRefName)"
-BRANCH_PREFIX="$(jq -r '.branchNamePrefix // "cursor/"' "$POLICY")"
+BRANCH_PREFIX="$(jq -r '.branchNamePrefix // "cursor-issue"' "$POLICY")"
 
 if [[ "$HEAD" != ${BRANCH_PREFIX}* ]]; then
   echo "merge_eligible=false reason=branch_prefix"

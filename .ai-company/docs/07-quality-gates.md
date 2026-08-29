@@ -166,6 +166,9 @@ CEO 职责收缩为：处理 Human 档升级 + 抽检 merge。
 
 ## 相关文档
 
+- [18-definition-of-done.md](./18-definition-of-done.md)  
+- [20-issue-brief-style-guide.md](./20-issue-brief-style-guide.md)  
+- [21-label-state-machine.md](./21-label-state-machine.md)  
 - [09-compliance-and-risk.md](./09-compliance-and-risk.md)  
 - [templates/accept_cases.md](../templates/accept_cases.md)
 - [runbooks/employee-autopilot.md](../runbooks/employee-autopilot.md)

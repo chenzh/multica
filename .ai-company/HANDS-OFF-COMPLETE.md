@@ -1,5 +1,7 @@
 # 脱手运行 — 完成清单（2026-08-26）
 
+> **一屏总览战略**：[docs/17-ceo-cockpit.md](./docs/17-ceo-cockpit.md) — 脱手靠本清单 + cron；「资产 / 规范 / 流程一目了然」靠升级 `:9477` 指挥舱，不把 Multica 改成公司 OS。
+
 ## 已自动化（无需盯盘）
 
 | 能力 | 命令 / 证据 |
@@ -11,6 +13,7 @@
 | 自动 merge | `ceo-auto-merge.sh` |
 | 补票 | `sync-portfolio-backlogs.sh`（`--skip-existing`） |
 | 验收 | `verify-hands-off.sh` → 应全绿 |
+| 规范同步 | `sync-company-norms.sh` → 各产品 `.delivery/company-os/`（见 [docs/27-norm-sync.md](./docs/27-norm-sync.md)） |
 | Multica 并发 | `multica-runtime-status.sh`、工作台 `:9477` |
 | 飞书审批（可选） | `setup-feishu-approval.sh` + `CEO_FEISHU_APPROVAL_PUSH=1` + `ceo-feishu-cloudflare-tunnel.sh quick-install` |
 | 飞书 inbound 最后一步 | `setup-feishu-approval-token.sh` → `feishu-approval.env` → `print-feishu-inbound-setup.sh` |
@@ -21,6 +24,7 @@
 bash scripts/ai-company/verify-hands-off.sh
 bash scripts/ai-company/setup-feishu-bot-notify.sh
 bash scripts/ai-company/install-nightly-cron.sh --install
+bash scripts/ai-company/sync-company-norms.sh    # 规范副本 → 各产品 .delivery/company-os/
 # 可选：飞书卡片审批
 bash scripts/ai-company/setup-feishu-approval.sh --test
 bash scripts/ai-company/ceo-feishu-approval-service.sh install

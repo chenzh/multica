@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Tasks with label `agent-safe` may be picked up by the agent delivery workflow.
-        See `.delivery/README.md` and `.delivery/COMPANY-OS.md`.
+        See `.delivery/README.md`, `.delivery/COMPANY-OS.md`, and `.delivery/company-os/` (norms snapshot).
 
   - type: textarea
     id: summary

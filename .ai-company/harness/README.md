@@ -17,7 +17,15 @@
   scripts/agent-delivery/   # dispatch · build-prompt · check-merge-eligible · poll
 ```
 
-公司级文档仍放在 **Multica 仓** `.ai-company/`（或你 fork 的 `company-os` 仓），不随每个站点复制。
+公司级文档仍放在 **Multica 仓** `.ai-company/`（或你 fork 的 `company-os` 仓），不随 harness 全文复制。
+
+**规范副本** 下发到各产品仓：
+
+```bash
+bash scripts/ai-company/sync-company-norms.sh
+```
+
+见 [../docs/27-norm-sync.md](../docs/27-norm-sync.md)。
 
 ---
 

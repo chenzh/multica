@@ -62,6 +62,24 @@ GitHub Template → 新项目 `Use this template` 已含 harness。
 
 ---
 
+## 规范同步（Company OS → 产品仓）
+
+执行 harness **不**复制 `.ai-company/docs/` 全文。规范副本走独立管道：
+
+```bash
+# 编辑 manifest 后，同步到 registry 内各本机 checkout
+bash scripts/ai-company/sync-company-norms.sh
+bash scripts/ai-company/sync-company-norms.sh --id beatscape --harness --force-harness
+```
+
+产物：各产品 `.delivery/company-os/` + 更新的 `COMPANY-OS.md`。
+
+详见 [27-norm-sync.md](./27-norm-sync.md) 与 [config/company-os-sync-manifest.yaml](../config/company-os-sync-manifest.yaml)。
+
+SecondBrain 层（`sync-all-harness.sh`）与 harness 层（`install-harness.sh`）见同文档 — **三条管道勿混用**。
+
+---
+
 ## 队列调度（多项目公平）
 
 夜间总配额示例：`max_total_tickets: 5`

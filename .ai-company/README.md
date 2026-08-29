@@ -41,6 +41,15 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | [docs/10-cost-and-budget.md](./docs/10-cost-and-budget.md) | 成本模型与预算护栏 |
 | [docs/11-langgraph-when-and-how.md](./docs/11-langgraph-when-and-how.md) | 何时上 LangGraph、如何与 Multica 对接 |
 | [docs/12-ceo-dashboard.md](./docs/12-ceo-dashboard.md) | 老板仪表盘：看什么、何时介入 |
+| [docs/17-ceo-cockpit.md](./docs/17-ceo-cockpit.md) | **CEO 指挥舱**：脱手 + 一屏总览（`:9477`）架构与分阶段 |
+| [docs/27-norm-sync.md](./docs/27-norm-sync.md) | **规范同步**：三层管道 + `sync-company-norms.sh` |
+| [docs/28-norm-layers.md](./docs/28-norm-layers.md) | **规范分层**：通用 vs 项目 vs 任务 |
+| [docs/18-definition-of-done.md](./docs/18-definition-of-done.md) | **DoD** 完成定义 |
+| [docs/20-issue-brief-style-guide.md](./docs/20-issue-brief-style-guide.md) | Issue / brief 写作规范 |
+| [docs/21-label-state-machine.md](./docs/21-label-state-machine.md) | Label 状态机与 BLOCKED 原因码 |
+| [docs/22-git-and-remotes.md](./docs/22-git-and-remotes.md) | Git / fork / 产品仓推送 |
+| [docs/23-local-agent-environment.md](./docs/23-local-agent-environment.md) | 本机 Agent 环境（pnpm、代理、cron） |
+| [docs/19-asset-registry.md](./docs/19-asset-registry.md) | **资产台账**：registry / 路径 / 域名 |
 | [docs/13-implementation-roadmap.md](./docs/13-implementation-roadmap.md) | P0→P3 分阶段路线图 |
 | [docs/14-multica-autopilot-portfolio.md](./docs/14-multica-autopilot-portfolio.md) | **Portfolio 夜间调度 + Multica Autopilot** |
 | [docs/15-feishu-site-factory.md](./docs/15-feishu-site-factory.md) | **飞书一句话建站：竞品 → MVP → Cloudflare → 多 Agent** |
@@ -67,11 +76,14 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | 文件 | 说明 |
 |------|------|
 | [templates/project-brief.md](./templates/project-brief.md) | 项目 brief 模板 |
+| [templates/CLAUDE.project.md](./templates/CLAUDE.project.md) | **项目 CLAUDE.md 骨架**（产品仓根目录） |
+| [templates/orchestrator-kickoff-product.md](./templates/orchestrator-kickoff-product.md) | 产品仓 Agent kickoff（install 写入 prompts/） |
 | [templates/accept_cases.md](./templates/accept_cases.md) | 验收用例模板 |
 | [templates/api_spec.openapi.yaml](./templates/api_spec.openapi.yaml) | OpenAPI 契约骨架 |
 | [templates/merge-policy.json](./templates/merge-policy.json) | auto-merge 白名单模板 |
 | [templates/project-registry.yaml](./templates/project-registry.yaml) | 公司项目台账 |
 | [config/company-defaults.yaml](./config/company-defaults.yaml) | 公司级默认参数 |
+| [config/company-assets.local.yaml.example](./config/company-assets.local.yaml.example) | 本机资产登记模板（域名、Secret 名） |
 
 ### 可复制脚手架与示例
 
@@ -91,6 +103,7 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | [../scripts/ai-company/bootstrap-all-products.sh](../scripts/ai-company/bootstrap-all-products.sh) | 批量 bootstrap 三条产品线 |
 | [../scripts/ai-company/install-harness.sh](../scripts/ai-company/install-harness.sh) | 从仓库根调用的安装包装脚本 |
 | [../scripts/ai-company/sync-backlog-to-issues.sh](../scripts/ai-company/sync-backlog-to-issues.sh) | 从 `backlog.md` 批量创建 GitHub Issue |
+| [../scripts/ai-company/sync-company-norms.sh](../scripts/ai-company/sync-company-norms.sh) | **把选定 `.ai-company/` 规范复制到各产品 `.delivery/company-os/`** |
 
 ---
 

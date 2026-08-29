@@ -76,10 +76,18 @@ RUNTIME_JSON="$(
   bash "$SCRIPT_DIR/multica-runtime-status.sh" --json 2>/dev/null || echo '{"api_ok":false}'
 )"
 
+OVERVIEW_JSON="$(
+  bash "$SCRIPT_DIR/company-overview-snapshot.sh" 2>/dev/null || echo '{}'
+)"
+
+WORKBENCH_URL="${CEO_WORKBENCH_URL:-http://127.0.0.1:9477}"
+
 export BRIEF_FILE="$brief_file"
 export BRIEF_SINCE="$SINCE"
 export BRIEF_JSON_LINES="$JSON_LINES"
 export BRIEF_RUNTIME_JSON="$RUNTIME_JSON"
+export BRIEF_OVERVIEW_JSON="$OVERVIEW_JSON"
+export BRIEF_WORKBENCH_URL="$WORKBENCH_URL"
 
 python3 <<'PY'
 import json
@@ -91,6 +99,8 @@ from pathlib import Path
 brief_file = os.environ["BRIEF_FILE"]
 since = os.environ["BRIEF_SINCE"]
 runtime = json.loads(os.environ.get("BRIEF_RUNTIME_JSON", "{}"))
+overview = json.loads(os.environ.get("BRIEF_OVERVIEW_JSON", "{}"))
+workbench_url = os.environ.get("BRIEF_WORKBENCH_URL", "http://127.0.0.1:9477")
 rows = [
     json.loads(line)
     for line in os.environ["BRIEF_JSON_LINES"].splitlines()
@@ -230,6 +240,38 @@ if runtime.get("api_ok"):
 else:
     runtime_lines.append(f"- _不可用_ ({runtime.get('api_error', 'unknown')})")
 
+overview_lines = []
+proc = overview.get("process") or {}
+hq = overview.get("hq") or {}
+overview_lines.append(f"- HQ multica `{hq.get('sha', '-')}` · manifest {proc.get('manifest_paths', 0)} 文件")
+cron_ok = proc.get("cron_installed")
+overview_lines.append(
+    f"- 21:00 cron: **{'已安装' if cron_ok else '未安装'}**"
+)
+if proc.get("last_nightly_log_line"):
+    overview_lines.append(f"- 最近 nightly 日志: `{proc['last_nightly_log_line'][:80]}`")
+
+stale_norms = []
+missing_path = []
+for proj in overview.get("projects") or []:
+    if not proj.get("local_path_resolved"):
+        missing_path.append(proj.get("id", "?"))
+        continue
+    cos = proj.get("company_os") or {}
+    if not cos.get("synced"):
+        stale_norms.append(f"{proj.get('id')} (未 sync company-os)")
+    elif not cos.get("hq_sha_current"):
+        stale_norms.append(f"{proj.get('id')} (@ {cos.get('hq_sha', '?')})")
+
+if missing_path:
+    overview_lines.append(f"- ⚠️ 无本机 path: {', '.join(missing_path)}")
+if stale_norms:
+    overview_lines.append(f"- ⚠️ 规范副本需更新: {', '.join(stale_norms)}")
+elif overview.get("projects"):
+    overview_lines.append("- ✅ 各产品 company-os 与 HQ 同 sha（或已 sync）")
+
+overview_lines.append(f"- **指挥舱**: {workbench_url}")
+
 ts = datetime.now().strftime("%Y-%m-%d %H:%M %Z")
 body = f"""# AI 公司日报 — {ts}
 
@@ -242,6 +284,10 @@ body = f"""# AI 公司日报 — {ts}
 | {total_blocked} | {total_running} | {total_safe} | {total_merged} |
 
 派单模式: {cursor_ready}
+
+## 指挥舱 / 资产
+
+{chr(10).join(overview_lines)}
 
 ## Multica / 本机 CLI
 
@@ -268,7 +314,8 @@ body = f"""# AI 公司日报 — {ts}
 {action}
 
 ---
-工作台: `bash scripts/ai-company/ceo-workbench.sh` → http://127.0.0.1:9477
+指挥舱: {workbench_url}
+本地: `bash scripts/ai-company/ceo-workbench.sh`
 """
 Path(brief_file).write_text(body, encoding="utf-8")
 PY
@@ -285,20 +332,21 @@ if [ "$NOTIFY" -eq 1 ]; then
   if ! has_ceo_notify_channel; then
     echo "notify: skipped (set SLACK_WEBHOOK_URL, FEISHU_WEBHOOK_URL, or run setup-feishu-bot-notify.sh)" >&2
   else
-    notify_text="$(python3 - "$brief_file" <<'PY'
+    notify_text="$(python3 - "$brief_file" "$WORKBENCH_URL" <<'PY'
 import sys
 from pathlib import Path
 
 text = Path(sys.argv[1]).read_text(encoding="utf-8")
+workbench_url = sys.argv[2]
 lines = text.splitlines()
-head = []
+head = [f"📊 指挥舱 {workbench_url}", ""]
 for line in lines:
     head.append(line)
-    if line.startswith("## 需 CEO 拍板"):
+    if line.startswith("## Multica"):
         break
 for i, line in enumerate(lines):
     if line.startswith("## 建议动作"):
-        head.extend(lines[i : i + 6])
+        head.extend(lines[i : i + 8])
         break
 out = "\n".join(head)
 if len(out) > 12000:

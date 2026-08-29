@@ -13,6 +13,8 @@ CEO 投 brief / Issue
 
 **睡眠模式**：夜间只处理 `agent-safe`；无 BLOCKED 则不 ping CEO。
 
+**界面分工（2026-08-29 冻结）**：飞书 **推**（日报 + BLOCKED）；`http://127.0.0.1:9477` **拉**（公司指挥舱）；Multica `:3000` 仅 runtime。详见 [17-ceo-cockpit.md](./17-ceo-cockpit.md)。
+
 ---
 
 ## 三层时钟

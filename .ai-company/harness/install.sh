@@ -91,7 +91,18 @@ echo ""
 
 # Core delivery tree (exclude feature-specific slugs under .delivery/*)
 copy_tree "$SOURCE_ROOT/.delivery/_template" "$TARGET/.delivery/_template"
-copy_tree "$SOURCE_ROOT/.delivery/prompts" "$TARGET/.delivery/prompts"
+TARGET_ABS="$(cd "$TARGET" && pwd)"
+SOURCE_ABS="$(cd "$SOURCE_ROOT" && pwd)"
+if [ "$TARGET_ABS" = "$SOURCE_ABS" ]; then
+  copy_tree "$SOURCE_ROOT/.delivery/prompts" "$TARGET/.delivery/prompts"
+else
+  COMPANY_TEMPLATES="$SCRIPT_DIR/../templates"
+  run mkdir -p "$TARGET/.delivery/prompts"
+  if [ -f "$COMPANY_TEMPLATES/orchestrator-kickoff-product.md" ]; then
+    copy_tree "$COMPANY_TEMPLATES/orchestrator-kickoff-product.md" \
+      "$TARGET/.delivery/prompts/orchestrator-kickoff.md"
+  fi
+fi
 copy_tree "$SOURCE_ROOT/.delivery/config" "$TARGET/.delivery/config"
 if [ -f "$SOURCE_ROOT/.delivery/README.md" ]; then
   copy_tree "$SOURCE_ROOT/.delivery/README.md" "$TARGET/.delivery/README.md"
@@ -123,6 +134,14 @@ copy_tree "$SCRIPT_DIR/scaffold/.github/workflows/cloudflare-pages-check.yml" \
 copy_tree "$SCRIPT_DIR/scaffold/.github/ISSUE_TEMPLATE/agent_safe_task.yml" \
   "$TARGET/.github/ISSUE_TEMPLATE/agent_safe_task.yml"
 
+# Project CLAUDE.md skeleton (product repos only)
+if [ "$TARGET_ABS" != "$SOURCE_ABS" ] && [ ! -f "$TARGET/CLAUDE.md" ]; then
+  COMPANY_TEMPLATES="${COMPANY_TEMPLATES:-$SCRIPT_DIR/../templates}"
+  if [ -f "$COMPANY_TEMPLATES/CLAUDE.project.md" ]; then
+    copy_tree "$COMPANY_TEMPLATES/CLAUDE.project.md" "$TARGET/CLAUDE.md"
+  fi
+fi
+
 # Make scripts executable
 if [ "$DRY_RUN" -eq 0 ]; then
   chmod +x "$TARGET/scripts/agent-delivery/"*.sh 2>/dev/null || true
@@ -136,13 +155,23 @@ else
   cat >"$POINTER" <<EOF
 # Company OS pointer
 
-AI 公司级文档不在本仓库内复制，请阅读 Multica 仓：
+AI 公司规范 **本仓副本**：\`.delivery/company-os/README.md\`
 
-- \`.ai-company/README.md\` — 宪法与索引
-- \`.ai-company/runbooks/onboard-new-project.md\` — 接入清单
-- \`.ai-company/examples/\` — 产品线示例 brief
+HQ 权威源在 Multica 仓 \`.ai-company/\`（不随 harness 自动复制全文）。
 
-本仓库仅保留 **执行 harness**（\`.delivery/\`、agents、workflows、scripts）。
+| 层 | 读本仓 | 读 HQ |
+|----|--------|-------|
+| 交付宪法 | \`.delivery/company-os/\` | multica \`.ai-company/\` |
+| 执行 harness | \`.delivery/\` · agents · workflows | \`install-harness.sh\` |
+| SecondBrain | \`docs/VAULT-HARNESS.md\` | Vault \`HARNESS/\` |
+
+刷新本仓规范副本：
+
+\`\`\`bash
+bash /path/to/multica/scripts/ai-company/sync-company-norms.sh --id <project-id>
+\`\`\`
+
+见 \`.ai-company/docs/27-norm-sync.md\`（HQ）或同步后的 \`.delivery/company-os/docs/27-norm-sync.md\`。
 EOF
   echo "installed: $POINTER"
 fi
@@ -154,7 +183,9 @@ Next steps:
   2. Create labels: agent-safe, agent-running, agent-blocked, agent-done
   3. cp -r <company-os>/.ai-company/examples/music-game-sea .delivery/<your-slug>
      — or copy from .delivery/_template and fill brief.md
-  4. gh workflow run agent-delivery-dispatch.yml -f max_tasks=1
+  4. Edit CLAUDE.md (from templates/CLAUDE.project.md if install created it)
+  5. bash /path/to/multica/scripts/ai-company/sync-company-norms.sh --id <project-id>
+  6. gh workflow run agent-delivery-dispatch.yml -f max_tasks=1
 
 See .ai-company/harness/README.md (in multica repo) for details.
 EOF

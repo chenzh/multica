@@ -1,5 +1,7 @@
 # 12 — CEO 仪表盘
 
+> **界面战略**：脱手靠 cron + 飞书推；想「一眼看全公司（资产 / 规范 / 流程）」只开指挥舱 `:9477`。详见 [17-ceo-cockpit.md](./17-ceo-cockpit.md)。
+
 ## 每日必看（一处汇总）
 
 | 信号 | 去哪看 | 绿色 | 红色 |
@@ -91,5 +93,6 @@ bash scripts/ai-company/install-nightly-cron.sh --install
 
 ## 相关文档
 
+- [17-ceo-cockpit.md](./17-ceo-cockpit.md) — 指挥舱架构与分阶段路线图  
 - [runbooks/ceo-daily.md](../runbooks/ceo-daily.md)  
 - [runbooks/ceo-weekly.md](../runbooks/ceo-weekly.md)  

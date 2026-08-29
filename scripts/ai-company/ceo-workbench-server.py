@@ -44,6 +44,27 @@ class Project:
     max_nightly_tickets: int = 1
     tier: str = ""
     notes: str = ""
+    domain: str = ""
+    cloudflare_project: str = ""
+    delivery_slug: str = ""
+
+
+NORM_LINKS: list[tuple[str, str]] = [
+    ("规范分层", "docs/28-norm-layers.md"),
+    ("规范同步", "docs/27-norm-sync.md"),
+    ("完成定义 DoD", "docs/18-definition-of-done.md"),
+    ("好票写法", "docs/20-issue-brief-style-guide.md"),
+    ("Label / BLOCKED", "docs/21-label-state-machine.md"),
+    ("质量门禁", "docs/07-quality-gates.md"),
+    ("任务分级", "docs/06-task-grading.md"),
+    ("资产台账", "docs/19-asset-registry.md"),
+    ("Git / fork", "docs/22-git-and-remotes.md"),
+    ("本机环境", "docs/23-local-agent-environment.md"),
+    ("脱手清单", "HANDS-OFF-COMPLETE.md"),
+]
+
+_overview_cache: dict[str, Any] = {"at": 0.0, "data": None}
+OVERVIEW_CACHE_SECS = 45
 
 
 def run_cmd(cmd: list[str], *, cwd: Path | None = None, timeout: int = 120) -> subprocess.CompletedProcess[str]:
@@ -55,6 +76,219 @@ def run_cmd(cmd: list[str], *, cwd: Path | None = None, timeout: int = 120) -> s
         timeout=timeout,
         check=False,
     )
+
+
+def hq_git_sha() -> str:
+    result = run_cmd(["git", "-C", str(MULTICA_ROOT), "rev-parse", "--short", "HEAD"], timeout=10)
+    return result.stdout.strip() if result.returncode == 0 else "unknown"
+
+
+def load_company_assets() -> dict[str, dict[str, Any]]:
+    """Parse company-assets.local.yaml (or .example) — projects.<id> blocks."""
+    for name in ("company-assets.local.yaml", "company-assets.local.yaml.example"):
+        path = MULTICA_ROOT / ".ai-company/config" / name
+        if path.is_file():
+            return _parse_assets_yaml(path.read_text(encoding="utf-8"))
+    return {}
+
+
+def _parse_assets_yaml(text: str) -> dict[str, dict[str, Any]]:
+    projects: dict[str, dict[str, Any]] = {}
+    current_id: str | None = None
+    section: str | None = None
+    in_projects = False
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].rstrip()
+        if not line.strip():
+            continue
+        if line.strip() == "projects:":
+            in_projects = True
+            continue
+        if not in_projects:
+            continue
+        if re.match(r"^\S", line) and not line.startswith(" "):
+            break
+        m_id = re.match(r"^  (\w[\w-]*):\s*$", line)
+        if m_id:
+            current_id = m_id.group(1)
+            projects[current_id] = {}
+            section = None
+            continue
+        if current_id is None:
+            continue
+        m_sec = re.match(r"^    (\w+):\s*$", line)
+        if m_sec:
+            section = m_sec.group(1)
+            projects[current_id].setdefault(section, {})
+            continue
+        m_kv = re.match(r"^    (\w+):\s*(.*)$", line)
+        if m_kv and section is None:
+            key, val = m_kv.group(1), m_kv.group(2).strip().strip('"').strip("'")
+            if key == "repo":
+                projects[current_id]["repo"] = val
+            elif key == "tier":
+                projects[current_id]["tier"] = val
+            elif key == "notes":
+                projects[current_id]["notes"] = val
+            continue
+        m_nested = re.match(r"^      (\w+):\s*(.*)$", line)
+        if m_nested and section:
+            key, val = m_nested.group(1), m_nested.group(2).strip().strip('"').strip("'")
+            bucket = projects[current_id].setdefault(section, {})
+            if isinstance(bucket, dict):
+                bucket[key] = val
+        m_list = re.match(r"^      - (.+)$", line)
+        if m_list and section:
+            bucket = projects[current_id].setdefault(section, [])
+            if isinstance(bucket, list):
+                bucket.append(m_list.group(1).strip())
+    return projects
+
+
+def read_company_os_meta(local_path: str) -> dict[str, Any]:
+    readme = Path(local_path) / ".delivery/company-os/README.md"
+    if not local_path or not readme.is_file():
+        return {"synced": False, "synced_at": "", "hq_sha": "", "file_count": 0}
+    text = readme.read_text(encoding="utf-8", errors="replace")
+    synced_at = ""
+    hq_sha = ""
+    m_time = re.search(r"> synced:\s*([^\n·]+)", text)
+    if m_time:
+        synced_at = m_time.group(1).strip()
+    m_sha = re.search(r"multica @ `([^`]+)`", text)
+    if m_sha:
+        hq_sha = m_sha.group(1)
+    file_count = len(re.findall(r"^- `([^`]+)`", text, re.MULTILINE))
+    claude = (Path(local_path) / "CLAUDE.md").is_file()
+    return {
+        "synced": True,
+        "synced_at": synced_at,
+        "hq_sha": hq_sha,
+        "file_count": file_count,
+        "claude_md": claude,
+        "hq_sha_current": hq_sha == hq_git_sha() if hq_sha else False,
+    }
+
+
+def process_health() -> dict[str, Any]:
+    cron_ok = False
+    cron_line = ""
+    crontab = run_cmd(["crontab", "-l"], timeout=10)
+    if crontab.returncode == 0:
+        for line in crontab.stdout.splitlines():
+            if "ceo-nightly" in line or "multica-ai-company-nightly" in line:
+                cron_ok = True
+                cron_line = line.strip()
+                break
+    nightly_log = Path.home() / ".multica/ceo-nightly.log"
+    last_nightly = ""
+    if nightly_log.is_file():
+        try:
+            last_nightly = nightly_log.read_text(encoding="utf-8", errors="replace").splitlines()[-1][:120]
+        except OSError:
+            last_nightly = ""
+    manifest = MULTICA_ROOT / ".ai-company/config/company-os-sync-manifest.yaml"
+    manifest_paths = 0
+    if manifest.is_file():
+        for line in manifest.read_text(encoding="utf-8").splitlines():
+            if line.strip().startswith("- "):
+                manifest_paths += 1
+    return {
+        "cron_installed": cron_ok,
+        "cron_line": cron_line,
+        "last_nightly_log_line": last_nightly,
+        "manifest_paths": manifest_paths,
+        "hq_sha": hq_git_sha(),
+    }
+
+
+def verify_hands_off_summary() -> dict[str, Any]:
+    result = run_cmd(["bash", str(SCRIPT_DIR / "verify-hands-off.sh")], timeout=150)
+    ok = warn = fail = 0
+    for line in result.stdout.splitlines():
+        if line.strip().startswith("✅"):
+            ok += 1
+        elif line.strip().startswith("❌"):
+            fail += 1
+        elif line.strip().startswith("⚠️"):
+            warn += 1
+    m = re.search(r"结果:\s*(\d+)\s*通过\s*·\s*(\d+)\s*警告\s*·\s*(\d+)\s*失败", result.stdout)
+    if m:
+        ok, warn, fail = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    return {
+        "ok": ok,
+        "warn": warn,
+        "fail": fail,
+        "green": fail == 0,
+        "exit_code": result.returncode,
+        "ran_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+
+
+def company_overview(*, refresh_verify: bool = False) -> dict[str, Any]:
+    now = time.time()
+    if (
+        not refresh_verify
+        and _overview_cache["data"] is not None
+        and now - float(_overview_cache["at"]) < OVERVIEW_CACHE_SECS
+    ):
+        return _overview_cache["data"]  # type: ignore[return-value]
+
+    assets = load_company_assets()
+    process = process_health()
+    if refresh_verify:
+        verify: dict[str, Any] = verify_hands_off_summary()
+        verify["skipped"] = False
+    elif _overview_cache["data"] is not None and _overview_cache["data"].get("verify"):
+        verify = dict(_overview_cache["data"]["verify"])  # type: ignore[union-attr]
+    else:
+        verify = {"ok": 0, "warn": 0, "fail": 0, "green": None, "skipped": True, "ran_at": ""}
+
+    rows = dashboard_rows()
+    registry = {p.id: p for p in parse_registry()}
+    projects_out: list[dict[str, Any]] = []
+    for row in rows:
+        pid = row.get("id", "")
+        reg = registry.get(pid)
+        asset = assets.get(pid, {})
+        local_path = row.get("local_path", "")
+        domains = asset.get("domains", {}) if isinstance(asset.get("domains"), dict) else {}
+        hosting = asset.get("hosting", {}) if isinstance(asset.get("hosting"), dict) else {}
+        domain = (reg.domain if reg and reg.domain else "") or domains.get("production", "")
+        cf_project = (reg.cloudflare_project if reg and reg.cloudflare_project else "") or hosting.get(
+            "project", ""
+        )
+        projects_out.append(
+            {
+                **row,
+                "domain": domain,
+                "cloudflare_project": cf_project,
+                "delivery_slug": reg.delivery_slug if reg else "",
+                "company_os": read_company_os_meta(local_path),
+                "asset_notes": asset.get("notes", ""),
+            }
+        )
+
+    payload: dict[str, Any] = {
+        "hq": {
+            "multica_root": str(MULTICA_ROOT),
+            "sha": process["hq_sha"],
+            "registry": str(REGISTRY),
+        },
+        "process": process,
+        "verify": verify,
+        "norms": [{"title": title, "path": rel} for title, rel in NORM_LINKS],
+        "projects": projects_out,
+        "totals": {
+            "blocked": sum(int(p.get("blocked", 0)) for p in projects_out),
+            "running": sum(int(p.get("running", 0)) for p in projects_out),
+            "agent_safe": sum(int(p.get("agent_safe", 0)) for p in projects_out),
+            "merged_prs": sum(int(p.get("merged_prs", 0)) for p in projects_out),
+        },
+    }
+    _overview_cache["at"] = now
+    _overview_cache["data"] = payload
+    return payload
 
 
 def parse_registry() -> list[Project]:
@@ -72,9 +306,10 @@ def parse_registry() -> list[Project]:
                 projects.append(Project(**current))  # type: ignore[arg-type]
             current = {"id": line.split(":", 1)[1].strip()}
             continue
-        for key in ("repo", "tier", "notes"):
+        for key in ("repo", "tier", "notes", "domain", "cloudflare_project", "delivery_slug"):
             if line.startswith(f"{key}:"):
-                current[key] = line.split(":", 1)[1].strip().strip('"')
+                val = line.split(":", 1)[1].strip().strip('"')
+                current[key] = val
         if line.startswith("paused:"):
             current["paused"] = line.split(":", 1)[1].strip() == "true"
         if line.startswith("priority:"):
@@ -421,6 +656,12 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(HTTPStatus.OK, multica_runtime_status())
                 return
 
+            if path == "/api/company-overview":
+                query = parse_qs(parsed.query)
+                refresh = query.get("refresh_verify", ["0"])[0] in ("1", "true", "yes")
+                self._send_json(HTTPStatus.OK, company_overview(refresh_verify=refresh))
+                return
+
             if path == "/api/projects":
                 rows = dashboard_rows()
                 totals = {
@@ -554,6 +795,13 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
+    import sys
+
+    if len(sys.argv) > 1 and sys.argv[1] == "--snapshot-json":
+        refresh = "--refresh-verify" in sys.argv[2:]
+        print(json.dumps(company_overview(refresh_verify=refresh), ensure_ascii=False))
+        return
+
     host = os.environ.get("CEO_WORKBENCH_HOST", "127.0.0.1")
     port = DEFAULT_PORT
     server = ThreadingHTTPServer((host, port), Handler)

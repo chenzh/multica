@@ -1,5 +1,9 @@
 # AI 公司 — 项目台账
 # CEO 每周更新。调度脚本 / LangGraph 可读此文件做多 repo 公平队列。
+#
+# 资产字段（domain、cloudflare_project、sla_hours）为可选，供指挥舱/文档；
+# 本机路径与密钥名见 config/repo-paths.local.yaml、company-assets.local.yaml（gitignore）。
+# 详见 docs/19-asset-registry.md
 
 company:
   name: your-ai-company
@@ -68,3 +72,5 @@ projects:
     paused: false
     delivery_slug: json-site
     notes: "Feishu site-factory 2026-08-27 — json 格式化"
+    # domain: ""                  # optional — see docs/19-asset-registry.md
+    # cloudflare_project: json-site

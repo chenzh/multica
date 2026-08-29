@@ -29,6 +29,31 @@
         <p class="subtitle" id="runtime-cli">本机 cursor-agent 进程: -</p>
       </section>
 
+      <section class="card company-overview" style="margin-bottom: 16px">
+        <div class="panel-title">
+          <h2>公司指挥舱</h2>
+          <div class="header-actions">
+            <span class="pill" id="hq-sha">HQ —</span>
+            <button id="verify-refresh-btn" type="button">重跑脱手验收</button>
+          </div>
+        </div>
+        <div class="lights-grid" id="process-lights"></div>
+        <div class="norm-links" id="norm-links"></div>
+        <table class="assets-table">
+          <thead>
+            <tr>
+              <th>项目</th>
+              <th>Tier</th>
+              <th>本机 path</th>
+              <th>规范副本</th>
+              <th>域名 / CF</th>
+              <th>队列</th>
+            </tr>
+          </thead>
+          <tbody id="assets-body"></tbody>
+        </table>
+      </section>
+
       <section class="grid">
         <div class="card">
           <div class="metric-label">BLOCKED</div>

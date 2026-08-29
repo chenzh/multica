@@ -10,6 +10,7 @@
 - [ ] 技术栈（Next / Go / 纯静态等）
 - [ ] 是否需要 OpenAPI、E2E
 - [ ] 登记 [project-registry.yaml](../templates/project-registry.yaml)
+- [ ] 本机：`repo-paths.local.yaml` + [company-assets.local.yaml](../config/company-assets.local.yaml.example)（见 [19-asset-registry.md](../docs/19-asset-registry.md)）
 
 ---
 
@@ -41,7 +42,8 @@ cp /path/to/multica/.ai-company/examples/music-game-sea/brief.md .delivery/<proj
 cp /path/to/multica/.ai-company/templates/accept_cases.md .delivery/<project-slug>/
 ```
 
-- [ ] 编写项目 `CLAUDE.md`（或链到公司约定）
+- [ ] 编写项目 `CLAUDE.md`（复制 [templates/CLAUDE.project.md](../templates/CLAUDE.project.md)，填 stack / 命令 / forbidden paths）
+- [ ] `bash …/sync-company-norms.sh --id <project-id>` → `.delivery/company-os/`
 - [ ] 调整 `merge-policy.json` deny/allow
 - [ ] 若有 API：放 `api/openapi.yaml`，加 contract workflow
 

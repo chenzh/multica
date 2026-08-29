@@ -27,7 +27,7 @@ concurrency:
 
 nightly:
   max_total_tickets: 5
-  cron: "0 2 * * *"
+  cron: "0 21 * * *"             # 21:00 Asia/Shanghai
   timezone: Asia/Shanghai
 ```
 

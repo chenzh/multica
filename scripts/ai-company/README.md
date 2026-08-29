@@ -160,6 +160,31 @@ Enabled in `ceo-nightly.sh` when `CEO_SYNC_BACKLOG=1` (default).
 
 Human-only lines (`PAY-001`, etc.) are only parsed if they use the same `### ID [grade] title` format.
 
+## sync-company-norms.sh
+
+Copy selected `.ai-company/` norm docs into each portfolio checkout at `.delivery/company-os/`.
+
+```bash
+bash scripts/ai-company/sync-company-norms.sh
+bash scripts/ai-company/sync-company-norms.sh --id landing-tool-a --dry-run
+bash scripts/ai-company/sync-company-norms.sh --harness --force-harness
+```
+
+Manifest: `.ai-company/config/company-os-sync-manifest.yaml`.  
+Playbook: `.ai-company/docs/27-norm-sync.md`.
+
+After sync, commit in each product repo: `.delivery/company-os/` + `.delivery/COMPANY-OS.md`.
+
+## portfolio-commit-norms.sh
+
+Batch `git add` + commit (+ optional push) for `CLAUDE.md` and company-os across portfolio:
+
+```bash
+bash scripts/ai-company/sync-company-norms.sh
+bash scripts/ai-company/portfolio-commit-norms.sh --commit
+bash scripts/ai-company/portfolio-commit-norms.sh --commit --push
+```
+
 ## push-fork.sh
 
 Push harness changes to **your fork** (`chenzh/multica`). Pushing to `origin` (`multica-ai/multica`) returns 403 unless you are a maintainer.
@@ -181,6 +206,14 @@ bash scripts/ai-company/ceo-reconcile-queue.sh            # fix stale agent-* la
 ```
 
 Dispatch log (background): `~/.multica/ceo-nightly-dispatch.log`
+
+## company-overview-snapshot.sh
+
+JSON snapshot for daily brief (no HTTP server; add `--refresh-verify` to run verify-hands-off):
+
+```bash
+bash scripts/ai-company/company-overview-snapshot.sh | python3 -m json.tool
+```
 
 See `.ai-company/runbooks/nightly-ceo-brief.md`.
 

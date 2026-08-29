@@ -9,7 +9,7 @@
 |----|--------|--------------|
 | **经营（OPC）** | `Documents/SecondBrain/03-MAPS/...-map-portfolio-opc.md` | 本周全力主线、杀线、触达/转发 |
 | **交付（Company OS）** | `Projects/multica/.ai-company/` + 各产品仓 Issues | 队列、派单、BLOCKED、PR/CI |
-| **控制台** | `ceo-workbench.sh` → http://127.0.0.1:9477 | 看队列 / 点派单 |
+| **控制台** | `ceo-workbench.sh` → http://127.0.0.1:9477 | 指挥舱：队列 / 资产 / 流程灯 / 点派单（见 [17-ceo-cockpit.md](./17-ceo-cockpit.md)） |
 
 **原则**：OPC 决定「做什么产品值得做」；Company OS 决定「怎么无人值守做完」。不要用 Agent 会话当经营真相源。
 

@@ -1,6 +1,7 @@
 const state = {
   projects: [],
   totals: {},
+  overview: null,
   selectedRepo: "",
   selectedProject: null,
   meta: {},
@@ -26,6 +27,84 @@ function statusClass(project) {
   if (Number(project.blocked) > 0) return "bad";
   if (project.paused === true || project.paused === "true") return "warn";
   return "good";
+}
+
+function renderOverview() {
+  const ov = state.overview;
+  if (!ov) return;
+
+  document.getElementById("hq-sha").textContent = `HQ ${ov.hq?.sha || "-"}`;
+
+  const lights = [
+    {
+      title: "21:00 cron",
+      ok: ov.process?.cron_installed,
+      detail: ov.process?.cron_line || "未安装 install-nightly-cron.sh",
+    },
+    {
+      title: "脱手验收",
+      ok: ov.verify?.green === true,
+      warn: ov.verify?.skipped === true,
+      detail: ov.verify?.skipped
+        ? "未跑（工作台点「重跑脱手验收」）"
+        : `${ov.verify?.ok ?? 0} 通过 · ${ov.verify?.warn ?? 0} 警告 · ${ov.verify?.fail ?? 0} 失败`,
+    },
+    {
+      title: "规范 manifest",
+      ok: (ov.process?.manifest_paths ?? 0) > 0,
+      detail: `${ov.process?.manifest_paths ?? 0} 个文件 · HQ @ ${ov.hq?.sha || "-"}`,
+    },
+    {
+      title: "昨夜 nightly",
+      ok: Boolean(ov.process?.last_nightly_log_line),
+      detail: ov.process?.last_nightly_log_line || "无 ~/.multica/ceo-nightly.log",
+    },
+  ];
+
+  document.getElementById("process-lights").innerHTML = lights
+    .map((light) => {
+      let cls = "good";
+      if (light.warn) cls = "warn";
+      else if (!light.ok) cls = "bad";
+      return `<div class="light ${cls}"><strong>${light.title}</strong><span>${light.detail}</span></div>`;
+    })
+    .join("");
+
+  const hqRoot = ov.hq?.multica_root || "";
+  document.getElementById("norm-links").innerHTML = (ov.norms || [])
+    .map((item) => {
+      const href = hqRoot ? `file://${hqRoot}/.ai-company/${item.path}` : "#";
+      return `<a href="${href}" title="${item.path}">${item.title}</a>`;
+    })
+    .join("");
+
+  const tbody = document.getElementById("assets-body");
+  tbody.innerHTML = (ov.projects || [])
+    .map((p) => {
+      const cos = p.company_os || {};
+      const pathOk = p.local_path_resolved;
+      let syncLabel = "未 sync";
+      let syncClass = "bad";
+      if (cos.synced) {
+        syncLabel = cos.hq_sha_current ? `已同步 @ ${cos.hq_sha}` : `旧副本 @ ${cos.hq_sha}`;
+        syncClass = cos.hq_sha_current ? "good" : "warn";
+      }
+      const claude = cos.claude_md ? "CLAUDE ✓" : "无 CLAUDE";
+      const domain = p.domain || p.cloudflare_project || "—";
+      const cf = p.cloudflare_project ? `CF: ${p.cloudflare_project}` : "";
+      return `<tr>
+        <td>
+          <div class="project-name">${p.id}${p.paused ? " ⏸" : ""}</div>
+          <div class="project-repo">${p.repo}</div>
+        </td>
+        <td>${p.tier || "-"}</td>
+        <td class="cell-muted">${pathOk ? "✓ " + (p.local_path || "").split("/").slice(-2).join("/") : "✗ 未配置"}</td>
+        <td><span class="pill ${syncClass}">${syncLabel}</span><div class="cell-muted">${claude} · ${cos.file_count || 0} 文件</div></td>
+        <td class="cell-muted">${domain}${cf ? `<br>${cf}` : ""}</td>
+        <td>B${p.blocked} R${p.running} Q${p.agent_safe}</td>
+      </tr>`;
+    })
+    .join("");
 }
 
 function formatTotals() {
@@ -190,7 +269,24 @@ async function loadQueue() {
   });
 }
 
+async function loadOverview(refreshVerify = false) {
+  const q = refreshVerify ? "?refresh_verify=1" : "";
+  state.overview = await api(`/api/company-overview${q}`);
+  state.projects = state.overview.projects || [];
+  state.totals = state.overview.totals || {};
+  renderOverview();
+  formatTotals();
+  renderProjects();
+}
+
 async function loadProjects() {
+  if (state.overview) {
+    state.projects = state.overview.projects || [];
+    state.totals = state.overview.totals || {};
+    formatTotals();
+    renderProjects();
+    return;
+  }
   const data = await api("/api/projects");
   state.projects = data.projects;
   state.totals = data.totals;
@@ -282,12 +378,20 @@ async function loadRuntime() {
 }
 
 async function refreshAll() {
-  await Promise.all([loadMeta(), loadRuntime(), loadProjects(), loadJobs()]);
+  await Promise.all([loadMeta(), loadRuntime(), loadOverview(false), loadJobs()]);
   if (state.selectedRepo) await loadQueue();
 }
 
 function bindEvents() {
   document.getElementById("refresh-btn").addEventListener("click", refreshAll);
+  document.getElementById("verify-refresh-btn").addEventListener("click", async () => {
+    document.getElementById("verify-refresh-btn").disabled = true;
+    try {
+      await loadOverview(true);
+    } finally {
+      document.getElementById("verify-refresh-btn").disabled = false;
+    }
+  });
   document.getElementById("dispatch-portfolio").addEventListener("click", async () => {
     const maxTotal = Number(document.getElementById("max-total").value || "1");
     await dispatchPortfolio(maxTotal);

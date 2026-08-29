@@ -90,5 +90,7 @@ label:agent-safe -label:agent-running -label:agent-blocked
 
 ## 相关文档
 
+- [18-definition-of-done.md](./18-definition-of-done.md)  
+- [20-issue-brief-style-guide.md](./20-issue-brief-style-guide.md)  
 - [02-operating-model.md](./02-operating-model.md)  
 - [runbooks/blocked-triage.md](../runbooks/blocked-triage.md)  

@@ -16,7 +16,7 @@ concurrency:
 
 nightly:
   enabled: true                   # local: install-nightly-cron.sh --install
-  cron: "0 21 * * *"              # 21:00 server local time (set TZ=Asia/Shanghai)
+  cron: "0 21 * * *"              # 21:00 Asia/Shanghai — match install-nightly-cron.sh
   max_total_tickets: 5
   dispatch_before_brief: true       # ceo-nightly.sh
   brief_script: scripts/ai-company/ceo-daily-brief.sh

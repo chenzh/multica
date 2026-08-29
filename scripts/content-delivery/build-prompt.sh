@@ -35,6 +35,7 @@ $body
 
 ### Content delivery rules
 
+- Read \`.delivery/CONTENT-HQ-SPLIT.md\` — you are the **remote worker**; CEO HQ owns queue and publish.
 - Work in this repository only. Commit to a branch named \`content/issue-${number}\`.
 - Deliverables live under \`drafts/\`, \`calendar/\`, or paths named in the issue — not ad-hoc chat output only.
 - Do **not** publish to social platforms or call posting APIs unless the issue explicitly says \`publish-ok\`.

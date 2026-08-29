@@ -14,7 +14,9 @@
 #   executor: remote-hermes            （文档用，脚本不解析）
 #   publish_policy: ceo-approve        （文档用；发布 human-only）
 #   channels: [youtube, x]            （可选）
-# 内容仓 **不需要** CEO 本机 AI_REPO_PATH_*。见 docs/24-content-operations.md
+# 内容仓 **不需要** CEO 本机 AI_REPO_PATH_*。
+# 职责划分（Harness）：harness/content-hq-split.md → 内容仓 .delivery/CONTENT-HQ-SPLIT.md
+# 运营接线：docs/24-content-operations.md
 
 company:
   name: your-ai-company

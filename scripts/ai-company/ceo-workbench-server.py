@@ -50,6 +50,7 @@ class Project:
 
 
 NORM_LINKS: list[tuple[str, str]] = [
+    ("Harness 布局", "docs/29-harness-layout.md"),
     ("规范分层", "docs/28-norm-layers.md"),
     ("规范同步", "docs/27-norm-sync.md"),
     ("完成定义 DoD", "docs/18-definition-of-done.md"),

@@ -68,3 +68,16 @@ make check            # Full verification pipeline
 ```
 
 See CLAUDE.md for the authoritative rules and common commands.
+
+### AI 公司规范（与产品代码分开）
+
+本仓 **两套规范** 并存：
+
+| 范围 | 权威文档 |
+|------|----------|
+| Multica **产品代码**（Go/TS/apps/packages） | 根目录 `CLAUDE.md` |
+| **AI 公司 OS**（portfolio、DoD、.harness、examples） | `.ai-company/docs/29-harness-layout.md` |
+
+- 改全公司规则 → `.ai-company/docs/` + `sync-company-norms.sh`
+- 复制新产品种子 → `.ai-company/examples/<slug>/`（见 `examples/README.md`）
+- 安装交付脚手架 → `.ai-company/harness/install.sh`

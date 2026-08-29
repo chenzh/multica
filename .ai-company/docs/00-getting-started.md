@@ -10,6 +10,8 @@
 - [ ] [02-operating-model.md](./02-operating-model.md)
 - [ ] [03-organization.md](./03-organization.md)
 - [ ] [04-architecture.md](./04-architecture.md)
+- [ ] [28-norm-layers.md](./28-norm-layers.md) — 通用 / 项目 / 任务放哪
+- [ ] [29-harness-layout.md](./29-harness-layout.md) — examples vs templates vs harness
 
 ## Day 2 — 搭基础设施（4h）
 

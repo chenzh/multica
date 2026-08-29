@@ -1,5 +1,7 @@
 # AI 公司操作系统（Company OS）
 
+> 权威布局：[docs/29-harness-layout.md](./docs/29-harness-layout.md) · Harness 入口：[harness/HARNESS-INDEX.md](./harness/HARNESS-INDEX.md)
+
 > **你是老板（CEO），这套文档是公司的「宪法 + 运营手册 + 技术蓝图」。**  
 > 对话不是真相源；本目录 + 各项目仓库里的 `brief.md` / `accept_cases.md` / `api_spec.yaml` 才是。
 
@@ -44,6 +46,7 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 | [docs/17-ceo-cockpit.md](./docs/17-ceo-cockpit.md) | **CEO 指挥舱**：脱手 + 一屏总览（`:9477`）架构与分阶段 |
 | [docs/27-norm-sync.md](./docs/27-norm-sync.md) | **规范同步**：三层管道 + `sync-company-norms.sh` |
 | [docs/28-norm-layers.md](./docs/28-norm-layers.md) | **规范分层**：通用 vs 项目 vs 任务 |
+| [docs/29-harness-layout.md](./docs/29-harness-layout.md) | **Harness 布局**：按类型放哪、examples vs templates、multica 本仓 |
 | [docs/18-definition-of-done.md](./docs/18-definition-of-done.md) | **DoD** 完成定义 |
 | [docs/20-issue-brief-style-guide.md](./docs/20-issue-brief-style-guide.md) | Issue / brief 写作规范 |
 | [docs/21-label-state-machine.md](./docs/21-label-state-machine.md) | Label 状态机与 BLOCKED 原因码 |
@@ -90,6 +93,9 @@ CEO 只投方向与验收 → Multica 管任务公司 → LangGraph/GHA 硬编�
 
 | 路径 | 说明 |
 |------|------|
+| [docs/29-harness-layout.md](./docs/29-harness-layout.md) | **按类型索引**：docs / examples / harness / multica 本仓 |
+| [harness/HARNESS-INDEX.md](./harness/HARNESS-INDEX.md) | Harness 目录快捷入口 |
+| [examples/README.md](./examples/README.md) | **种子包索引**（复制到 `.delivery/<slug>/`） |
 | [harness/](./harness/) | **company-harness**：`install.sh` 一键装进任意 repo |
 | [examples/music-game-sea/](./examples/music-game-sea/) | 出海音乐游戏站 **完整 brief + AC + API + backlog** |
 | [examples/landing-tool-a/](./examples/landing-tool-a/) | 第二产品线：轻量工具落地页（4 ticket） |

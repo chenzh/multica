@@ -19,6 +19,7 @@ paths:
   - docs/17-ceo-cockpit.md
   - docs/27-norm-sync.md
   - docs/28-norm-layers.md
+  - docs/29-harness-layout.md
   - runbooks/blocked-triage.md
   - runbooks/employee-autopilot.md
   - runbooks/onboard-new-project.md

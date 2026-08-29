@@ -90,6 +90,7 @@ echo ""
 
 copy_tree "$SCAFFOLD/.delivery/_template" "$TARGET/.delivery/_template"
 run mkdir -p "$TARGET/.delivery/prompts"
+copy_tree "$SCRIPT_DIR/content-hq-split.md" "$TARGET/.delivery/CONTENT-HQ-SPLIT.md"
 copy_tree "$SCRIPT_DIR/../templates/orchestrator-kickoff-content.md" \
   "$TARGET/.delivery/prompts/orchestrator-kickoff.md"
 
@@ -122,17 +123,21 @@ fi
 
 cat <<'EOF'
 
+Responsibility split (installed to .delivery/CONTENT-HQ-SPLIT.md):
+  CEO HQ = queue, nightly, Feishu, product cursor, publish
+  Remote  = this repo only: pull-dispatch, Hermes oneshot, drafts/PR
+
 Next steps (remote Hermes machine):
   1. gh auth login (or GH_TOKEN for automation)
-  2. hermes setup --portal (or your provider)
+  2. hermes setup --portal (or your provider); prefer profile zimeiti
   3. Labels: agent-safe, agent-running, agent-blocked, agent-done
-  4. Register self-hosted runner with labels: self-hosted, content-hermes
-  5. Add project to HQ project-registry.yaml (kind: content, dispatch_mode: gha)
+  4. cron 22:00: pull-dispatch.sh --max-tasks 1  (or GHA runner: self-hosted, content-hermes)
+  5. Disable Kanban auto-dispatch if still active (Issues = single queue)
   6. Test: bash scripts/content-delivery/pull-dispatch.sh --max-tasks 1 --dry-run
 
 CEO HQ (no local clone required):
-  bash scripts/ai-company/portfolio-dispatch.sh --max-total 1
-  # dispatches content-delivery-dispatch.yml on content repo
+  project-registry.yaml: kind: content, dispatch_mode: remote-pull (or gha)
+  bash scripts/ai-company/portfolio-dispatch.sh --dry-run --max-total 1
 
-See .ai-company/docs/24-content-operations.md
+See .delivery/CONTENT-HQ-SPLIT.md and .ai-company/docs/24-content-operations.md
 EOF

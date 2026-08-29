@@ -94,7 +94,15 @@ bash .ai-company/harness/install-content-harness.sh /path/to/content-repo
 bash scripts/ai-company/install-content-harness.sh /path/to/content-repo
 ```
 
-见 [../docs/24-content-operations.md](../docs/24-content-operations.md)。
+安装后内容仓会有 **`.delivery/CONTENT-HQ-SPLIT.md`** — Harness 权威职责表（司令部 vs 内容工位）。
+
+| 文档 | 用途 |
+|------|------|
+| [content-hq-split.md](./content-hq-split.md) | Harness 源文件；`install-content-harness` 复制到内容仓 |
+| [../docs/24-content-operations.md](../docs/24-content-operations.md) | 接线、远程机、token、落地清单 |
+| `.delivery/prompts/orchestrator-kickoff.md` | Hermes worker 每次派单读取 |
+
+**分工摘要：** CEO 本机 = Issues / `ceo-nightly` / 工程 cursor / 飞书 / 发布；远程 lighthouse = `pull-dispatch` + Hermes oneshot + `drafts/` PR。勿双派单（Kanban vs Issues）。
 
 ---
 

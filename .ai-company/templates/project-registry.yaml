@@ -95,7 +95,7 @@ projects:
   - id: meigen-replica
     repo: github.com/chenzh/meigen-replica
     tier: experiment
-    priority: 14
+    priority: 17
     stack: visual-replica
     autopilot_id: null
     max_nightly_tickets: 2

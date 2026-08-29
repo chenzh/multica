@@ -181,6 +181,12 @@ if [ "$DRY_RUN" -eq 0 ]; then
   cleaned="$(cleanup_stale_local_dispatches 0 || echo 0)"
   echo "stale dispatch cleanup: removed/killed ${cleaned:-0}"
   bash "$SCRIPT_DIR/ceo-reconcile-queue.sh" --registry "$REGISTRY" --org "$GITHUB_ORG" 2>/dev/null || true
+  if [ "${CEO_AUTO_MERGE:-1}" = "1" ]; then
+    echo ">> auto-merge green PRs (autopilot)"
+    bash "$SCRIPT_DIR/ceo-auto-merge.sh" \
+      --registry "$REGISTRY" \
+      --org "$GITHUB_ORG" 2>/dev/null || echo "warn: auto-merge failed (continuing)" >&2
+  fi
 fi
 
 aggregate_queue

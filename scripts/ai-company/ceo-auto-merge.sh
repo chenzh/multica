@@ -89,15 +89,26 @@ while IFS= read -r repo; do
     [ "$merged" -ge "$MAX_MERGE" ] && break
     [ -z "$num" ] && continue
     head="$(gh pr view "$num" -R "$repo" --json headRefName -q .headRefName 2>/dev/null || echo "")"
-    if [[ "$head" == cursor/* ]]; then
-      root="$(bash "$SCRIPT_DIR/resolve-repo-path.sh" --repo "$repo" --quiet 2>/dev/null || true)"
-      if [ -n "$root" ] && [ -f "$root/.delivery/config/merge-policy.json" ]; then
-        if ! GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
-          bash "$MULTICA_ROOT/scripts/agent-delivery/check-merge-eligible.sh" "$num" 2>/dev/null | grep -q '^merge_eligible=true'; then
-          echo "skip policy: $repo#$num (not merge_eligible)"
-          continue
-        fi
+    root="$(bash "$SCRIPT_DIR/resolve-repo-path.sh" --repo "$repo" --quiet 2>/dev/null || true)"
+    policy=""
+    branch_prefix="cursor-issue"
+    if [ -n "$root" ] && [ -f "$root/.delivery/config/merge-policy.json" ]; then
+      policy="$root/.delivery/config/merge-policy.json"
+      branch_prefix="$(jq -r '.branchNamePrefix // "cursor-issue"' "$policy")"
+    fi
+    if [ -n "$policy" ]; then
+      if [[ "$head" != ${branch_prefix}* ]]; then
+        echo "skip non-agent: $repo#$num (head=$head prefix=$branch_prefix)"
+        continue
       fi
+      if ! GITHUB_REPOSITORY="$repo" REPO_ROOT="$root" \
+        bash "$MULTICA_ROOT/scripts/agent-delivery/check-merge-eligible.sh" "$num" 2>/dev/null | grep -q '^merge_eligible=true'; then
+        echo "skip policy: $repo#$num (not merge_eligible)"
+        continue
+      fi
+    elif [[ "$head" != cursor/* ]] && [[ "$head" != cursor-issue* ]]; then
+      echo "skip non-agent: $repo#$num (head=$head)"
+      continue
     fi
     if [ "$DRY_RUN" -eq 1 ]; then
       echo "would merge: $repo#$num"

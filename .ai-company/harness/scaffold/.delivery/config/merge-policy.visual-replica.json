@@ -20,7 +20,8 @@
     "**/*.spec.ts",
     "public/**",
     "assets/**",
-    "locales/**"
+    "locales/**",
+    ".delivery/**"
   ],
   "deny": [
     "**/migrations/**",

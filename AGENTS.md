@@ -21,6 +21,36 @@ This repo is joined to SecondBrain. **Before coding:**
 Gateway on a machine with the Vault cloned: `zb status` / `zb advance`
 <!-- zbrain-harness:end -->
 
+<!-- harness-rules:zcode:start -->
+## Harness 触发规则（自 `.cursor/rules/` 迁移，ZCode 同样生效）
+
+> 薄指针，勿塞全文。Cursor 侧同款规则在 `.cursor/rules/*.mdc`（`alwaysApply`）。
+
+### 分流（原 company-harness.mdc）
+
+| 场景 | 读 |
+|------|-----|
+| 改 TS/Go/产品 | 根 `CLAUDE.md` → `docs/CODE-INDEX.md` |
+| 公司交付 / portfolio | `.ai-company/docs/28-norm-layers.md` 阅读顺序 |
+| dogfood 流水线 | `.delivery/README.md` |
+
+- 规范下发：`.delivery/company-os/`（`sync-company-norms.sh`）
+- 经验回流（里程碑 / BLOCKED 解决后）：读 `.ai-company/docs/31-harness-learnings-routing.md`；用 `record-harness-learning.sh` 记入 harness-candidates；口令 `记录 harness 经验：[结论]`
+- **禁止**把 `.ai-company/docs/` 全文塞进本文件或任何规则文件；**禁止**无审批 PATCH 宪法正文
+
+### Vault / SecondBrain（原 vault-harness.mdc + zbrain-session.mdc）
+
+- 本仓 slug **multica**；权威源在 SecondBrain 仓，快照见 `docs/VAULT-HARNESS.md`
+- 需要权威源时按顺序读 Vault：`10-SYSTEM/HARNESS/registry.json`（匹配 slug）→ `global.md` → `profiles/multica-monorepo.md` → `projects/multica.md`
+- 会话路由：workspace 有 `.secondbrain` 或用户说 继续 / 推进 / scratch 时，从本会话 transcript id 解析 chat-id → 优先 `sessions/<chat-id>.md`，按 Vault `10-SYSTEM/HARNESS/session-protocol.md` 路由；不接管其他会话的 next；可选 `zb init` / `zb advance`
+- 口令：`同步第二大脑规则` · `同步项目规范到全部外接仓库` · `打包第二大脑上下文：multica`
+
+### 索引边界（原 code-index.mdc）
+
+- **索引**：`server/` · `apps/` · `packages/` · `e2e/` · `scripts/` · `docs/` · `.ai-company/`（不含 run-logs）；不索引项见 `.cursorignore`
+- `.ai-company/` 是卫星交付流水线，不是本仓产品代码
+<!-- harness-rules:zcode:end -->
+
 ## Quick Reference
 
 ### Architecture
